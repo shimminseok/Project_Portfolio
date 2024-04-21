@@ -4,9 +4,14 @@ using Tables;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable
+public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable
 {
+    [Header("PlayerController")]
     public CHARACTER_JOB job;
+    [SerializeField] JoystickController joystick;
+
+    public JoystickController JoystickController => joystick;
+
 
     int attackCount;
 
@@ -26,6 +31,8 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     bool isLessHp;
     bool isDead;
 
+
+    Vector2 moveDir;
 
 
     public float Damage 
@@ -128,6 +135,16 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         get => genTime; 
         set => genTime = value; 
     }
+
+    public bool IsMove
+    {
+        get => JoystickController.Direction != Vector2.zero;
+    }
+    public Vector2 InputDirection
+    { 
+        get => JoystickController.Direction; 
+    }
+
     void Awake()
     {
         InitData(Tables.Character.Get((int)job));
@@ -160,6 +177,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void FixedUpdate()
     {
+        if(IsMove) 
+        {
+            Move(new Vector3(InputDirection.x, 0, InputDirection.y));
+        }
     }
     public override void Init()
     {
@@ -190,6 +211,19 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public void InitMoveData(Character _tb)
     {
         SetMoveSpeed(_tb.MoveSpeed);
+    }
+    public void Move(Vector3 dir)
+    {
+        Vector3 moveDirection = dir;
+        Debug.LogFormat("X : {0}, Y : {1}", InputDirection.x , InputDirection.y);
+        Vector3 movement = moveDirection * MoveSpd * Time.fixedDeltaTime;
+        transform.Translate(movement,Space.World);
+        Rotate(movement);
+    }
+    public void Rotate(Vector3 dir)
+    {
+        Quaternion rotation = Quaternion.LookRotation(dir,Vector3.up);
+        transform.rotation = Quaternion.Lerp(transform.rotation,rotation, Time.fixedDeltaTime * 10f);
     }
     public void SetMoveEvent()
     {

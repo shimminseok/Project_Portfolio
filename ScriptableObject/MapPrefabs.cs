@@ -10,47 +10,18 @@ public class MapPrefabs : ScriptableObject
 
     public void SetMap(int index)
     {
-        int width =20;
-        int height = 20;
-        Maps[index].GroundSize = new Vector2(width, height);
+        PoolManager.Instance.mapPoolRoot.localPosition = new Vector3(-(Maps[index].GroundSize.x / 2), 0, -(Maps[index].GroundSize.y / 2));
         Maps[index].MapNode = new Node[(int)(Maps[index].GroundSize.x), (int)(Maps[index].GroundSize.y)];
-        for (int i = 0; i < width; i++)
+        for (int i = 0; i < Maps[index].GroundSize.x; i++)
         {
-            for (int j = 0; j < height; j++)
+            for (int j = 0; j < Maps[index].GroundSize.y; j++)
             {
-                Maps[index].start.Position = new Vector3(i * 5,0,j * 5);
+                //맵을 생성해 줘야함
+                //임시로 맵에 장애물이 없는 형태로 생성
+                GameObject go = Instantiate(Random.value <= 1f ? Maps[index].MapList[^1] : Maps[index].MapList[Random.Range(0, Maps[index].MapList.Count - 1)],PoolManager.Instance.mapPoolRoot);
+                go.transform.localPosition = new Vector3(i * 1f, -0.5f, j * 1f);
+                Maps[index].MapNode[i, j] = new Node(i, j, go.layer == LayerMask.NameToLayer("IsMoveable"));
             }
         }
-
-        //SetManualMap(index);
-    }
-
-    void SetManualMap(int index)
-    {
-        string STR_PATH_MAP_PIECE_A = "Prefabs/Map/DW_BG_014A";
-        string STR_PATH_MAP_PIECE_B = "Prefabs/Map/DW_BG_014B";
-        string STR_MAP_PIECE = "DW_BG_014";
-
-        // 갱도 던전 맵 수동으로 만들기
-        if (Maps[index].name == STR_MAP_PIECE)
-        {
-            GameObject Parent = CreateObj(null, Quaternion.Euler(0, 45, 0), new Vector3(0, -0.01f, 0), PoolManager.Instance.transform, true);
-
-            Maps[index].MapList.Clear();
-
-            for (int i = 1; i <= 4; i++)
-                Maps[index].MapList.Add(CreateObj((i % 2 == 0) ? STR_PATH_MAP_PIECE_B : STR_PATH_MAP_PIECE_A, Quaternion.Euler(0, -90, 0), Vector3.zero, Parent.transform, false));
-        }
-    }
-
-    GameObject CreateObj(string path, Quaternion quaternion, Vector3 position, Transform parent, bool isActive)
-    {
-        GameObject go = (path == null) ? new GameObject() : Instantiate(Resources.Load<GameObject>(path));
-        go.transform.parent = parent;
-        go.transform.localRotation = quaternion;
-        go.transform.localPosition = (path == null) ? go.transform.localPosition - position : position;
-        go.SetActive(isActive);
-
-        return go;
     }
 }

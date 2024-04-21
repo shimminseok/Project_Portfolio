@@ -4,15 +4,10 @@ using UnityEngine;
 
 public abstract class ObjectController : MonoBehaviour
 {
+    [Header("ObjController")]
     public EObjType objType;
     // Start is called before the first frame update
     void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
     {
         
     }

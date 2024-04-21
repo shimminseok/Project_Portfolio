@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class AnimationContrller : MonoBehaviour
 {
-    // Start is called before the first frame update
     [SerializeField] ObjectController m_Controller;
     IAttackable m_Attackable;
     IMoveable m_Moveable;
     IHittable m_Hittable;
+    IControlable m_Controlable;
     int AttackCount;
     Animator animator;
     void Start()
@@ -22,17 +22,18 @@ public class AnimationContrller : MonoBehaviour
         m_Attackable = m_Controller.GetComponent<IAttackable>();
         m_Moveable = m_Controller.GetComponent<IMoveable>();
         m_Hittable = m_Controller.GetComponent<IHittable>();
+        m_Controlable = m_Controller.GetComponent<IControlable>();
         animator = GetComponent<Animator>();
     }
     void Update()
     {
-        if (m_Attackable != null)
-        {
-            if(Input.GetMouseButtonDown(0))
-                animator.SetBool("IsAttack", true);
-            else if(Input.GetMouseButtonUp(0))
-                animator.SetBool("IsAttack", false);
-        }
+        //if (m_Attackable != null)
+        //{
+        //    if(Input.GetMouseButtonDown(0))
+        //        animator.SetBool("IsAttack", true);
+        //    else if(Input.GetMouseButtonUp(0))
+        //        animator.SetBool("IsAttack", false);
+        //}
 
 
         if (m_Hittable != null)
@@ -51,6 +52,11 @@ public class AnimationContrller : MonoBehaviour
                 animator.SetBool("IsDead", true);
             }
         }
+
+        if (m_Controlable != null)
+        {
+            animator.SetBool("IsMove", m_Controlable.IsMove);
+        }
     }
 
     public void AttackEvent()
@@ -61,5 +67,10 @@ public class AnimationContrller : MonoBehaviour
     {
         m_Attackable.AttackCount = 0;
         animator.SetInteger("AttackCount", m_Attackable.AttackCount);
+    }
+
+    public void MoveEvent()
+    {
+        m_Moveable?.SetMoveEvent();
     }
 }

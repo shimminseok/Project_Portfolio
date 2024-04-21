@@ -12,13 +12,7 @@ public class MapManager : Singleton<MapManager>
 
     void Start()
     {
-        PoolManager.Instance.CreateMap(0, null);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        Init();
     }
     public void Init(Tables.Dungeon dungeon = null)
     {
@@ -39,12 +33,11 @@ public class MapManager : Singleton<MapManager>
         if (!string.IsNullOrEmpty(_mapName) && currentMap != _mapName)
         {
             currentMap = _mapName;
-
             SetActiveMapList(false);
-
-            Map map = PoolManager.Instance.MapPrefabs.Maps.Find(x => x.name == _mapName);
-            currentMapData = map;
-            MapList = map.MapList;
+            int mapIndex = PoolManager.Instance.mapPrefabs.Maps.FindIndex(x => x.name == _mapName);
+            currentMapData = PoolManager.Instance.mapPrefabs.Maps[mapIndex];
+            MapList = PoolManager.Instance.mapPrefabs.Maps[mapIndex].MapList;
+            PoolManager.Instance.CreateMap(mapIndex,null);
             SetActiveMapList(true);
         }
 

@@ -6,8 +6,13 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-
 #region [Enum]
+public enum CHARACTER_JOB
+{
+    KNIGHT = 1,
+    RANGER,
+    MAGITION
+}
 public enum EObjType
 {
     COLLEAGUE,
@@ -51,15 +56,16 @@ public interface IHittable
     void InitMoveData(Tables.Character characterTb);
     void SetMoveSpeed(float _moveSpeed);
     void SetMoveEvent();
+    void Move(Vector3 dir);
+    void Rotate(Vector3 dir);
 }
-#endregion
-
-#region [Enum]
-public enum CHARACTER_JOB
+public interface IControlable
 {
-    KNIGHT = 1,
-    RANGER,
-    MAGITION
+    JoystickController JoystickController { get; }
+    bool IsMove { get; }
+    Vector2 InputDirection { get; }
+
+
 }
 #endregion
 
