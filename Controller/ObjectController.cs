@@ -5,7 +5,9 @@ using UnityEngine;
 public abstract class ObjectController : MonoBehaviour
 {
     [Header("ObjController")]
-    public EObjType objType;
+    public OBJ_TYPE objType;
+    
+    protected AnimationController aniCtrl;
     // Start is called before the first frame update
     void Start()
     {

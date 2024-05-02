@@ -73,6 +73,13 @@ public static class DataTableLoader
 					Debug.Log("Job is loaded");
 				}
 				break;
+			case "Monster":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Monster.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Monster>());
+					Debug.Log("Monster is loaded");
+				}
+				break;
 			case "Quest":
 				{
 					JObject json = JObject.Parse(txt.text);
@@ -85,6 +92,13 @@ public static class DataTableLoader
 					JObject json = JObject.Parse(txt.text);
 					Tables.Skill.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Skill>());
 					Debug.Log("Skill is loaded");
+				}
+				break;
+			case "Spawn":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Spawn.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Spawn>());
+					Debug.Log("Spawn is loaded");
 				}
 				break;
 			case "Stage":

@@ -1,16 +1,14 @@
-using Newtonsoft.Json.Serialization;
-using System;
-using Tables;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable
 {
     [Header("PlayerController")]
     public CHARACTER_JOB job;
-    [SerializeField] JoystickController joystick;
+    Tables.Character characterTb;
 
-    public JoystickController JoystickController => joystick;
+
+    MonsterController targetObj;
+    public JoystickController JoystickController => GameManager.Instance.joystickController;
 
 
     int attackCount;
@@ -25,17 +23,16 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     float damage;
     float attackSpd;
     float attackRange;
+    float accuracy;
+    float dodge;
     float moveSpeed;
-    
+
     bool isCri;
     bool isLessHp;
     bool isDead;
+    bool isMove;
 
-
-    Vector2 moveDir;
-
-
-    public float Damage 
+    public float Damage
     {
         get => damage;
         set
@@ -43,39 +40,44 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             damage = value;
         }
     }
-    public float Defense 
-    { 
+    public float Defense
+    {
         get => defense;
         set
         {
             defense = value;
         }
     }
-    public float AttackSpd 
-    { 
+    public float AttackSpd
+    {
         get => attackSpd;
         set
         {
             attackSpd = value;
         }
     }
-    public float AttackRange 
-    { 
+    public float AttackRange
+    {
         get => attackRange;
         set
         {
             attackRange = value;
         }
     }
+    public float Accuracy
+    {
+        get => accuracy;
+        set => accuracy = value;
+    }
     public float MoveSpd
-    { 
+    {
         get => moveSpeed;
         set
         {
             moveSpeed = value;
         }
     }
-    public bool IsCri 
+    public bool IsCri
     {
         get
         {
@@ -88,17 +90,17 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         }
     }
 
-    public float CriDam 
+    public float CriDam
     {
-        get => criDam; 
-        set 
+        get => criDam;
+        set
         {
             criDam = Damage * 2 + value;
-        } 
+        }
     }
 
-    public float MaxHP 
-    { 
+    public float MaxHP
+    {
         get => maxHp;
         set
         {
@@ -112,47 +114,73 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         set
         {
             isDead = value;
+            if (isDead)
+            {
+                isMove = false;
+            }
         }
     }
 
-    public int AttackCount 
+    public int AttackCount
     {
         get => attackCount;
         set => attackCount = value;
     }
-    public float CurHP 
+    public float CurHP
     {
         get => curHp;
-        set => curHp = value; 
+        set => curHp = value;
     }
 
-    public float HPRegen { 
-        get => hpRegen; 
+    public float HPRegen
+    {
+        get => hpRegen;
         set => hpRegen = value;
     }
-    public float GenTime 
-    { 
-        get => genTime; 
-        set => genTime = value; 
+    public float GenTime
+    {
+        get => genTime;
+        set => genTime = value;
     }
 
     public bool IsMove
     {
-        get => JoystickController.Direction != Vector2.zero;
+        get => isMove;
+        set
+        {
+            isMove = value;
+            if (isMove)
+            {
+            }
+        }
     }
     public Vector2 InputDirection
-    { 
-        get => JoystickController.Direction; 
+    {
+        get => JoystickController.Direction;
+    }
+    public float Dodge
+    {
+        get => dodge;
+        set => dodge = value;
+    }
+
+    public bool IsManualControl
+    {
+        get
+        {
+            IsMove = JoystickController.Direction != Vector2.zero;
+            return JoystickController.Direction != Vector2.zero;
+        }
     }
 
     void Awake()
     {
-        InitData(Tables.Character.Get((int)job));
-        ObjectGetComponent();
+
     }
     void Start()
     {
-
+        InitData((int)job);
+        ObjectGetComponent();
     }
     void Update()
     {
@@ -160,10 +188,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void HpGen()
     {
-        if(CurHP < MaxHP)
+        if (CurHP < MaxHP)
         {
             GenTime += Time.deltaTime;
-            if(GenTime >= 1f)
+            if (GenTime >= 1f)
             {
                 CurHP += HPRegen;
 
@@ -177,10 +205,30 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void FixedUpdate()
     {
-        if(IsMove) 
+        if (IsManualControl)
         {
             Move(new Vector3(InputDirection.x, 0, InputDirection.y));
         }
+        //수동 조작이 아니면 적을 찾음
+        else if (!IsManualControl)
+        {
+            if (targetObj != null && !targetObj.IsDead)
+            {
+                if (GetTargetDistance(targetObj.transform) > attackRange)
+                {
+                    Move(targetObj.transform.localPosition - transform.localPosition);
+                }
+                else
+                {
+                    Attack();
+                }
+            }
+            else
+            {
+                aniCtrl.CurrentState = OBJ_ANIMATION_STATE.IDLE;
+            }
+        }
+
     }
     public override void Init()
     {
@@ -188,59 +236,73 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public override void ObjectGetComponent()
     {
+        aniCtrl = GetComponentInChildren<AnimationController>();
     }
-    void InitData(Character _tb)
+    void InitData(int job)
     {
-        GameManager.Instance.CreateCharacterPrefab(_tb.Prefab, transform);
-        InitHitData(_tb);
-        InitAttackData(_tb);
-        InitMoveData(_tb);
+        characterTb = Tables.Character.Get(job);
+        objType = OBJ_TYPE.COLLEAGUE;
+        //GameManager.Instance.CreateCharacterPrefab(characterTb.Prefab, transform);
+        InitHitData();
+        InitAttackData();
+        InitMoveData();
     }
-    public void InitHitData(Tables.Character _tb)
+    public void InitHitData()
     {
-        MaxHP = CurHP =_tb.HealthPoint;
-        HPRegen = _tb.HealthPointRegen;
-        Defense = _tb.DefencePoint;
+        MaxHP = CurHP = characterTb.HealthPoint;
+        HPRegen = characterTb.HealthPointRegen;
+        Defense = characterTb.DefencePoint;
     }
-    public void InitAttackData(Character _tb)
+    public void InitAttackData()
     {
-        Damage = _tb.Attack;
-        AttackSpd = _tb.AttackSpeed;
-        AttackRange = _tb.AttackRange;
+        Damage = characterTb.Attack;
+        AttackSpd = characterTb.AttackSpeed;
+        AttackRange = characterTb.AttackRange;
     }
-    public void InitMoveData(Character _tb)
+    public void InitMoveData()
     {
-        SetMoveSpeed(_tb.MoveSpeed);
+        SetMoveSpeed(characterTb.MoveSpeed);
     }
     public void Move(Vector3 dir)
     {
-        Vector3 moveDirection = dir;
-        Debug.LogFormat("X : {0}, Y : {1}", InputDirection.x , InputDirection.y);
-        Vector3 movement = moveDirection * MoveSpd * Time.fixedDeltaTime;
-        transform.Translate(movement,Space.World);
+        Vector3 movement = dir * MoveSpd * Time.fixedDeltaTime;
+        transform.Translate(movement, Space.World);
         Rotate(movement);
+        SetMoveEvent();
     }
     public void Rotate(Vector3 dir)
     {
-        Quaternion rotation = Quaternion.LookRotation(dir,Vector3.up);
-        transform.rotation = Quaternion.Lerp(transform.rotation,rotation, Time.fixedDeltaTime * 10f);
+        Quaternion rotation = Quaternion.LookRotation(dir, Vector3.up);
+        transform.rotation = Quaternion.Lerp(transform.rotation, rotation, Time.fixedDeltaTime * 10f);
     }
     public void SetMoveEvent()
     {
-        //TO DO
-        //걷을때 발생되는 이벤트 함수
-        throw new System.NotImplementedException();
+        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.MOVE;
     }
     public void SetMoveSpeed(float _moveSpeed)
     {
         MoveSpd = _moveSpeed;
     }
-    public int SetDamage(IAttackable _attacker)
+    void Attack()
+    {
+        targetObj.SetDamage(this);
+        SetAttackEvent();
+    }
+    public void SetAttackEvent()
+    {
+        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.ATTACK;
+    }
+    public void SetDamage(IAttackable _attacker)
     {
         //TO DO
         //방어력 계산후 데미지 설정
-        int finalDam = Mathf.RoundToInt(_attacker.IsCri ? _attacker.Damage : _attacker.CriDam);
-        return finalDam;
+
+        int finalDam = Mathf.RoundToInt(_attacker.IsCri ? _attacker.Damage * 2 + _attacker.CriDam : _attacker.Damage);
+        CurHP -= (finalDam - defense);
+        if (CurHP <= 0)
+        {
+            SetDeadEvent();
+        }
     }
 
     public void UpdateHPUI()
@@ -259,23 +321,15 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         return Mathf.RoundToInt(Damage + _attackPow);
     }
 
-    public void GetDamage(IAttackable _attacker)
-    {
-        CurHP -= _attacker.SetDamage(_attacker);
-        if(CurHP <= 0)
-        {
-            SetDeadEvent();
-        }
-    }
-
     public void SetDeadEvent()
     {
-        IsDead = true;
+        isDead = true;
         AttackCount = 0;
         CurHP = 0;
+        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.DIE;
     }
-
-    public void SetAttackEvent()
+    public float GetTargetDistance(Transform _target)
     {
+        return Vector3.Distance(transform.localPosition, _target.localPosition);
     }
 }

@@ -13,26 +13,45 @@ public enum CHARACTER_JOB
     RANGER,
     MAGITION
 }
-public enum EObjType
+public enum OBJ_TYPE
 {
     COLLEAGUE,
     NPC,
     ENEMY,
 }
+public enum MONSTER_TYPE
+{
+    COMMON,
+    ELETE,
+    BOSS
+}
+public enum POOL_TYPE
+{
+    MONSTER,
+    MAP
+}
+public enum OBJ_ANIMATION_STATE
+{
+    IDLE,
+    DIE,
+    MOVE,
+    ATTACK,
+    LESS_HP
+}
 #endregion
 #region [Interface]
 public interface IAttackable
-{
-    int AttackCount { get; set; }
+{    
     float Damage { get; set; }
     float AttackSpd {  get; set; }
     float AttackRange {  get; set; }
     float CriDam { get; set; }
+    float Accuracy { get; set; }
     bool IsCri {  get; set; }
 
-    void InitAttackData(Tables.Character characterTb);
+    void InitAttackData();
     int SetAttackPow(float _attackPow);
-    int SetDamage(IAttackable _attacker);
+    void SetDamage(IAttackable _attacker);
     void SetDamageText();
     void SetAttackEvent();
 }
@@ -44,25 +63,27 @@ public interface IHittable
     float CurHP { get; set; }
     float HPRegen {  get; set; }
     float Defense { get; set; }
-    void InitHitData(Tables.Character characterTb);
+    float Dodge { get; set; }
+    void InitHitData();
     void UpdateHPUI();
-    void GetDamage(IAttackable _attacker);
     void SetDeadEvent();
 }
 
     public interface IMoveable
 {
+    bool IsMove { get; set; }
     float MoveSpd {  get; set; }
-    void InitMoveData(Tables.Character characterTb);
+    void InitMoveData();
     void SetMoveSpeed(float _moveSpeed);
     void SetMoveEvent();
     void Move(Vector3 dir);
     void Rotate(Vector3 dir);
+    float GetTargetDistance(Transform _target);
 }
 public interface IControlable
 {
     JoystickController JoystickController { get; }
-    bool IsMove { get; }
+    bool IsManualControl { get; }
     Vector2 InputDirection { get; }
 
 

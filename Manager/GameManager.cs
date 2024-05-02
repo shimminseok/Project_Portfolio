@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class GameManager : Singleton<GameManager>
 {
+    public JoystickController joystickController;
     // Start is called before the first frame update
     void Start()
     {

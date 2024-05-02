@@ -152,6 +152,53 @@ namespace Tables
 		}
 	}
 
+	public partial class Monster
+	{
+		/// <summary> 몬스터 인덱스 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 몬스터 이름 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		Monster_Name {get; private set;}
+		/// <summary> 프리팹 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		Prefabs {get; private set;}
+		/// <summary> 인게임 크기 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		Scale {get; private set;}
+		/// <summary> 공격력 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Attack {get; private set;}
+		/// <summary> 체력 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			HealthPoint {get; private set;}
+		/// <summary> 체력 회복 (초) </summary>
+		[Newtonsoft.Json.JsonProperty] public float		HealthPointRegen {get; private set;}
+		/// <summary> 방어력 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			DefencePoint {get; private set;}
+		/// <summary> 공격 속도 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		AttackSpeed {get; private set;}
+		/// <summary> 공격 거리 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			AttackRange {get; private set;}
+		/// <summary> 이동 속도 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		MoveSpeed {get; private set;}
+		/// <summary> 회피 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		Dodge {get; private set;}
+		/// <summary> 명중 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		Hit {get; private set;}
+		/// <summary> 치명타 피해량 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			CriticalDamage {get; private set;}
+		/// <summary> 치명타 확률 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		CriticalRate {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, Monster> data = new Dictionary<int, Monster>();
+		public static Monster Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in Monster Table");
+				return null;
+			}
+		}
+	}
+
 	public partial class Quest
 	{
 		/// <summary> 임무 키 </summary>
@@ -272,6 +319,29 @@ namespace Tables
 		}
 	}
 
+	public partial class Spawn
+	{
+		/// <summary> 스폰 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 몬스터 인덱스 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			[] MonsterIndex {get; private set;}
+		/// <summary> 보스 인덱스 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			BossIndex {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, Spawn> data = new Dictionary<int, Spawn>();
+		public static Spawn Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in Spawn Table");
+				return null;
+			}
+		}
+	}
+
 	public partial class Stage
 	{
 		/// <summary> 스테이지 키 </summary>
@@ -291,7 +361,7 @@ namespace Tables
 		/// <summary> 보스 레벨 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			BossLv {get; private set;}
 		/// <summary> 스폰몬스터키 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			[] SpawnGroup {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public int			SpawnGroup {get; private set;}
 		/// <summary> 몬스터 레벨 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			MonsterLv {get; private set;}
 		/// <summary> 일반 몬스터 골드 </summary>
