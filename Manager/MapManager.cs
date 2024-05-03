@@ -35,9 +35,10 @@ public class MapManager : Singleton<MapManager>
             currentMap = _mapName;
             SetActiveMapList(false);
             int mapIndex = PoolManager.Instance.mapPrefabs.Maps.FindIndex(x => x.name == _mapName);
-            currentMapData = PoolManager.Instance.mapPrefabs.Maps[mapIndex];
+            currentMapData = PoolManager.Instance.mapPrefabs.SetMap(mapIndex);
             MapList = PoolManager.Instance.mapPrefabs.Maps[mapIndex].MapList;
-            PoolManager.Instance.CreateMap(mapIndex,null);
+            //юс╫ц
+            Navigation.Instance.CreateMap(currentMapData);
             SetActiveMapList(true);
         }
 
@@ -46,5 +47,12 @@ public class MapManager : Singleton<MapManager>
     {
         foreach (var item in MapList)
             item.SetActive(isActive);
+    }
+    public void SetMapCollider(bool _isOn = false)
+    {
+        for (int i = 0; i < MapList.Count; i++)
+        {
+            MapList[i].transform.Find("Ground").GetComponent<BoxCollider>().enabled = _isOn;
+        }
     }
 }

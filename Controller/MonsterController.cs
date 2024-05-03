@@ -1,6 +1,8 @@
+using NPOI.XWPF.UserModel;
 using System.Collections;
 using System.Collections.Generic;
 using Tables;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -11,7 +13,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     MONSTER_TYPE monsterType;
     [SerializeField] ObjectController targetObj;
-
+    public Rigidbody rigi;
 
     float maxHp;
     float curHp;
@@ -162,23 +164,29 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         //캐릭터를 찾아서 따라감
         if (isDead)
             return;
-
-        Vector3 direction = (dir - transform.position).normalized;
+        Rotate(dir);
+        Vector3 direction = (dir - transform.localPosition).normalized;
         Vector3 movement = direction * MoveSpd * Time.fixedDeltaTime;
-        transform.Translate(movement, Space.World);
-        Rotate(movement);
         SetMoveEvent();
+        transform.Translate(movement,Space.World);
     }
 
     public override void ObjectGetComponent()
     {
-        aniCtrl = GetComponentInChildren<AnimationController>();
+        aniCtrl = GetComponent<AnimationController>();
+        rigi = GetComponent<Rigidbody>();
+        rigi.useGravity = false;
+        rigi.mass = 2000;
+        rigi.drag = 100;
+        rigi.angularDrag = 0.05f;
+        rigi.useGravity = true;
+        rigi.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
+
     }
 
     public void Rotate(Vector3 dir)
     {
-        Quaternion rotation = Quaternion.LookRotation(dir, Vector3.up);
-        transform.rotation = Quaternion.Lerp(transform.rotation, rotation, Time.fixedDeltaTime * 10f);
+        transform.LookAt(targetObj.transform);
     }
 
     public void SetAttackEvent()
@@ -212,6 +220,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         isDead = true;
         CurHP = 0;
+        MonsterManager.Instance.monsterList.Remove(this);
         Init();
     }
 
@@ -233,5 +242,9 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public float GetTargetDistance(Transform _target)
     {
         return Vector3.Distance(transform.localPosition, _target.transform.localPosition);
+    }
+    public override void FindEnemy(ObjectController _target)
+    {
+        targetObj = _target as PlayerController;
     }
 }

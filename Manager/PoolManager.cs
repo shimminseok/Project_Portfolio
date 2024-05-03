@@ -8,8 +8,7 @@ public class PoolManager : Singleton<PoolManager>
 {
 
     [HideInInspector] bool IsCreatedMaps = false;
-    [HideInInspector] MonsterController monsterCntl; 
-    public Transform mapPoolRoot;
+    public Transform poolRoot;
     public MapPrefabs mapPrefabs;
 
     Dictionary<string, List<GameObject>> poolObjects = new Dictionary<string, List<GameObject>>();
@@ -23,11 +22,6 @@ public class PoolManager : Singleton<PoolManager>
         {
             CreateMonsterPool(Monster.Get(spawnTb.MonsterIndex[i]), null);
         }
-    }
-    public void CreateMap(int index, UnityAction action)
-    {
-        mapPrefabs.SetMap(index);
-        action?.Invoke();
     }
     public void CreateMonsterPool(Tables.Monster _monster, UnityAction _action)
     {
@@ -69,7 +63,7 @@ public class PoolManager : Singleton<PoolManager>
             poolObject[_name] = Resources.Load<GameObject>(path);
             poolObjects[_name] = new List<GameObject>();
             parent = new GameObject();
-            parent.transform.parent = transform;
+            parent.transform.parent = poolRoot;
             parent.name = string.Format("{0}Parent", _name);
         }
 

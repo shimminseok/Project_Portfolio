@@ -6,9 +6,8 @@ public abstract class ObjectController : MonoBehaviour
 {
     [Header("ObjController")]
     public OBJ_TYPE objType;
+    public AnimationController aniCtrl;
     
-    protected AnimationController aniCtrl;
-    // Start is called before the first frame update
     void Start()
     {
         
@@ -16,4 +15,5 @@ public abstract class ObjectController : MonoBehaviour
 
     public abstract void ObjectGetComponent();
     public virtual void Init() { }
- }
+    public virtual void FindEnemy(ObjectController _target) { }
+}

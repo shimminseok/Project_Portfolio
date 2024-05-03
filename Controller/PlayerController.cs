@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 
 public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable
@@ -207,7 +208,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         if (IsManualControl)
         {
-            Move(new Vector3(InputDirection.x, 0, InputDirection.y));
+            ManualMove(new Vector3(InputDirection.x, 0, InputDirection.y));
         }
         //수동 조작이 아니면 적을 찾음
         else if (!IsManualControl)
@@ -264,6 +265,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         SetMoveSpeed(characterTb.MoveSpeed);
     }
     public void Move(Vector3 dir)
+    {
+        
+    }
+    public void ManualMove(Vector3 dir)
     {
         Vector3 movement = dir * MoveSpd * Time.fixedDeltaTime;
         transform.Translate(movement, Space.World);
@@ -331,5 +336,14 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public float GetTargetDistance(Transform _target)
     {
         return Vector3.Distance(transform.localPosition, _target.localPosition);
+    }
+    /// <summary>
+    /// 적을 찾는 함수
+    /// </summary>
+    /// <param name="_target"></param>
+    public override void FindEnemy(ObjectController _target)
+    {
+        targetObj = _target as MonsterController;
+
     }
 }

@@ -16,7 +16,6 @@ public enum CHARACTER_JOB
 public enum OBJ_TYPE
 {
     COLLEAGUE,
-    NPC,
     ENEMY,
 }
 public enum MONSTER_TYPE
@@ -85,6 +84,7 @@ public interface IControlable
     JoystickController JoystickController { get; }
     bool IsManualControl { get; }
     Vector2 InputDirection { get; }
+    void ManualMove(Vector3 dir);
 
 
 }
