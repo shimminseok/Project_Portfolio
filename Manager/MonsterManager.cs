@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Tables;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,7 +21,10 @@ public class MonsterManager : Singleton<MonsterManager>
     }
     void Update()
     {
-
+        if(monsterList.Count == 0)
+        {
+            CheckStageStep();
+        }
     }
 
     public void CreateMonsterPool(int _index, Vector3 _genPos, bool isBoss = false)
@@ -42,27 +47,31 @@ public class MonsterManager : Singleton<MonsterManager>
 
             targetMonsterOjb.transform.localScale = Vector3.one;
             monsterCon = targetMonsterOjb.GetComponent<MonsterController>();
-            monsterCon.aniCtrl.CurrentState = OBJ_ANIMATION_STATE.IDLE;
 
 
             CapsuleCollider capsule = targetMonsterOjb.GetComponent<CapsuleCollider>();
+            if (capsule == null)
+            {
+                capsule = targetMonsterOjb.AddComponent<CapsuleCollider>();
+            }
             capsule.center = Vector3.up;
             capsule.radius = 0.4f;
             capsule.height = 2;
             capsule.direction = 1;
             capsule.enabled = true;
 
-            targetMonsterOjb.SetActive(false);
+            targetMonsterOjb.SetActive(true);
 
             if (!isBoss)
             {
+                monsterCon.SetMonster(_genPos, MONSTER_TYPE.COMMON);
                 monsterList.Add(monsterCon);
             }
             else
             {
                 bossMon = monsterCon;
+                monsterCon.SetMonster(_genPos, MONSTER_TYPE.BOSS);
             }
-
         }
         else
         {
@@ -75,11 +84,32 @@ public class MonsterManager : Singleton<MonsterManager>
         Stage curStage = Stage.Get(AccountManager.instance.CurStageKey);
         if(curStage != null)
         {
-            //
-            if(GameManager.Instance.StageStep >= genMonsterStep)
+            genMonsterStep = curStage.SpawnCount;
+
+            if (GameManager.Instance.stageStep >= genMonsterStep)
             {
                 //보스도전을 누르면 보스를 도전하는 형식으로
                 StartCoroutine(BossSpawn());
+            }
+            else
+            {
+                GameManager.Instance.stageStep = 0;
+            }
+            if(GameManager.Instance.stageStep == 0)
+            {
+                List<Vector3> spawnPoint = Navigation.Instance.monsterSpawnPoints.ToList();
+                for (int i = 0; i < genMonsterStep; i++)
+                {
+                    int randomPointIndex = Random.Range(0, spawnPoint.Count);
+
+                    Tables.Spawn spwanTb = Tables.Spawn.Get(curStage.SpawnGroup);
+                    if(spwanTb != null)
+                    {
+                        int spwanMonIndex = Random.Range(0, spwanTb.MonsterIndex.Length);
+                        CreateMonsterPool(spwanTb.MonsterIndex[spwanMonIndex], spawnPoint[randomPointIndex]);
+                    }
+                }
+
             }
 
         }

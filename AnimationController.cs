@@ -74,15 +74,43 @@ public class AnimationController : MonoBehaviour
     }
     public void AttackEvent()
     {
+        switch(m_Controller.objType)
+        {
+            case OBJ_TYPE.PLAYER:
+                PlayerController characterCon = m_Controller as PlayerController;
+                MonsterController targetMon =  characterCon.Target as MonsterController;
+                targetMon.SetDamage(characterCon);
+                break;
 
+            case OBJ_TYPE.MONSTER:
+                MonsterController monsterCon = m_Controller as MonsterController;
+                PlayerController.Instance.SetDamage(monsterCon);
+                break;
+        }
     }
     public void EndAttackAni()
     {
-        //animator.SetInteger("AttackCount", m_Attackable.AttackCount);
+
     }
 
     public void MoveEvent()
     {
+
+    }
+    public void DeadEvent()
+    {
+        switch (m_Controller.objType)
+        {
+            case OBJ_TYPE.PLAYER:
+                PlayerController characterCon = m_Controller as PlayerController;
+                break;
+
+            case OBJ_TYPE.MONSTER:
+                MonsterController monsterCon = m_Controller as MonsterController;
+                PoolManager.Instance.PushObj(monsterCon.name, POOL_TYPE.MONSTER, monsterCon.gameObject);
+                monsterCon.Init();
+                break;
+        }
     }
 
 }

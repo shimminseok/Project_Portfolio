@@ -1,8 +1,9 @@
-using System.IO;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable
+public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable, IUseSkill
 {
+    public static PlayerController Instance;
     [Header("PlayerController")]
     public CHARACTER_JOB job;
     Tables.Character characterTb;
@@ -32,6 +33,14 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     bool isLessHp;
     bool isDead;
     bool isMove;
+
+    bool isFindEnemy;
+
+
+    //Skill
+    List<int> skillIndex = new List<int>();
+    List<float> skillCoolTime = new List<float>();
+    int useSkillNum;
 
     public float Damage
     {
@@ -173,10 +182,38 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             return JoystickController.Direction != Vector2.zero;
         }
     }
+    public ObjectController Target => targetObj;
+
+    public bool IsFindEnemy
+    {
+        get
+        {
+            return isFindEnemy;
+        }
+        set
+        {
+            isFindEnemy = value;
+        }
+    }
+
+    public List<int> SkillIndex 
+    {
+        get
+        {
+            return skillIndex;
+        }
+        set
+        {
+            skillIndex = value;
+        }
+    }
+    public int UseSkillNum { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+    public List<float> SkillCoolTime { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 
     void Awake()
     {
-
+        if (Instance == null)
+            Instance = this;
     }
     void Start()
     {
@@ -185,39 +222,37 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void Update()
     {
+        if (IsDead)
+            return;
+
+
         HpGen();
     }
-    void HpGen()
-    {
-        if (CurHP < MaxHP)
-        {
-            GenTime += Time.deltaTime;
-            if (GenTime >= 1f)
-            {
-                CurHP += HPRegen;
 
-                if (CurHP >= MaxHP)
-                    CurHP = MaxHP;
-
-                GenTime = 0f;
-            }
-
-        }
-    }
     void FixedUpdate()
     {
-        if (IsManualControl)
+        if (IsDead)
+            return;
+
+        if (IsManualControl || !GameManager.Instance.isAuto)
         {
-            ManualMove(new Vector3(InputDirection.x, 0, InputDirection.y));
+            if (InputDirection != Vector2.zero)
+                Move(new Vector3(InputDirection.x, 0, InputDirection.y));
+            else
+                Idle();
         }
         //수동 조작이 아니면 적을 찾음
         else if (!IsManualControl)
         {
+            if (!IsFindEnemy)
+            {
+                FindEnemy();
+            }
             if (targetObj != null && !targetObj.IsDead)
             {
                 if (GetTargetDistance(targetObj.transform) > attackRange)
                 {
-                    Move(targetObj.transform.localPosition - transform.localPosition);
+                    Move(Target.transform.localPosition - transform.localPosition);
                 }
                 else
                 {
@@ -229,7 +264,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                 aniCtrl.CurrentState = OBJ_ANIMATION_STATE.IDLE;
             }
         }
-
     }
     public override void Init()
     {
@@ -242,8 +276,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     void InitData(int job)
     {
         characterTb = Tables.Character.Get(job);
-        objType = OBJ_TYPE.COLLEAGUE;
-        //GameManager.Instance.CreateCharacterPrefab(characterTb.Prefab, transform);
+        objType = OBJ_TYPE.PLAYER;
         InitHitData();
         InitAttackData();
         InitMoveData();
@@ -266,13 +299,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public void Move(Vector3 dir)
     {
-        
-    }
-    public void ManualMove(Vector3 dir)
-    {
-        Vector3 movement = dir * MoveSpd * Time.fixedDeltaTime;
-        transform.Translate(movement, Space.World);
-        Rotate(movement);
+        Vector3 monveVec = dir.normalized * MoveSpd;
+        Rotate(monveVec);
+        Vector3 tmpVec = Vector3.Lerp(transform.localPosition, transform.localPosition + monveVec, 0.01f);
+        transform.localPosition = tmpVec;
         SetMoveEvent();
     }
     public void Rotate(Vector3 dir)
@@ -290,12 +320,31 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void Attack()
     {
-        targetObj.SetDamage(this);
-        SetAttackEvent();
-    }
-    public void SetAttackEvent()
-    {
         aniCtrl.CurrentState = OBJ_ANIMATION_STATE.ATTACK;
+        Rotate(targetObj.transform.localPosition - transform.localPosition);
+    }
+    void Idle()
+    {
+        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.IDLE;
+    }
+    void HpGen()
+    {
+
+
+        if (CurHP < MaxHP)
+        {
+            GenTime += Time.deltaTime;
+            if (GenTime >= 1f)
+            {
+                CurHP += HPRegen;
+
+                if (CurHP >= MaxHP)
+                    CurHP = MaxHP;
+
+                GenTime = 0f;
+            }
+
+        }
     }
     public void SetDamage(IAttackable _attacker)
     {
@@ -341,9 +390,16 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     /// 적을 찾는 함수
     /// </summary>
     /// <param name="_target"></param>
-    public override void FindEnemy(ObjectController _target)
+    public override void FindEnemy()
     {
-        targetObj = _target as MonsterController;
-
+        foreach (var mon in MonsterManager.Instance.monsterList)
+        {
+            float dis = mon.GetTargetDistance(transform);
+            if (targetObj == null || targetObj.IsDead || dis < targetObj.GetTargetDistance(transform))
+            {
+                targetObj = mon;
+                IsFindEnemy = true;
+            }
+        }
     }
 }

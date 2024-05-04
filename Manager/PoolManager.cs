@@ -111,10 +111,13 @@ public class PoolManager : Singleton<PoolManager>
         CreateObj(_name, _type, 1);
         GameObject parent = null;
 
-        for (int i = 0; i < transform.childCount; i++)
+        for (int i = 0; i < poolRoot.childCount; i++)
         {
-            if (transform.GetChild(i).name == _name + "Parent")
-                parent = transform.GetChild(i).transform.gameObject;
+            if (poolRoot.GetChild(i).name == _name + "Parent")
+            {
+                parent = poolRoot.GetChild(i).transform.gameObject;
+                break;
+            }
         }
 
         _gameObject.transform.parent = parent.transform;

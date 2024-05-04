@@ -15,8 +15,9 @@ public enum CHARACTER_JOB
 }
 public enum OBJ_TYPE
 {
+    PLAYER,
     COLLEAGUE,
-    ENEMY,
+    MONSTER,
 }
 public enum MONSTER_TYPE
 {
@@ -41,18 +42,21 @@ public enum OBJ_ANIMATION_STATE
 #region [Interface]
 public interface IAttackable
 {    
+    ObjectController Target { get; }
     float Damage { get; set; }
     float AttackSpd {  get; set; }
     float AttackRange {  get; set; }
     float CriDam { get; set; }
     float Accuracy { get; set; }
     bool IsCri {  get; set; }
+    bool IsFindEnemy { get; set; }
 
     void InitAttackData();
     int SetAttackPow(float _attackPow);
     void SetDamage(IAttackable _attacker);
     void SetDamageText();
-    void SetAttackEvent();
+
+
 }
 public interface IHittable
 {
@@ -84,9 +88,13 @@ public interface IControlable
     JoystickController JoystickController { get; }
     bool IsManualControl { get; }
     Vector2 InputDirection { get; }
-    void ManualMove(Vector3 dir);
+}
 
-
+public interface IUseSkill
+{
+    List<int> SkillIndex { get; set; }
+    int UseSkillNum {  get; set; }
+    List<float> SkillCoolTime { get; set; }
 }
 #endregion
 
@@ -115,6 +123,11 @@ public class Node
     public int Y;
 
     public Vector3 Position;
+
+    public float fCost
+    {
+        get { return G + H; }
+    }
 
     public Node(float x, float y, bool moveable = true)
     {

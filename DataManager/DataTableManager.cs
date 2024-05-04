@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-
 namespace Tables
 {
 
@@ -173,7 +172,7 @@ namespace Tables
 		/// <summary> 공격 속도 </summary>
 		[Newtonsoft.Json.JsonProperty] public float		AttackSpeed {get; private set;}
 		/// <summary> 공격 거리 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			AttackRange {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public float		AttackRange {get; private set;}
 		/// <summary> 이동 속도 </summary>
 		[Newtonsoft.Json.JsonProperty] public float		MoveSpeed {get; private set;}
 		/// <summary> 회피 </summary>

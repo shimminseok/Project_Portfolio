@@ -48,11 +48,4 @@ public class MapManager : Singleton<MapManager>
         foreach (var item in MapList)
             item.SetActive(isActive);
     }
-    public void SetMapCollider(bool _isOn = false)
-    {
-        for (int i = 0; i < MapList.Count; i++)
-        {
-            MapList[i].transform.Find("Ground").GetComponent<BoxCollider>().enabled = _isOn;
-        }
-    }
 }

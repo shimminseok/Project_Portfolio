@@ -7,16 +7,23 @@ public class GameManager : Singleton<GameManager>
 {
     public JoystickController joystickController;
 
-    public int StageStep;
-    // Start is called before the first frame update
+    public int stageStep;
+
+    public bool isAuto = true;
 
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
+    {
+
+    }
+
+
+    public void BossChallenge()
     {
 
     }
