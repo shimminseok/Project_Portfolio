@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+
 namespace Tables
 {
 
@@ -239,10 +240,6 @@ namespace Tables
 	{
 		/// <summary> 스킬 키 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
-		/// <summary> 사용 캐릭터 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			SkillUse {get; private set;}
-		/// <summary> 스킬 등급 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			SkillTier {get; private set;}
 		/// <summary> 스킬 목록 아이콘 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		SkillListIcon {get; private set;}
 		/// <summary> 스킬 아이콘 </summary>
@@ -251,12 +248,6 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public string		SkillName {get; private set;}
 		/// <summary> 스킬 설명 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		SkillDescription {get; private set;}
-		/// <summary> 스킬 계열 설명 </summary>
-		[Newtonsoft.Json.JsonProperty] public string		Skillset {get; private set;}
-		/// <summary> 스킬 계열 등급 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			SkillsetGrid {get; private set;}
-		/// <summary> 스킬 속성 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			SkillProperties {get; private set;}
 		/// <summary> 스킬 타입 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			SkillType {get; private set;}
 		/// <summary> 스킬  </summary>
@@ -265,44 +256,20 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			SkillRange {get; private set;}
 		/// <summary> 스킬 범위 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			SkillRadius {get; private set;}
+		/// <summary> 해금 레벨 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			UnLockLevel {get; private set;}
 		/// <summary> 쿨타임 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			CoolTime {get; private set;}
-		/// <summary> 사용 마나 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			UseMana {get; private set;}
 		/// <summary> 데미지 계수 </summary>
 		[Newtonsoft.Json.JsonProperty] public float		DamageCoefficient {get; private set;}
 		/// <summary> 강화 시 증가 계수 </summary>
 		[Newtonsoft.Json.JsonProperty] public float		AddDamageCoefficient {get; private set;}
-		/// <summary> 각성 시 증가 계수 </summary>
-		[Newtonsoft.Json.JsonProperty] public float		AwakeningCoefficient {get; private set;}
-		/// <summary> 각성 효과 설명 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			AwakeningDescription {get; private set;}
-		/// <summary> 보유 효과 인덱스 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			Retenion_Effect_Index {get; private set;}
-		/// <summary> 버프 키 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			BuffKey {get; private set;}
-		/// <summary> 상태이상 발동 시, 인게임 텍스트 </summary>
-		[Newtonsoft.Json.JsonProperty] public string		Buff_Effect_Text {get; private set;}
 		/// <summary> 캐스팅 FX </summary>
 		[Newtonsoft.Json.JsonProperty] public string		[] ActionFx {get; private set;}
 		/// <summary> 스킬 애니 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		[] SkillAnimation {get; private set;}
-		/// <summary> 투사체 FX </summary>
-		[Newtonsoft.Json.JsonProperty] public string		[] TrailFx {get; private set;}
-		/// <summary> 타겟 FX </summary>
-		[Newtonsoft.Json.JsonProperty] public string		[] TargetFx {get; private set;}
-		/// <summary> 히트 Fx </summary>
-		[Newtonsoft.Json.JsonProperty] public string		[] HitFx {get; private set;}
-		/// <summary>  </summary>
-		[Newtonsoft.Json.JsonProperty] public string		[] CastingFx {get; private set;}
 		/// <summary> 사운드 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		[] Sound {get; private set;}
-		/// <summary> 캐스팅 타입 </summary>
-		[Newtonsoft.Json.JsonProperty] public bool		CastType {get; private set;}
-		/// <summary> 캐스팅 시간 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			CastingTime {get; private set;}
-		/// <summary> 컬렉션 길잡이 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			SkillCollectionGuide {get; private set;}
 
 		// 메인 저장소
 		public static Dictionary<int, Skill> data = new Dictionary<int, Skill>();

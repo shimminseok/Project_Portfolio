@@ -36,7 +36,11 @@ public enum OBJ_ANIMATION_STATE
     DIE,
     MOVE,
     ATTACK,
-    LESS_HP
+    LESS_HP,
+
+
+    SKILL_1 = 101,
+    SKILL_2
 }
 #endregion
 #region [Interface]
@@ -55,8 +59,6 @@ public interface IAttackable
     int SetAttackPow(float _attackPow);
     void SetDamage(IAttackable _attacker);
     void SetDamageText();
-
-
 }
 public interface IHittable
 {
@@ -92,14 +94,37 @@ public interface IControlable
 
 public interface IUseSkill
 {
-    List<int> SkillIndex { get; set; }
+    List<SkillInfo> SkillInfoList { get; set; }
     int UseSkillNum {  get; set; }
-    List<float> SkillCoolTime { get; set; }
+    Dictionary<int,float> SkillCoolTime { get; set; }
+
+    void UseSkill(int _index);
+    void SetSkillCoolDown(int _index);
+    float UpdateSkillCoolTime(int _index,bool _isFill);
 }
 #endregion
 
 #region[Class]
 
+
+public class SkillInfo
+{
+    public int skillKey;
+    public int skillLevel;
+
+
+    public void EquipSkill(int _key, int _level)
+    {
+        skillKey = _key;
+        skillLevel = _level;
+    }
+    public void UnEquipSkill()
+    {
+        skillKey = 0;
+        skillLevel = 0;
+
+    }
+}
 [System.Serializable]
 public class Map
 {

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c719c2a7ec569446b3e546158fd33bf, type: 3}
+  m_Name: SkillIcon
+  m_EditorClassIdentifier: 
+  spriteList:
+  - {fileID: 21300000, guid: fdb864a2ae9e3d74e9de3d31d000940a, type: 3}
+  - {fileID: 21300000, guid: cc66ba929073e774c89e6904b1b72fc3, type: 3}
+  - {fileID: 21300000, guid: f86ab449bc6be3043807168913175ef0, type: 3}
+  - {fileID: 21300000, guid: 3b5c40b1731a1de4ab432624c4b67847, type: 3}

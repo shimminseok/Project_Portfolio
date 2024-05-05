@@ -16,4 +16,8 @@ public abstract class ObjectController : MonoBehaviour
     public abstract void ObjectGetComponent();
     public virtual void Init() { }
     public virtual void FindEnemy() { }
+    public  void ChangeState(OBJ_ANIMATION_STATE _state) 
+    {
+        aniCtrl.CurrentState = _state;
+    }
 }
