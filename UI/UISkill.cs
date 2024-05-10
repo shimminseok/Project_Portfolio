@@ -1,15 +1,32 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class UISkill : UIPopUp
 {
     public static UISkill Instance;
 
+    [Header("SkillList")]
     [SerializeField] GameObject skillListSlotPrefab;
     [SerializeField] Transform skillListGrid;
-    public int selectSkillNumber;
+    List<SkillListSlot> skillSlotList = new List<SkillListSlot>();
+
+    [Header("SkillSetting")]
+    public List<Image> skillSettingIconList;
+    public List<Image> skillSettingLockImgList;
+    public List<Image> skillSettingSelectedImgList;
+    public Image skillDescSkillIcon;
+    public Text skillDescSkillName;
+    public Text skillDescSkillLimitLevel;
+    public Text skillDescSkillDesc;
 
 
+    int selectSkillNumber = -1;
+    int selectEquipSlotNumber;
+    bool isOnClickEquipSkill;
+    bool isOnClickUnEquipSkill;
     void Awake()
     {
         if (Instance == null)
@@ -17,53 +34,135 @@ public class UISkill : UIPopUp
     }
     void Start()
     {
-        foreach(Tables.Skill skillTb in Tables.Skill.data.Values)
-        {
-            GameObject go = Instantiate(skillListSlotPrefab, skillListGrid);
-            SkillListSlot skillListSlot = go.GetComponent<SkillListSlot>();
-            if(skillListSlot != null)
-            {
-                skillListSlot.SetSkillListSlotInfo(skillTb);
-            }
-        }
+        CreateSkillListSlot();
+        ClosePopUp();
+
+        skillSettingSelectedImgList.ForEach(x => x.gameObject.SetActive(false));
     }
 
-    public void EquipSkill(Tables.Skill _skillTb, bool _isEquip)
+    public void Update()
     {
-        SkillInfo skillInfo = new SkillInfo();
-        if (_isEquip)
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            int key = _skillTb.key;
-            int level = 1;
-            skillInfo.EquipSkill(key, level);
-            PlayerController.Instance.SkillInfoList[selectSkillNumber] = skillInfo;
-            PlayerController.Instance.SetSkillCoolDown(key);
-            UIManager.Instance.EquipSkill(key);
-        }
-        else
-        {
-            PlayerController.Instance.SkillCoolTime.Remove(PlayerController.Instance.SkillInfoList[selectSkillNumber].skillKey);
-            PlayerController.Instance.SkillInfoList[selectSkillNumber].UnEquipSkill();
+            UIManager.Instance.OnClickOpenPopUp(this);
         }
     }
 
     public override void ClosePopUp()
     {
-        if (UIManager.Instance.openedPopupList.Count > 0)
-            UIManager.Instance.openedPopupList.Pop().OpenPopUp();
+        if (UIManager.Instance.openedPopupList.TryPop(out UIPopUp popup))
+            popup.OpenPopUp();
+
 
         ChildSetActive(false);
     }
 
     public override void OpenPopUp()
     {
-        UIManager.Instance.openedPopupList.Push(this);
         ChildSetActive(true);
+        SelectedSkill(0);
+        UnLockSkillIcon();
+
+        isOnClickEquipSkill = false;
     }
 
 
+
+    public void SelectedSkill(int _num)
+    {
+        skillSlotList.ForEach(x => x.selectedSlot.gameObject.SetActive(x.Number == _num));
+        selectSkillNumber = _num;
+    }
     public void GetClickedSkillInfo(Tables.Skill _skillTb)
     {
-        EquipSkill(_skillTb,true);
+        SetSkillInfo(_skillTb);
     }
+    void CreateSkillListSlot()
+    {
+        int num = 0;
+        foreach (Tables.Skill skillTb in Tables.Skill.data.Values)
+        {
+            GameObject go = Instantiate(skillListSlotPrefab, skillListGrid);
+            SkillListSlot skillListSlot = go.GetComponent<SkillListSlot>();
+            if (skillListSlot != null)
+            {
+                skillListSlot.SetSkillListSlotInfo(skillTb);
+                skillListSlot.Number = num++;
+                skillSlotList.Add(skillListSlot);
+            }
+        }
+    }
+    void SetSkillInfo(Tables.Skill _skillTb)
+    {
+        skillDescSkillIcon.sprite = UIManager.Instance.GetSkillIconImg(_skillTb.SkillListIcon);
+        skillDescSkillName.text = UIManager.Instance.GetText(_skillTb.SkillName);
+        skillDescSkillLimitLevel.text = string.Format("제한 레벨 : {0}", _skillTb.UnLockLevel);
+        skillDescSkillDesc.text = UIManager.Instance.GetText(_skillTb.SkillDescription);
+    }
+    void UnLockSkillIcon()
+    {
+        for (int i = 0; i < skillSettingLockImgList.Count; i++)
+        {
+            skillSettingLockImgList[i].gameObject.SetActive(AccountManager.Instance.PlayerLevel < Tables.Define.Get(string.Format("SkillSlotOpen_{0:D2}", i + 1)).value);
+        }
+
+        for (int i = 0; i < PlayerController.Instance.SkillInfoList.Count; i++)
+        {
+            SetSkillSettingIconList(i);
+        }
+    }
+    void SetSkillSettingIconList(int _num)
+    {
+        if (PlayerController.Instance.SkillInfoList[_num] != null && PlayerController.Instance.SkillInfoList[_num].skillKey != 0)
+        {
+            skillSettingIconList[_num].enabled = true;
+            skillSettingIconList[_num].sprite = UIManager.Instance.GetSkillIconImg(Tables.Skill.Get(PlayerController.Instance.SkillInfoList[_num].skillKey).SkillListIcon);
+        }
+        else
+        {
+            skillSettingIconList[_num].enabled = false;
+        }
+    }
+    #region[Button Action]
+    public void OnClickEquipSkill()
+    {
+        isOnClickEquipSkill = true;
+    }
+    public void OnClickUnEquipSkill()
+    {
+        if(PlayerController.Instance.SkillInfoList[selectEquipSlotNumber] != null && !PlayerController.Instance.SkillInfoList[selectEquipSlotNumber].IsEmpty)
+        {
+            PlayerController.Instance.SkillInfoList[selectEquipSlotNumber].UnEquipSkill();
+            PlayerController.Instance.SkillCoolTime.Remove(PlayerController.Instance.SkillInfoList[selectEquipSlotNumber].skillKey);
+            SetSkillSettingIconList(selectEquipSlotNumber);
+            UIManager.Instance.EquipSkill(selectEquipSlotNumber,0);
+        }
+
+
+    }
+    public void OnClickSkillSettingSkillIcon(int _num)
+    {
+        selectEquipSlotNumber = _num;
+        if (isOnClickEquipSkill)
+        {
+            SkillInfo skillInfo = new SkillInfo();
+            int key = skillSlotList[selectSkillNumber].SkillTb.key;
+            int level = 1;
+            skillInfo.EquipSkill(key, level);
+            PlayerController.Instance.SkillInfoList[_num] = skillInfo;
+            PlayerController.Instance.SetSkillCoolDown(key);
+            UIManager.Instance.EquipSkill(_num, key);
+            isOnClickEquipSkill = false;
+            SetSkillSettingIconList(_num);
+        }
+        else
+        {
+            isOnClickUnEquipSkill = true;
+        }
+        for (int i = 0; i < skillSettingSelectedImgList.Count; i++)
+        {
+            skillSettingSelectedImgList[i].gameObject.SetActive(i == _num);
+        }
+    }
+    #endregion
 }

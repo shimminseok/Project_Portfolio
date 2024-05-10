@@ -112,6 +112,7 @@ public class SkillInfo
     public int skillKey;
     public int skillLevel;
 
+    public bool IsEmpty { get => skillKey == 0; }
 
     public void EquipSkill(int _key, int _level)
     {
@@ -122,7 +123,6 @@ public class SkillInfo
     {
         skillKey = 0;
         skillLevel = 0;
-
     }
 }
 [System.Serializable]

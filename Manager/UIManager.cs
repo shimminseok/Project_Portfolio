@@ -1,8 +1,5 @@
-using NPOI.Util.Collections;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class UIManager : Singleton<UIManager>
@@ -21,9 +18,14 @@ public class UIManager : Singleton<UIManager>
 
 
     public Stack<UIPopUp> openedPopupList = new Stack<UIPopUp>();
+
+    public int SkillSlotCount { get => skillIconImg.Count; }
     void Start()
     {
-        
+        for (int i = 0; i < SkillSlotCount; i++)
+        {
+            EquipSkill(i, PlayerController.Instance.SkillInfoList[i].skillKey);
+        }
     }
 
     void Update()
@@ -46,15 +48,36 @@ public class UIManager : Singleton<UIManager>
         hpBarImg.fillAmount = _cur / _max;
     }
 
-    public void EquipSkill(int _skillkey)
+    public void EquipSkill(int _num, int _skillkey)
     {
         Tables.Skill skillTb = Tables.Skill.Get(_skillkey);
-        if(skillTb != null)
-            skillIconImg[UISkill.Instance.selectSkillNumber].sprite = skillIconScripObj.GetSprite(skillTb.SkillIcon);
+        skillIconImg[_num].enabled = skillTb != null;
+        if (skillTb != null)
+        {
+            skillIconImg[_num].sprite = GetSkillIconImg(skillTb.SkillIcon);
+        }
+    }
+
+    public Sprite GetSkillIconImg(string _name)
+    {
+        return skillIconScripObj.GetSprite(_name);
     }
     #region[Button Event]
-    public void OnClickClosePopUp()
+    public void OnClickOpenPopUp(UIPopUp _popup)
     {
+        if(!openedPopupList.Contains(_popup))
+        {
+            openedPopupList.Push(_popup);
+        }
+        _popup.OpenPopUp();
+    }
+    public void OnClickClosePopUp(UIPopUp _popup)
+    {
+        UIPopUp closePopup = openedPopupList.Pop();
+        if (closePopup == _popup)
+            closePopup.ClosePopUp();
+        else
+            _popup.ClosePopUp();
 
     }
 
@@ -80,12 +103,6 @@ public class UIManager : Singleton<UIManager>
             skillCoolTimeImg[_num].fillAmount = PlayerController.Instance.UpdateSkillCoolTime(skillKey, true);
             skillCoolTimeText[_num].text = string.Format("{0:#.#}", PlayerController.Instance.UpdateSkillCoolTime(skillKey, false));
         }
-    }
-
-
-    public void OnPointerClickDelegate(PointerEventData data)
-    {
-
     }
     #endregion
 }

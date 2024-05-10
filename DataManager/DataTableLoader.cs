@@ -52,6 +52,13 @@ public static class DataTableLoader
 					Debug.Log("Character is loaded");
 				}
 				break;
+			case "Define":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Define.data = json.GetDeserializedObject("value", new Dictionary<string, Tables.Define>());
+					Debug.Log("Define is loaded");
+				}
+				break;
 			case "Dungeon":
 				{
 					JObject json = JObject.Parse(txt.text);
@@ -106,6 +113,13 @@ public static class DataTableLoader
 					JObject json = JObject.Parse(txt.text);
 					Tables.Stage.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Stage>());
 					Debug.Log("Stage is loaded");
+				}
+				break;
+			case "TextKey":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.TextKey.data = json.GetDeserializedObject("value", new Dictionary<string, Tables.TextKey>());
+					Debug.Log("TextKey is loaded");
 				}
 				break;
 			default:

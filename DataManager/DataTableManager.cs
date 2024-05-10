@@ -47,6 +47,27 @@ namespace Tables
 		}
 	}
 
+	public partial class Define
+	{
+		/// <summary> 디파인 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		key {get; private set;}
+		/// <summary> 값 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		value {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<string, Define> data = new Dictionary<string, Define>();
+		public static Define Get(string key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in Define Table");
+				return null;
+			}
+		}
+	}
+
 	public partial class Dungeon
 	{
 		/// <summary> 키 </summary>
@@ -354,6 +375,27 @@ namespace Tables
 			else
 			{
 				UnityEngine.Debug.LogWarning("This Key doesn't exist in Stage Table");
+				return null;
+			}
+		}
+	}
+
+	public partial class TextKey
+	{
+		/// <summary> 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		key {get; private set;}
+		/// <summary> 설명(한국어) </summary>
+		[Newtonsoft.Json.JsonProperty] public string		Description {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<string, TextKey> data = new Dictionary<string, TextKey>();
+		public static TextKey Get(string key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in TextKey Table");
 				return null;
 			}
 		}

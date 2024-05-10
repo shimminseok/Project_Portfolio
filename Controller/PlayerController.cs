@@ -38,7 +38,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
 
     //Skill
-    List<SkillInfo> skillInfoList = new List<SkillInfo>() { null, null, null, null };
+    List<SkillInfo> skillInfoList = new List<SkillInfo>();
     Dictionary<int, float> skillCoolTime = new Dictionary<int, float>();
     int useSkillNum;
 
@@ -232,6 +232,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void Start()
     {
+        for (int i = 0; i < UIManager.Instance.SkillSlotCount; i++)
+        {
+            skillInfoList.Add(new SkillInfo());
+        }
         InitData((int)job);
         ObjectGetComponent();
     }
@@ -305,6 +309,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         InitHitData();
         InitAttackData();
         InitMoveData();
+        for (int i = 0; i < skillInfoList.Count; i++)
+        {
+            UIManager.Instance.EquipSkill(i, skillInfoList[i].skillKey);
+        }
     }
     public void InitHitData()
     {
@@ -431,12 +439,15 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         Tables.Skill skillTb = Tables.Skill.Get(_index);
         if (skillTb != null)
         {
-            if(!SkillCoolTime.ContainsKey(skillTb.key))
+            if (!SkillCoolTime.ContainsKey(skillTb.key))
                 SkillCoolTime.Add(_index, skillTb.CoolTime);
         }
     }
     public void UseSkill(int _index)
     {
+        if (skillInfoList[_index] == null || skillInfoList[_index].IsEmpty)
+            return;
+
         UseSkillNum = _index;
         //스킬 사용
         ChangeState((OBJ_ANIMATION_STATE)_index + 100);
@@ -446,18 +457,23 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public float UpdateSkillCoolTime(int _index, bool _isFill)
     {
-        SkillCoolTime[_index] -= Time.deltaTime;
-        if (SkillCoolTime[_index] < 0)
+        if (skillCoolTime.ContainsKey(_index))
         {
-            SkillCoolTime[_index] = 0;
-        }
-        if (!_isFill)
-        {
-            return SkillCoolTime[_index];
-        }
+            SkillCoolTime[_index] -= Time.deltaTime;
+            if (SkillCoolTime[_index] < 0)
+            {
+                SkillCoolTime[_index] = 0;
+            }
+            if (!_isFill)
+            {
+                return SkillCoolTime[_index];
+            }
 
-        Tables.Skill skillTb = Tables.Skill.Get(_index);
-        return SkillCoolTime[_index] / skillTb.CoolTime;
+            Tables.Skill skillTb = Tables.Skill.Get(_index);
+            return SkillCoolTime[_index] / skillTb.CoolTime;
+        }
+        else
+            return 0f;
     }
 
 }
