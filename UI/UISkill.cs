@@ -21,6 +21,7 @@ public class UISkill : UIPopUp
     public Text skillDescSkillName;
     public Text skillDescSkillLimitLevel;
     public Text skillDescSkillDesc;
+    public Text skillSettingSelectedSlotNumTxt;
 
 
     int selectSkillNumber = -1;
@@ -127,6 +128,7 @@ public class UISkill : UIPopUp
     public void OnClickEquipSkill()
     {
         isOnClickEquipSkill = true;
+        UIManager.Instance.SetSystemMessage("장착할 스킬의 슬롯을 선택해주세요.", 1f,0.5f);
     }
     public void OnClickUnEquipSkill()
     {
@@ -137,12 +139,11 @@ public class UISkill : UIPopUp
             SetSkillSettingIconList(selectEquipSlotNumber);
             UIManager.Instance.EquipSkill(selectEquipSlotNumber,0);
         }
-
-
     }
     public void OnClickSkillSettingSkillIcon(int _num)
     {
         selectEquipSlotNumber = _num;
+        skillSettingSelectedSlotNumTxt.text = string.Format("선택 슬롯 : {0}번",_num + 1);
         if (isOnClickEquipSkill)
         {
             SkillInfo skillInfo = new SkillInfo();

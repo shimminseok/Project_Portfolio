@@ -249,12 +249,23 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            ChangeState(OBJ_ANIMATION_STATE.SKILL_1);
+            UseSkill(0);
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            ChangeState(OBJ_ANIMATION_STATE.SKILL_2);
+            UseSkill(1);
         }
+
+        for (int i = 0; i < skillInfoList.Count; i++)
+        {
+            if (GameManager.Instance.isAuto && !IsManualControl && aniCtrl.GetAniState == OBJ_ANIMATION_STATE.IDLE)
+            {
+                UseSkill(i);
+                return;
+            }
+        }
+
+
     }
     void FixedUpdate()
     {
@@ -279,18 +290,22 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             }
             if (targetObj != null && !targetObj.IsDead)
             {
-                if (GetTargetDistance(targetObj.transform) > attackRange)
+                if(aniCtrl.GetAniState < OBJ_ANIMATION_STATE.SKILL_1)
                 {
-                    Move(Target.transform.localPosition - transform.localPosition);
+                    if (GetTargetDistance(targetObj.transform) > attackRange)
+                    {
+                        Move(Target.transform.localPosition - transform.localPosition);
+                    }
+                    else
+                    {
+                        Attack();
+                    }
                 }
-                else
-                {
-                    Attack();
-                }
+
             }
             else
             {
-                ChangeState(OBJ_ANIMATION_STATE.IDLE);
+                Idle();
             }
         }
     }
@@ -341,7 +356,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public void Rotate(Vector3 dir)
     {
         Quaternion rotation = Quaternion.LookRotation(dir, Vector3.up);
-        transform.rotation = Quaternion.Lerp(transform.rotation, rotation, Time.fixedDeltaTime * 10f);
+        transform.rotation = rotation;
     }
     public void SetMoveEvent()
     {
@@ -353,12 +368,16 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void Attack()
     {
-        ChangeState(OBJ_ANIMATION_STATE.ATTACK);
-        Rotate(targetObj.transform.localPosition - transform.localPosition);
+        if(aniCtrl.GetAniState != OBJ_ANIMATION_STATE.ATTACK)
+        {
+            ChangeState(OBJ_ANIMATION_STATE.ATTACK);
+            Rotate(targetObj.transform.localPosition - transform.localPosition);
+        }
+
     }
     void Idle()
     {
-        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.IDLE;
+        ChangeState(OBJ_ANIMATION_STATE.IDLE);
     }
     void HpGen()
     {
@@ -411,7 +430,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         isDead = true;
         AttackCount = 0;
         CurHP = 0;
-        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.DIE;
+        ChangeState(OBJ_ANIMATION_STATE.DIE);
     }
     public float GetTargetDistance(Transform _target)
     {
@@ -441,22 +460,26 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         {
             if (!SkillCoolTime.ContainsKey(skillTb.key))
                 SkillCoolTime.Add(_index, skillTb.CoolTime);
+            else
+                SkillCoolTime[_index] = skillTb.CoolTime;
         }
+
     }
     public void UseSkill(int _index)
     {
-        if (skillInfoList[_index] == null || skillInfoList[_index].IsEmpty)
+        if (skillInfoList[_index] == null || skillInfoList[_index].IsEmpty || SkillCoolTime[SkillInfoList[_index].skillKey] > 0)
             return;
 
         UseSkillNum = _index;
         //스킬 사용
-        ChangeState((OBJ_ANIMATION_STATE)_index + 100);
+        ChangeState((OBJ_ANIMATION_STATE)_index + 101);
 
         //
         SetSkillCoolDown(skillInfoList[_index].skillKey);
     }
     public float UpdateSkillCoolTime(int _index, bool _isFill)
     {
+
         if (skillCoolTime.ContainsKey(_index))
         {
             SkillCoolTime[_index] -= Time.deltaTime;
@@ -468,9 +491,11 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             {
                 return SkillCoolTime[_index];
             }
-
-            Tables.Skill skillTb = Tables.Skill.Get(_index);
-            return SkillCoolTime[_index] / skillTb.CoolTime;
+            else
+            {
+                Tables.Skill skillTb = Tables.Skill.Get(_index);
+                return SkillCoolTime[_index] / skillTb.CoolTime;
+            }
         }
         else
             return 0f;

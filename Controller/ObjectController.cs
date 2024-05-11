@@ -18,6 +18,6 @@ public abstract class ObjectController : MonoBehaviour
     public virtual void FindEnemy() { }
     public  void ChangeState(OBJ_ANIMATION_STATE _state) 
     {
-        aniCtrl.CurrentState = _state;
+        aniCtrl.ChangeAnimation(_state);
     }
 }

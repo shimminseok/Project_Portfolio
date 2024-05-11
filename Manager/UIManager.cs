@@ -1,11 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class UIManager : Singleton<UIManager>
 {
     [Header("ScriptableObj")]
     [SerializeField] SkillIcon skillIconScripObj;
+
+    [Header("SystemMessage")]
+    [SerializeField] Image systemMessageObj;
+    [SerializeField] Text systemMessageTxt;
 
     [Header("BottomAnchor")]
     [SerializeField] Image hpBarImg;
@@ -62,10 +67,18 @@ public class UIManager : Singleton<UIManager>
     {
         return skillIconScripObj.GetSprite(_name);
     }
+    public void SetSystemMessage(string _message, float _time, float _delay = 0, UnityAction _action = null)
+    {
+        systemMessageTxt.text = _message;
+        StartCoroutine(TweenManager.Instance.FadeIn(systemMessageObj.gameObject, 1, 0, 0, () =>
+        {
+            StartCoroutine(TweenManager.Instance.FadeOut(systemMessageObj.gameObject, 0, _time, _delay, _action));
+        }));
+    }
     #region[Button Event]
     public void OnClickOpenPopUp(UIPopUp _popup)
     {
-        if(!openedPopupList.Contains(_popup))
+        if (!openedPopupList.Contains(_popup))
         {
             openedPopupList.Push(_popup);
         }
@@ -101,7 +114,13 @@ public class UIManager : Singleton<UIManager>
         {
             int skillKey = PlayerController.Instance.SkillInfoList[_num].skillKey;
             skillCoolTimeImg[_num].fillAmount = PlayerController.Instance.UpdateSkillCoolTime(skillKey, true);
-            skillCoolTimeText[_num].text = string.Format("{0:#.#}", PlayerController.Instance.UpdateSkillCoolTime(skillKey, false));
+            float skillCoolTime = PlayerController.Instance.UpdateSkillCoolTime(skillKey, false);
+            if (skillCoolTimeText[_num].enabled)
+            {
+                skillCoolTimeText[_num].text = string.Format("{0:0.#}", skillCoolTime);
+            }
+            skillCoolTimeText[_num].enabled = skillCoolTime > 0;
+
         }
     }
     #endregion

@@ -11,78 +11,29 @@ public class AnimationController : MonoBehaviour
     Animator animator;
 
 
-    public OBJ_ANIMATION_STATE CurrentState { set { currentState = value; } }
-
+    public OBJ_ANIMATION_STATE GetAniState { get => currentState; }
     void Start()
     {
         m_Controller = GetComponentInParent<ObjectController>();
         animator = GetComponent<Animator>();
         EnterAnimationState(OBJ_ANIMATION_STATE.IDLE);
     }
-    void Update()
+    public void ChangeAnimation(OBJ_ANIMATION_STATE _state)
     {
+        currentState = _state;
         if (prevState != currentState)
-            ChangeAnimation(currentState);
-    }
-    void ChangeAnimation(OBJ_ANIMATION_STATE _state)
-    {
-        ExitAnimationState(prevState);
-        EnterAnimationState(_state);
+        {
+            ExitAnimationState(prevState);
+            EnterAnimationState(_state);
+        }
     }
     void EnterAnimationState(OBJ_ANIMATION_STATE _state)
     {
         animator.SetInteger("State",(int)_state);
-        //switch (_state)
-        //{
-        //    case OBJ_ANIMATION_STATE.IDLE:
-        //        animator.SetBool("IsIdle", true);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.DIE:
-        //        animator.SetBool("IsDead", true);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.MOVE:
-        //        animator.SetBool("IsMove", true);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.ATTACK:
-        //        animator.SetBool("IsAttack", true);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.LESS_HP:
-        //        animator.SetBool("LessHp", true);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.SKILL_1:
-        //        animator.SetInteger("SkillNum", 1);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.SKILL_2:
-        //        animator.SetInteger("SkillNum", 2);
-        //        break;
-        //}
-        currentState = _state;
     }
     void ExitAnimationState(OBJ_ANIMATION_STATE _state)
     {
         animator.SetInteger("State",(int)_state);
-        //switch (_state)
-        //{
-        //    case OBJ_ANIMATION_STATE.IDLE:
-        //        animator.SetBool("IsIdle", false);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.DIE:
-        //        animator.SetBool("IsDead", false);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.MOVE:
-        //        animator.SetBool("IsMove", false);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.ATTACK:
-        //        animator.SetBool("IsAttack", false);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.LESS_HP:
-        //        animator.SetBool("LessHp", false);
-        //        break;
-        //    case OBJ_ANIMATION_STATE.SKILL_1:
-        //    case OBJ_ANIMATION_STATE.SKILL_2:
-        //        animator.SetInteger("SkillNum", 0);
-        //        break;
-        //}
         prevState = currentState;
     }
     public void AttackEvent()
@@ -103,7 +54,7 @@ public class AnimationController : MonoBehaviour
     }
     public void EndAttackAni()
     {
-
+        ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
     }
 
     public void MoveEvent()

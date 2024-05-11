@@ -148,7 +148,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         }
         else
         {
-            aniCtrl.CurrentState = OBJ_ANIMATION_STATE.IDLE;
+            aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
         }
     }
 
@@ -160,7 +160,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         accuracy = monsterTb.Hit;
         dodge = monsterTb.Dodge;
         targetObj = FindObjectOfType(typeof(PlayerController)) as PlayerController;
-        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.IDLE;
+        aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
         InitMoveData();
         InitAttackData();
     }
@@ -256,7 +256,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         IsDead = true;
         CurHP = 0;
-        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.DIE;
+        aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.DIE);
         MonsterManager.Instance.monsterList.Remove(this);
         
         //Init();
@@ -264,7 +264,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     public void SetMoveEvent()
     {
-        aniCtrl.CurrentState = OBJ_ANIMATION_STATE.MOVE;
+        aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.MOVE);
     }
 
     public void SetMoveSpeed(float _moveSpeed)
