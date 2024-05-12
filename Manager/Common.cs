@@ -28,7 +28,8 @@ public enum MONSTER_TYPE
 public enum POOL_TYPE
 {
     MONSTER,
-    MAP
+    MAP,
+    TAG,
 }
 public enum OBJ_ANIMATION_STATE
 {
@@ -47,21 +48,24 @@ public enum OBJ_ANIMATION_STATE
 public interface IAttackable
 {    
     ObjectController Target { get; }
+    int FinalDamage { get;}
     float Damage { get; set; }
     float AttackSpd {  get; set; }
     float AttackRange {  get; set; }
-    float CriDam { get; set; }
+    float CriDam { get; }
     float Accuracy { get; set; }
+
     bool IsCri {  get; set; }
-    bool IsFindEnemy { get; set; }
 
     void InitAttackData();
     int SetAttackPow(float _attackPow);
-    void SetDamage(IAttackable _attacker);
     void SetDamageText();
+    int CalculateAttackDamage();
+
 }
 public interface IHittable
 {
+
     float GenTime { get; set; }
     bool IsDead { get; set; }
     float MaxHP { get; set; }
@@ -69,9 +73,11 @@ public interface IHittable
     float HPRegen {  get; set; }
     float Defense { get; set; }
     float Dodge { get; set; }
+    TagController TagController { get; set; }
     void InitHitData();
     void UpdateHPUI();
     void SetDeadEvent();
+    void GetDamage(int _damage);
 }
 
     public interface IMoveable
@@ -98,9 +104,13 @@ public interface IUseSkill
     int UseSkillNum {  get; set; }
     Dictionary<int,float> SkillCoolTime { get; set; }
 
+    float UpdateSkillCoolTime(int _index,bool _isFill);
+    int CalculateSkillDamage(SkillInfo _skillInfo);
+    bool IsTargetAngle(GameObject _target, float _angle);
+    List<GameObject> GetInBarObjects(Transform _start, float _width, float _range);
     void UseSkill(int _index);
     void SetSkillCoolDown(int _index);
-    float UpdateSkillCoolTime(int _index,bool _isFill);
+
 }
 #endregion
 

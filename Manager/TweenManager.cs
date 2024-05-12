@@ -1,8 +1,11 @@
+using NPOI.OpenXmlFormats.Dml.Chart;
 using NPOI.Util;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 
 public enum TweenType
@@ -99,6 +102,19 @@ public class TweenManager : Singleton<TweenManager>
         }
 
         _rect.anchoredPosition = _to;
+        _action?.Invoke();
+    }
+    public IEnumerator TweenFill(Image _image, float _start,float _end, UnityAction _action = null)
+    {
+        _image.fillAmount = _start;
+        float time = 0;
+        while(time < 0.5f)
+        {
+            _image.fillAmount = Mathf.Lerp(_start, _end, time / 0.5f);
+            time += Time.deltaTime;
+            yield return null;
+        }
+        _image.fillAmount = _end;
         _action?.Invoke();
     }
 }

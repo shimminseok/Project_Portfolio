@@ -4,16 +4,19 @@ using System.Collections.Generic;
 using Tables;
 using TMPro;
 using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class MonsterController : ObjectController, IAttackable, IMoveable, IHittable
 {
     public Monster monsterTb;
-    ObjectController targetObj;
+    PlayerController targetObj;
 
-
+    TagController m_TagController;
     MONSTER_TYPE monsterType;
     public Rigidbody rigi;
+
+    int finalDamage;
 
     float maxHp;
     float curHp;
@@ -32,7 +35,6 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     bool isCri;
     bool isDead;
 
-    bool isFindEnemy;
 
     public float MoveSpd 
     { 
@@ -74,6 +76,10 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         get => damage; 
         set => damage = value; 
     }
+    public int FinalDamage
+    {
+        get => finalDamage;
+    }
     public float AttackSpd 
     { 
         get =>attackSpd; 
@@ -109,20 +115,15 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         get => throw new System.NotImplementedException(); 
         set => throw new System.NotImplementedException(); 
     }
-
+    public TagController TagController
+    {
+        get => m_TagController;
+        set => m_TagController = value;
+    }
     public ObjectController Target => targetObj;
 
-    public bool IsFindEnemy 
-    {
-        get
-        {
-            return isFindEnemy;
-        }
-        set
-        {
-            isFindEnemy = value;
-        }
-    }
+
+    public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
 
     private void Awake()
     {
@@ -131,7 +132,6 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     }
     void Start()
     {
-        Init();
     }
     void Update()
     {
@@ -142,14 +142,26 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         if(isDead) 
             return;
 
-        if (GetTargetDistance(targetObj.transform) > attackRange)
+        if(targetObj != null)
         {
-            Move(Target.transform.localPosition - transform.localPosition);
+            if (targetObj.IsDead)
+            {
+                FindEnemy();
+            }
+            else
+            {
+                if (GetTargetDistance(targetObj.transform) > attackRange)
+                {
+                    Move(Target.transform.localPosition - transform.localPosition);
+                }
+                else
+                {
+                    Attack();
+                }
+            }
         }
-        else
-        {
-            aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
-        }
+
+
     }
 
     public override void Init()
@@ -159,8 +171,12 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         hpRegen = monsterTb.HealthPointRegen;
         accuracy = monsterTb.Hit;
         dodge = monsterTb.Dodge;
+        damage = monsterTb.Attack;
         targetObj = FindObjectOfType(typeof(PlayerController)) as PlayerController;
         aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
+
+        m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
+        m_TagController.SetTag(this);
         InitMoveData();
         InitAttackData();
     }
@@ -204,7 +220,15 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         transform.localPosition = tmpVec;
         SetMoveEvent();
     }
+    void Attack()
+    {
+        if (aniCtrl.GetAniState != OBJ_ANIMATION_STATE.ATTACK)
+        {
+            ChangeState(OBJ_ANIMATION_STATE.ATTACK);
+            Rotate(TargetDir);
+        }
 
+    }
     public override void ObjectGetComponent()
     {
         aniCtrl = GetComponent<AnimationController>();
@@ -230,21 +254,6 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public int SetAttackPow(float _attackPow)
     {
         throw new System.NotImplementedException();
-    }
-
-    public void SetDamage(IAttackable _attacker)
-    {
-        //TO DO
-        //방어력 계산후 데미지 설정
-        int finalDam = Mathf.RoundToInt(_attacker.IsCri ? _attacker.Damage * 2 + _attacker.CriDam :_attacker.Damage);
-        CurHP -= (finalDam - defense);
-
-        Debug.LogFormat("Monster Name : {0}, Cur HP : {1}",gameObject.name,CurHP);
-        if (CurHP <= 0)
-        {
-            _attacker.IsFindEnemy = false;
-            SetDeadEvent();
-        }
     }
 
     public void SetDamageText()
@@ -284,5 +293,23 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public override void FindEnemy()
     {
         targetObj = PlayerController.Instance;
+    }
+
+    public void GetDamage(int _damage)
+    {
+        int finalDam = Mathf.RoundToInt(_damage - defense);
+        curHp -= finalDam <= 0 ? 1 : finalDam;
+        
+        Debug.LogFormat("Monster Name : {0}, Cur HP : {1}", gameObject.name, curHp);
+        if (curHp <= 0)
+        {
+            SetDeadEvent();
+        }
+    }
+    public int CalculateAttackDamage()
+    {
+        int finalDamage = Mathf.RoundToInt(isCri ? damage * 2 + CriDam : damage);
+
+        return finalDamage;
     }
 }

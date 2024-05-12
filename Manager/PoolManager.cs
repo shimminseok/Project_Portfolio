@@ -11,10 +11,10 @@ public class PoolManager : Singleton<PoolManager>
     public Transform poolRoot;
     public MapPrefabs mapPrefabs;
 
-    Dictionary<string, List<GameObject>> poolObjects = new Dictionary<string, List<GameObject>>();
+    Dictionary<string, Queue<GameObject>> poolObjects = new Dictionary<string, Queue<GameObject>>();
     Dictionary<string, GameObject> poolObject = new Dictionary<string, GameObject>();
 
-    void Start()
+    private void Awake()
     {
         Stage stageTb = Stage.Get(AccountManager.Instance.CurStageKey);
         Spawn spawnTb = Spawn.Get(stageTb.SpawnGroup);
@@ -22,6 +22,11 @@ public class PoolManager : Singleton<PoolManager>
         {
             CreateMonsterPool(Monster.Get(spawnTb.MonsterIndex[i]), null);
         }
+        CreateTagPool();
+    }
+    void Start()
+    {
+
     }
     public void CreateMonsterPool(Tables.Monster _monster, UnityAction _action)
     {
@@ -34,6 +39,10 @@ public class PoolManager : Singleton<PoolManager>
             Debug.LogErrorFormat("Create Monster Fail Name : {0}", _monster.Monster_Name);
         }
         _action?.Invoke();
+    }
+    public void CreateTagPool()
+    {
+        CreateObj("HP_Guage", POOL_TYPE.TAG, 20);
     }
     public void CreateObj(string _name, POOL_TYPE _poolType,int _count)
     {
@@ -57,11 +66,12 @@ public class PoolManager : Singleton<PoolManager>
             {
                 case POOL_TYPE.MONSTER: path = string.Format("Prefabs/Monster/{0}", _name); break;
                 case POOL_TYPE.MAP: path = _name; break;
+                case POOL_TYPE.TAG: path = string.Format("Prefabs/Tag/{0}",_name);break;
                 default: break;
             }
 
             poolObject[_name] = Resources.Load<GameObject>(path);
-            poolObjects[_name] = new List<GameObject>();
+            poolObjects[_name] = new Queue<GameObject>();
             parent = new GameObject();
             parent.transform.parent = poolRoot;
             parent.name = string.Format("{0}Parent", _name);
@@ -97,11 +107,15 @@ public class PoolManager : Singleton<PoolManager>
                     break;
                 case POOL_TYPE.MAP:
                     break;
+                case POOL_TYPE.TAG:
+                    {
+                    }
+                    break;
             }
             pool.transform.localPosition = Vector3.zero;
             pool.transform.localRotation = Quaternion.identity;
             pool.SetActive(false);
-            poolObjects[_name].Add(pool);
+            poolObjects[_name].Enqueue(pool);
         }
     }
 
@@ -124,14 +138,13 @@ public class PoolManager : Singleton<PoolManager>
         _gameObject.transform.localPosition = Vector3.zero;
         _gameObject.transform.localRotation = Quaternion.identity;
         _gameObject.SetActive(false);
-        poolObjects[_name].Add(_gameObject);
+        poolObjects[_name].Enqueue(_gameObject);
     }
     public GameObject GetObj(string _name, POOL_TYPE _type, int _count = 1)
     {
         CreateObj(_name, _type, _count);
 
-        GameObject go = poolObjects[_name][0];
-        poolObjects[_name].RemoveAt(0);
+        GameObject go = poolObjects[_name].Dequeue();
 
         go.transform.position = Vector3.zero;
         go.SetActive(true);

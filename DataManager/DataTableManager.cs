@@ -281,6 +281,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			UnLockLevel {get; private set;}
 		/// <summary> 쿨타임 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			CoolTime {get; private set;}
+		/// <summary> 타격횟수 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			AttackCount {get; private set;}
 		/// <summary> 데미지 계수 </summary>
 		[Newtonsoft.Json.JsonProperty] public float		DamageCoefficient {get; private set;}
 		/// <summary> 강화 시 증가 계수 </summary>

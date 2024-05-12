@@ -8,6 +8,9 @@ public class UIManager : Singleton<UIManager>
     [Header("ScriptableObj")]
     [SerializeField] SkillIcon skillIconScripObj;
 
+    [Header("Tag")]
+    public Canvas tagCanvas;
+
     [Header("SystemMessage")]
     [SerializeField] Image systemMessageObj;
     [SerializeField] Text systemMessageTxt;
@@ -50,7 +53,8 @@ public class UIManager : Singleton<UIManager>
 
     public void UpdateHPBarUI(float _max, float _cur)
     {
-        hpBarImg.fillAmount = _cur / _max;
+        float pevAmount = hpBarImg.fillAmount;
+        TweenManager.Instance.TweenFill(hpBarImg,pevAmount,_cur/_max);
     }
 
     public void EquipSkill(int _num, int _skillkey)
@@ -106,7 +110,8 @@ public class UIManager : Singleton<UIManager>
     }
     public void OnClickUseSkill(int _num)
     {
-        PlayerController.Instance.UseSkill(_num);
+        if (PlayerController.Instance.IsUseableSkill(_num))
+            PlayerController.Instance.UseSkill(_num);
     }
     void UpdateSkillCoolTime(int _num)
     {

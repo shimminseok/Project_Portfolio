@@ -10,6 +10,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
 
     MonsterController targetObj;
+    TagController m_TagController;
     public JoystickController JoystickController => GameManager.Instance.joystickController;
 
 
@@ -23,6 +24,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     float defense;
     float criDam;
     float damage;
+    int finalDamage;
     float attackSpd;
     float attackRange;
     float accuracy;
@@ -53,6 +55,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         {
             damage = value;
         }
+    }
+    public int FinalDamage
+    {
+        get => finalDamage;
     }
     public float Defense
     {
@@ -188,18 +194,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public ObjectController Target => targetObj;
 
-    public bool IsFindEnemy
-    {
-        get
-        {
-            return isFindEnemy;
-        }
-        set
-        {
-            isFindEnemy = value;
-        }
-    }
-
     public List<SkillInfo> SkillInfoList
     {
         get
@@ -224,7 +218,12 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             skillCoolTime = value;
         }
     }
-
+    public TagController TagController
+    {
+        get => m_TagController;
+        set => m_TagController = value;
+    }
+    public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
     void Awake()
     {
         if (Instance == null)
@@ -241,35 +240,35 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void Update()
     {
-        if (IsDead)
+        if (isDead)
             return;
 
 
-        HpGen();
 
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        //HpGen();
+
+        if (Input.GetKeyDown(KeyCode.Alpha1) && IsUseableSkill(0))
         {
             UseSkill(0);
         }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
+        else if (Input.GetKeyDown(KeyCode.Alpha2) && IsUseableSkill(1))
         {
             UseSkill(1);
         }
 
         for (int i = 0; i < skillInfoList.Count; i++)
         {
-            if (GameManager.Instance.isAuto && !IsManualControl && aniCtrl.GetAniState == OBJ_ANIMATION_STATE.IDLE)
+            if (GameManager.Instance.isAuto && !IsManualControl && IsUseableSkill(i)
+                && GetTargetDistance(targetObj.transform) <= attackRange && !aniCtrl.IsPlayingAnimation("SKILL"))
             {
                 UseSkill(i);
                 return;
             }
         }
-
-
     }
     void FixedUpdate()
     {
-        if (IsDead)
+        if (isDead)
             return;
 
         if (IsManualControl || !GameManager.Instance.isAuto)
@@ -284,13 +283,17 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         //수동 조작이 아니면 적을 찾음
         else if (!IsManualControl)
         {
-            if (!IsFindEnemy)
+            if(targetObj == null)
+            {
+                Idle();
+            }
+            else if (targetObj.IsDead)
             {
                 FindEnemy();
             }
-            if (targetObj != null && !targetObj.IsDead)
+            else
             {
-                if(aniCtrl.GetAniState < OBJ_ANIMATION_STATE.SKILL_1)
+                if (aniCtrl.GetAniState < OBJ_ANIMATION_STATE.SKILL_1)
                 {
                     if (GetTargetDistance(targetObj.transform) > attackRange)
                     {
@@ -301,11 +304,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                         Attack();
                     }
                 }
-
-            }
-            else
-            {
-                Idle();
             }
         }
     }
@@ -328,6 +326,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         {
             UIManager.Instance.EquipSkill(i, skillInfoList[i].skillKey);
         }
+        
+        m_TagController = PoolManager.Instance.GetObj("HP_Guage",POOL_TYPE.TAG).GetComponent<TagController>();
+        m_TagController.SetTag(this);
     }
     public void InitHitData()
     {
@@ -347,6 +348,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public void Move(Vector3 dir)
     {
+        if (aniCtrl.IsPlayingAnimation("ATTACK") || aniCtrl.IsPlayingAnimation("SKILL"))
+            return;
+
         Vector3 monveVec = dir.normalized * MoveSpd;
         Rotate(monveVec);
         Vector3 tmpVec = Vector3.Lerp(transform.localPosition, transform.localPosition + monveVec, 0.01f);
@@ -368,15 +372,19 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void Attack()
     {
-        if(aniCtrl.GetAniState != OBJ_ANIMATION_STATE.ATTACK)
+        if (aniCtrl.IsPlayingAnimation("SKILL"))
+            return;
+
+        if (aniCtrl.GetAniState != OBJ_ANIMATION_STATE.ATTACK)
         {
             ChangeState(OBJ_ANIMATION_STATE.ATTACK);
-            Rotate(targetObj.transform.localPosition - transform.localPosition);
+            Rotate(TargetDir);
         }
 
     }
     void Idle()
     {
+        FindEnemy();
         ChangeState(OBJ_ANIMATION_STATE.IDLE);
     }
     void HpGen()
@@ -396,21 +404,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         }
     }
-    public void SetDamage(IAttackable _attacker)
-    {
-        //TO DO
-        //방어력 계산후 데미지 설정
-
-        int finalDam = Mathf.RoundToInt(_attacker.IsCri ? _attacker.Damage * 2 + _attacker.CriDam : _attacker.Damage);
-        CurHP -= (finalDam - defense);
-        if (CurHP <= 0)
-        {
-            SetDeadEvent();
-        }
-    }
 
     public void UpdateHPUI()
     {
+        m_TagController.UpdateHPUI();
         UIManager.Instance.UpdateHPBarUI(maxHp, curHp);
     }
 
@@ -448,7 +445,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             if (targetObj == null || targetObj.IsDead || dis < targetObj.GetTargetDistance(transform))
             {
                 targetObj = mon;
-                IsFindEnemy = true;
             }
         }
     }
@@ -467,14 +463,24 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public void UseSkill(int _index)
     {
-        if (skillInfoList[_index] == null || skillInfoList[_index].IsEmpty || SkillCoolTime[SkillInfoList[_index].skillKey] > 0)
-            return;
-
         UseSkillNum = _index;
         //스킬 사용
         ChangeState((OBJ_ANIMATION_STATE)_index + 101);
-
+        Rotate(TargetDir);
         //
+        List<GameObject> gos = GetInBarObjects(transform, 100, 5);
+        Tables.Skill skillTb = Tables.Skill.Get(SkillInfoList[_index].skillKey);
+        foreach (var g in gos)
+        {
+            IHittable hitObj = g.GetComponent<IHittable>();
+            if (hitObj != null)
+            {
+                for (int i = 0; i < skillTb.AttackCount; i++)
+                {
+                    hitObj.GetDamage(CalculateSkillDamage(skillInfoList[_index]));
+                }
+            }
+        }
         SetSkillCoolDown(skillInfoList[_index].skillKey);
     }
     public float UpdateSkillCoolTime(int _index, bool _isFill)
@@ -500,5 +506,39 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         else
             return 0f;
     }
+    public bool IsUseableSkill(int _num)
+    {
+        return aniCtrl.GetAniState == OBJ_ANIMATION_STATE.IDLE && !skillInfoList[_num].IsEmpty && SkillCoolTime[SkillInfoList[_num].skillKey] <= 0;
+    }
 
+    public void GetDamage(int _damage)
+    {
+        int finalDam =  Mathf.RoundToInt(_damage - defense);
+        
+        curHp -= (finalDam <= 0 ? 1 : finalDam);
+        //UpdateHPUI();
+        m_TagController.UpdateHPUI();
+        if (curHp <= 0)
+        {
+            SetDeadEvent();
+        }
+    }
+    public int CalculateAttackDamage()
+    {
+        int finaldamage = Mathf.RoundToInt(isCri ? damage * 2 + CriDam : damage);
+
+        return finaldamage;
+    }
+    public int CalculateSkillDamage(SkillInfo _skillInfo)
+    {
+        int finaldamage = 0;
+        Tables.Skill skillTb = Tables.Skill.Get(_skillInfo.skillKey);
+        float skillOffset = skillTb.DamageCoefficient + (_skillInfo.skillLevel * skillTb.AddDamageCoefficient);
+        if (skillTb != null)
+        {
+            finaldamage = Mathf.RoundToInt(damage * skillOffset);
+        }
+
+        return finaldamage;
+    }
 }
