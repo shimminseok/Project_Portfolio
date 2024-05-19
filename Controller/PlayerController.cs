@@ -51,10 +51,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public float Damage
     {
         get => damage;
-        set
-        {
-            damage = value;
-        }
     }
     public int FinalDamage
     {
@@ -63,10 +59,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public float Defense
     {
         get => defense;
-        set
-        {
-            defense = value;
-        }
     }
     public float AttackSpd
     {
@@ -112,20 +104,12 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     public float CriDam
     {
-        get => criDam;
-        set
-        {
-            criDam = Damage * 2 + value;
-        }
+        get => damage + criDam;
     }
 
     public float MaxHP
     {
         get => maxHp;
-        set
-        {
-            maxHp = value;
-        }
     }
 
     public bool IsDead
@@ -155,7 +139,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public float HPRegen
     {
         get => hpRegen;
-        set => hpRegen = value;
     }
     public float GenTime
     {
@@ -208,7 +191,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public int UseSkillNum
     {
         get => useSkillNum;
-        set => useSkillNum = value;
     }
     public Dictionary<int, float> SkillCoolTime
     {
@@ -283,7 +265,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         //수동 조작이 아니면 적을 찾음
         else if (!IsManualControl)
         {
-            if(targetObj == null)
+            if (targetObj == null)
             {
                 Idle();
             }
@@ -326,19 +308,19 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         {
             UIManager.Instance.EquipSkill(i, skillInfoList[i].skillKey);
         }
-        
-        m_TagController = PoolManager.Instance.GetObj("HP_Guage",POOL_TYPE.TAG).GetComponent<TagController>();
+
+        m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
         m_TagController.SetTag(this);
     }
     public void InitHitData()
     {
-        MaxHP = CurHP = characterTb.HealthPoint;
-        HPRegen = characterTb.HealthPointRegen;
-        Defense = characterTb.DefencePoint;
+        maxHp = CurHP = characterTb.HealthPoint;
+        hpRegen = characterTb.HealthPointRegen;
+        defense = characterTb.DefencePoint;
     }
     public void InitAttackData()
     {
-        Damage = characterTb.Attack;
+        damage = characterTb.Attack;
         AttackSpd = characterTb.AttackSpeed;
         AttackRange = characterTb.AttackRange;
     }
@@ -439,7 +421,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     /// <param name="_target"></param>
     public override void FindEnemy()
     {
-        foreach (var mon in MonsterManager.Instance.monsterList)
+        foreach (var mon in MonsterManager.instance.monsterList)
         {
             float dis = mon.GetTargetDistance(transform);
             if (targetObj == null || targetObj.IsDead || dis < targetObj.GetTargetDistance(transform))
@@ -463,24 +445,13 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public void UseSkill(int _index)
     {
-        UseSkillNum = _index;
+        useSkillNum = _index;
         //스킬 사용
         ChangeState((OBJ_ANIMATION_STATE)_index + 101);
         Rotate(TargetDir);
+
         //
-        List<GameObject> gos = GetInBarObjects(transform, 100, 5);
-        Tables.Skill skillTb = Tables.Skill.Get(SkillInfoList[_index].skillKey);
-        foreach (var g in gos)
-        {
-            IHittable hitObj = g.GetComponent<IHittable>();
-            if (hitObj != null)
-            {
-                for (int i = 0; i < skillTb.AttackCount; i++)
-                {
-                    hitObj.GetDamage(CalculateSkillDamage(skillInfoList[_index]));
-                }
-            }
-        }
+
         SetSkillCoolDown(skillInfoList[_index].skillKey);
     }
     public float UpdateSkillCoolTime(int _index, bool _isFill)
@@ -513,8 +484,8 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     public void GetDamage(int _damage)
     {
-        int finalDam =  Mathf.RoundToInt(_damage - defense);
-        
+        int finalDam = Mathf.RoundToInt(_damage - defense);
+
         curHp -= (finalDam <= 0 ? 1 : finalDam);
         //UpdateHPUI();
         m_TagController.UpdateHPUI();
@@ -540,5 +511,42 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         }
 
         return finaldamage;
+    }
+
+    public void PlaySkillEffect(string[] _name)
+    {
+        for (int i = 0; i < _name.Length; i++)
+        {
+            GameObject go = EffectManager.instance.GetEffect(_name[i]);
+            EffectManager.instance.PlayEffect(go);
+            go.transform.parent = effectRoot;
+            go.transform.localPosition = Vector3.zero;
+        }
+
+    }
+
+    public void SkillAniEvent()
+    {
+        List<IHittable> gos = new List<IHittable>();
+        Tables.Skill skillTb = Tables.Skill.Get(skillInfoList[useSkillNum].skillKey);
+        switch ((SKILL_TYPE)skillTb.SkillType)
+        {
+            case SKILL_TYPE.CIRCLE:
+                gos = GetInCircleObjects(transform, skillTb.SkillRange);
+                break;
+            case SKILL_TYPE.BAR:
+                gos = GetInBarObjects(transform, skillTb.SkillRange, 5);
+                break;
+            case SKILL_TYPE.ANGLE:
+                break;
+        }
+        foreach (var go in gos)
+        {
+            for (int i = 0; i < skillTb.AttackCount; i++)
+            {
+                go.GetDamage(CalculateSkillDamage(skillInfoList[useSkillNum]));
+            }
+        }
+        PlaySkillEffect(skillTb.ActionFx); ;
     }
 }

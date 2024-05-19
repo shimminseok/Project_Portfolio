@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "SkillIcon", menuName = "ScriptableObjects/SkillIcon")]
+[CreateAssetMenu(fileName = "Sprite", menuName = "ScriptableObjects/Sprite")]
 
-public class SkillIcon : ScriptableObject
+public class SpriteScriptableObject : ScriptableObject
 {
     public List<Sprite> spriteList;
 

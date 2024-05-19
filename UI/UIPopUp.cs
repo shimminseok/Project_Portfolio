@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-public abstract class UIPopUp : MonoBehaviour
+public class UIPopUp : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
@@ -22,7 +22,16 @@ public abstract class UIPopUp : MonoBehaviour
             transform.GetChild(i).gameObject.SetActive(_isActive);
         }
     }
-    public abstract void ClosePopUp();
-    public abstract void OpenPopUp();
+    public virtual void ClosePopUp()
+    {
+        if (UIManager.Instance.openedPopupList.TryPop(out UIPopUp popup))
+            popup.OpenPopUp();
+
+        ChildSetActive(false );
+    }
+    public virtual void OpenPopUp()
+    {
+        ChildSetActive(true);
+    }
 
 }

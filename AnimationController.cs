@@ -1,5 +1,4 @@
-using Tables;
-using Unity.VisualScripting;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class AnimationController : MonoBehaviour
@@ -12,6 +11,7 @@ public class AnimationController : MonoBehaviour
 
 
     public OBJ_ANIMATION_STATE GetAniState { get => currentState; }
+    public Animator m_Animator => animator;
     void Start()
     {
         m_Controller = GetComponentInParent<ObjectController>();
@@ -30,26 +30,52 @@ public class AnimationController : MonoBehaviour
     }
     void EnterAnimationState(OBJ_ANIMATION_STATE _state)
     {
-        animator.SetInteger("State",(int)_state);
+        switch(_state)
+        {
+            case OBJ_ANIMATION_STATE.ATTACK:
+                {
+                    IAttackable attackable = m_Controller.GetComponent<IAttackable>();
+                    if(attackable != null)
+                    {
+                        animator.speed = GameManager.Instance.GameSpeed * attackable.AttackSpd;
+                    }
+                }
+                break;
+            case OBJ_ANIMATION_STATE.MOVE:
+                {
+                    IMoveable moveable = m_Controller.GetComponent<IMoveable>();
+                    if (moveable != null)
+                    {
+                        animator.speed = GameManager.Instance.GameSpeed * moveable.MoveSpd;
+                    }
+                }
+                break;
+            default:
+                animator.speed = GameManager.Instance.GameSpeed;
+                break;
+        }
+        animator.SetInteger("State", (int)_state);
     }
     void ExitAnimationState(OBJ_ANIMATION_STATE _state)
     {
-        animator.SetInteger("State",(int)_state);
+        animator.SetInteger("State", (int)_state);
         prevState = currentState;
     }
     public void AttackEvent()
     {
-        switch(m_Controller.objType)
+
+        switch (m_Controller.objType)
         {
             case OBJ_TYPE.PLAYER:
                 PlayerController characterCon = m_Controller as PlayerController;
-                MonsterController targetMon =  characterCon.Target as MonsterController;
-                targetMon.GetDamage(characterCon.CalculateAttackDamage());
+                MonsterController targetMon = characterCon.Target as MonsterController;
+                if (characterCon.GetTargetDistance(targetMon.transform) <= characterCon.AttackRange)
+                    targetMon.GetDamage(characterCon.CalculateAttackDamage());
                 break;
 
             case OBJ_TYPE.MONSTER:
                 MonsterController monsterCon = m_Controller as MonsterController;
-                switch(monsterCon.Target.objType)
+                switch (monsterCon.Target.objType)
                 {
                     case OBJ_TYPE.PLAYER:
                         PlayerController.Instance.GetDamage(monsterCon.CalculateAttackDamage());
@@ -72,6 +98,15 @@ public class AnimationController : MonoBehaviour
     {
 
     }
+    public void SkillEvent()
+    {
+        IUseSkill skillEvent = m_Controller.GetComponent<IUseSkill>();
+        if(skillEvent != null)
+        {
+            skillEvent.SkillAniEvent();
+        }
+
+    }
     public void DeadEvent()
     {
         switch (m_Controller.objType)
@@ -82,11 +117,10 @@ public class AnimationController : MonoBehaviour
 
             case OBJ_TYPE.MONSTER:
                 MonsterController monsterCon = m_Controller as MonsterController;
-                PoolManager.Instance.PushObj(monsterCon.name, POOL_TYPE.MONSTER, monsterCon.gameObject);
-                PoolManager.Instance.PushObj(monsterCon.TagController.name, POOL_TYPE.TAG, monsterCon.TagController.gameObject);
-                monsterCon.Init();
+                PoolManager.Instance.PushObj(gameObject.name, POOL_TYPE.MONSTER, gameObject);
                 break;
         }
+
     }
     public bool IsPlayingAnimation(string _name)
     {

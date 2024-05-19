@@ -1,4 +1,3 @@
-using NPOI.SS.Formula.Functions;
 using System.Collections.Generic;
 using Tables;
 using UnityEngine;
@@ -24,10 +23,6 @@ public class PoolManager : Singleton<PoolManager>
         }
         CreateTagPool();
     }
-    void Start()
-    {
-
-    }
     public void CreateMonsterPool(Tables.Monster _monster, UnityAction _action)
     {
         try
@@ -44,7 +39,7 @@ public class PoolManager : Singleton<PoolManager>
     {
         CreateObj("HP_Guage", POOL_TYPE.TAG, 20);
     }
-    public void CreateObj(string _name, POOL_TYPE _poolType,int _count)
+    public void CreateObj(string _name, POOL_TYPE _poolType, int _count)
     {
         GameObject parent = null;
         if (poolObject.ContainsKey(_name))
@@ -52,11 +47,14 @@ public class PoolManager : Singleton<PoolManager>
             if (poolObjects[_name].Count > 0)
                 return;
 
-            for (int i = 0; i < transform.childCount; i++)
+            for (int i = 0; i < poolRoot.transform.childCount; i++)
             {
-                if (transform.GetChild(i).name.Equals(_name + "Parent"))
-                    parent = transform.GetChild(i).transform.gameObject;
-            }
+                if (poolRoot.transform.GetChild(i).name.Equals(_name + "Parent"))
+                {
+                    parent = poolRoot.transform.GetChild(i).gameObject;
+                    break;
+                }
+            }            
         }
         else
         {
@@ -66,7 +64,8 @@ public class PoolManager : Singleton<PoolManager>
             {
                 case POOL_TYPE.MONSTER: path = string.Format("Prefabs/Monster/{0}", _name); break;
                 case POOL_TYPE.MAP: path = _name; break;
-                case POOL_TYPE.TAG: path = string.Format("Prefabs/Tag/{0}",_name);break;
+                case POOL_TYPE.TAG: path = string.Format("Prefabs/Tag/{0}", _name); break;
+                case POOL_TYPE.EFFECT: path = string.Format("Effect/{0}", _name); break;
                 default: break;
             }
 
@@ -87,17 +86,17 @@ public class PoolManager : Singleton<PoolManager>
         {
             GameObject pool = Instantiate(poolObject[_name], parent.transform);
             pool.name = _name;
-            switch(_poolType)
+            switch (_poolType)
             {
                 case POOL_TYPE.MONSTER:
                     {
                         Tables.Monster monsterTb = null;
-                        foreach(var monster in Tables.Monster.data.Values)
+                        foreach (var monster in Tables.Monster.data.Values)
                         {
-                            if(monster.Prefabs == _name)
+                            if (monster.Prefabs == _name)
                             {
                                 monsterTb = monster;
-                                pool.AddComponent<MonsterController>().monsterTb = monsterTb;
+                                pool.GetComponent<MonsterController>().monsterTb = monsterTb;
                                 pool.transform.localScale *= monster.Scale;
 
                                 break;
@@ -110,6 +109,9 @@ public class PoolManager : Singleton<PoolManager>
                 case POOL_TYPE.TAG:
                     {
                     }
+                    break;
+                case POOL_TYPE.EFFECT:
+                    pool.transform.localScale *= 0.001f;
                     break;
             }
             pool.transform.localPosition = Vector3.zero;
@@ -133,8 +135,15 @@ public class PoolManager : Singleton<PoolManager>
                 break;
             }
         }
-
-        _gameObject.transform.parent = parent.transform;
+        switch (_type)
+        {
+            case POOL_TYPE.TAG:
+                _gameObject.transform.SetParent(parent.transform);
+                break;
+            default:
+                _gameObject.transform.parent = parent.transform;
+                break;
+        }
         _gameObject.transform.localPosition = Vector3.zero;
         _gameObject.transform.localRotation = Quaternion.identity;
         _gameObject.SetActive(false);

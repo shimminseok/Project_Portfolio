@@ -4,6 +4,27 @@ using System.Collections.Generic;
 namespace Tables
 {
 
+	public partial class Ability
+	{
+		/// <summary> 어빌리티 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 능력치 이름 키값 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		AbilityName {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, Ability> data = new Dictionary<int, Ability>();
+		public static Ability Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in Ability Table");
+				return null;
+			}
+		}
+	}
+
 	public partial class Character
 	{
 		/// <summary>  </summary>
@@ -354,7 +375,7 @@ namespace Tables
 		/// <summary> 몬스터 레벨 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			MonsterLv {get; private set;}
 		/// <summary> 일반 몬스터 골드 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			MonsterGold {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public ulong		MonsterGold {get; private set;}
 		/// <summary> 일반 몬스터 경험치 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			MonsterExp {get; private set;}
 		/// <summary> 스테이지 클리어 보상 </summary>

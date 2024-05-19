@@ -9,8 +9,6 @@ public class SkillListSlot : MonoBehaviour
     int number;
     public EventTrigger eventTrigger;
 
-    public SkillListIcon spriteIcon;
-
     public Image selectedSlot;
     public Image skillIconImg;
     public Text skillName;
@@ -31,7 +29,7 @@ public class SkillListSlot : MonoBehaviour
     public void SetSkillListSlotInfo(Tables.Skill skillTb)
     {
         m_skillTb = skillTb;
-        skillIconImg.sprite = spriteIcon.GetSprite(skillTb.SkillListIcon);
+        skillIconImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_LISTICON,skillTb.SkillListIcon);
         skillName.text = UIManager.Instance.GetText(m_skillTb.SkillName);
         skillUnLockLevel.text = string.Format("해금 레벨 : {0}", m_skillTb.UnLockLevel);
     }
@@ -39,7 +37,7 @@ public class SkillListSlot : MonoBehaviour
 
     public void OnClickSlot()
     {
-        UISkill.Instance.SelectedSkill(Number);
+        UISkill.Instance.SelectedSkill(number);
         UISkill.Instance.GetClickedSkillInfo(m_skillTb);
     }
 }

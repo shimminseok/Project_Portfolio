@@ -6,25 +6,20 @@ using UnityEngine.Jobs;
 public class GameManager : Singleton<GameManager>
 {
     public JoystickController joystickController;
+    float gameSpeed = 1;
 
     public int stageStep;
 
     public bool isAuto = true;
 
-    void Start()
-    {
 
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-
+    public float GameSpeed { get { return gameSpeed; } }
     public void BossChallenge()
     {
 
+    }
+    public void SetGameSpeed(float _speed)
+    {
+        gameSpeed = _speed;
     }
 }

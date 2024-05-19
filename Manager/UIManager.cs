@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class UIManager : Singleton<UIManager>
 {
     [Header("ScriptableObj")]
-    [SerializeField] SkillIcon skillIconScripObj;
+    [SerializeField] List<SpriteScriptableObject> spriteScripObjList = new List<SpriteScriptableObject>();
 
     [Header("Tag")]
     public Canvas tagCanvas;
@@ -15,6 +15,8 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] Image systemMessageObj;
     [SerializeField] Text systemMessageTxt;
 
+    [Header("RightTopAnchor")]
+    [SerializeField] List<Text> goodsTextList;
     [Header("BottomAnchor")]
     [SerializeField] Image hpBarImg;
 
@@ -43,13 +45,28 @@ public class UIManager : Singleton<UIManager>
             UpdateSkillCoolTime(i);
         }
     }
+    public List<GameObject> CreateInfinityScrollRectItem(RectTransform _scrollviewRect, RectTransform _itemRect)
+    {
+        int createItemCount = Mathf.CeilToInt(_scrollviewRect.rect.height / _itemRect.rect.height) + 200;
 
+        List<GameObject> returnObjs = new List<GameObject>();
+        for (int i = 0; i < createItemCount; i++)
+        {
+            GameObject go = Instantiate(_itemRect.gameObject, _scrollviewRect.GetChild(0).GetChild(0));
+            returnObjs.Add(go);
+        }
+
+        return returnObjs;
+    }
     public string GetText(string _key)
     {
         string text = string.Empty;
         return text;
     }
-
+    public void UpdateGoodText(GOOD_TYPE _type, ulong _amount)
+    {
+        goodsTextList[(int)(_type -1)].text = AccountManager.Instance.ToCurrencyString(_amount);
+    }
 
     public void UpdateHPBarUI(float _max, float _cur)
     {
@@ -63,13 +80,12 @@ public class UIManager : Singleton<UIManager>
         skillIconImg[_num].enabled = skillTb != null;
         if (skillTb != null)
         {
-            skillIconImg[_num].sprite = GetSkillIconImg(skillTb.SkillIcon);
+            skillIconImg[_num].sprite = GetSprite(SPRITE_TYPE.SKILL_ICON,skillTb.SkillIcon);
         }
     }
-
-    public Sprite GetSkillIconImg(string _name)
+    public Sprite GetSprite(SPRITE_TYPE _type, string _name)
     {
-        return skillIconScripObj.GetSprite(_name);
+        return spriteScripObjList[(int)_type].GetSprite(_name);
     }
     public void SetSystemMessage(string _message, float _time, float _delay = 0, UnityAction _action = null)
     {

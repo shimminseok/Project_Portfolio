@@ -6,22 +6,29 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MonsterManager : Singleton<MonsterManager>
+public class MonsterManager : MonoBehaviour
 {
-
+    public static MonsterManager instance;
 
     public Transform monsterRoot;
     public List<MonsterController> monsterList = new List<MonsterController>();
+    public Tables.Stage currentStageTb;
 
     MonsterController bossMon;
     int genMonsterStep;
 
+
+    void Awake()
+    {
+        if (instance == null)
+            instance = this;
+    }
     void Start()
     {
     }
     void Update()
     {
-        if(monsterList.Count == 0)
+        if(monsterList.Count <= 2)
         {
             CheckStageStep();
         }
@@ -81,10 +88,10 @@ public class MonsterManager : Singleton<MonsterManager>
 
     public void CheckStageStep()
     {
-        Stage curStage = Stage.Get(AccountManager.instance.CurStageKey);
-        if(curStage != null)
+        currentStageTb = Stage.Get(AccountManager.Instance.CurStageKey);
+        if(currentStageTb != null)
         {
-            genMonsterStep = curStage.SpawnCount;
+            genMonsterStep = currentStageTb.SpawnCount;
 
             if (GameManager.Instance.stageStep >= genMonsterStep)
             {
@@ -102,7 +109,7 @@ public class MonsterManager : Singleton<MonsterManager>
                 {
                     int randomPointIndex = Random.Range(0, spawnPoint.Count);
 
-                    Tables.Spawn spwanTb = Tables.Spawn.Get(curStage.SpawnGroup);
+                    Tables.Spawn spwanTb = Tables.Spawn.Get(currentStageTb.SpawnGroup);
                     if(spwanTb != null)
                     {
                         int spwanMonIndex = Random.Range(0, spwanTb.MonsterIndex.Length);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Tables;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -41,26 +42,15 @@ public class UISkill : UIPopUp
         skillSettingSelectedImgList.ForEach(x => x.gameObject.SetActive(false));
     }
 
-    public void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            UIManager.Instance.OnClickOpenPopUp(this);
-        }
-    }
-
     public override void ClosePopUp()
     {
-        if (UIManager.Instance.openedPopupList.TryPop(out UIPopUp popup))
-            popup.OpenPopUp();
-
-
-        ChildSetActive(false);
+        base.ClosePopUp();
     }
 
     public override void OpenPopUp()
     {
-        ChildSetActive(true);
+        base.OpenPopUp();
+
         SelectedSkill(0);
         UnLockSkillIcon();
 
@@ -95,7 +85,7 @@ public class UISkill : UIPopUp
     }
     void SetSkillInfo(Tables.Skill _skillTb)
     {
-        skillDescSkillIcon.sprite = UIManager.Instance.GetSkillIconImg(_skillTb.SkillListIcon);
+        skillDescSkillIcon.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON, _skillTb.SkillIcon);
         skillDescSkillName.text = UIManager.Instance.GetText(_skillTb.SkillName);
         skillDescSkillLimitLevel.text = string.Format("제한 레벨 : {0}", _skillTb.UnLockLevel);
         skillDescSkillDesc.text = UIManager.Instance.GetText(_skillTb.SkillDescription);
@@ -117,7 +107,7 @@ public class UISkill : UIPopUp
         if (PlayerController.Instance.SkillInfoList[_num] != null && PlayerController.Instance.SkillInfoList[_num].skillKey != 0)
         {
             skillSettingIconList[_num].enabled = true;
-            skillSettingIconList[_num].sprite = UIManager.Instance.GetSkillIconImg(Tables.Skill.Get(PlayerController.Instance.SkillInfoList[_num].skillKey).SkillListIcon);
+            skillSettingIconList[_num].sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON,Tables.Skill.Get(PlayerController.Instance.SkillInfoList[_num].skillKey).SkillListIcon);
         }
         else
         {

@@ -8,8 +8,6 @@ using Newtonsoft.Json;
 
 public static class Utility
 {
-
-
     public static T GetValue<T>(this JObject jObj, string key, T defaultValue = default) where T : IComparable, IConvertible, IEquatable<T>
     {
         try

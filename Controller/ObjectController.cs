@@ -1,3 +1,4 @@
+using NPOI.SS.Formula.Functions;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +8,8 @@ public abstract class ObjectController : MonoBehaviour
     [Header("ObjController")]
     public OBJ_TYPE objType;
     public AnimationController aniCtrl;
+    public List<GameObject> effectList;
+    public Transform effectRoot;
 
     void Start()
     {
@@ -36,10 +39,23 @@ public abstract class ObjectController : MonoBehaviour
         float theta = Mathf.Acos(dot) * Mathf.Rad2Deg;
         return theta <= _angle;
     }
-
-    public List<GameObject> GetInBarObjects(Transform _start, float _width, float _range)
+    public List<IHittable> GetInCircleObjects(Transform _start, float _radius)
     {
-        List<GameObject> hitObjs = new List<GameObject>();
+        List<IHittable> hitObjs = new List<IHittable>();
+        Collider[] cols = Physics.OverlapSphere(_start.localPosition, _radius);
+        for (int i = 0; i < cols.Length; i++)
+        {
+            IHittable hitObj = cols[i].GetComponent<IHittable>();
+            if (hitObj != null)
+            {
+                hitObjs.Add(hitObj);
+            }
+        }
+        return hitObjs;
+    }
+    public List<IHittable> GetInBarObjects(Transform _start, float _width, float _range)
+    {
+        List<IHittable> hitObjs = new List<IHittable>();
         Vector3 dir = new Vector3(Input.GetAxis("Mouse X"), 0, Input.GetAxis("Mouse Y"));
         Vector3 skillRange = new Vector3(_width, 0.5f, _range);
         Vector3 boxSenter = _start.localPosition + (_start.forward * skillRange.z * 0.5f);
@@ -49,7 +65,7 @@ public abstract class ObjectController : MonoBehaviour
             IHittable hitObj = cols[i].GetComponent<IHittable>();
             if (hitObj != null)
             {
-                hitObjs.Add(cols[i].gameObject);
+                hitObjs.Add(hitObj);
             }
         }
         return hitObjs;

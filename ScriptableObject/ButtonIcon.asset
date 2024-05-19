@@ -10,10 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2c719c2a7ec569446b3e546158fd33bf, type: 3}
-  m_Name: SkillListIcon
+  m_Name: ButtonIcon
   m_EditorClassIdentifier: 
   spriteList:
-  - {fileID: 21300000, guid: f1ff46e1eb3ad24408230f1a471279c4, type: 3}
-  - {fileID: 21300000, guid: 7a6d066b3f775424eb70a6fd6c8e2b9d, type: 3}
-  - {fileID: 21300000, guid: b7a9e4b19f8541a4eb7516840331e5b4, type: 3}
-  - {fileID: 21300000, guid: 07f2746b37d48f94aaa62a860f0f597e, type: 3}
+  - {fileID: 21300000, guid: 1027b84a8f88bf94da291b0179f14eec, type: 3}
+  - {fileID: 21300000, guid: 81d89502a218cbf42a4f27d03522d44a, type: 3}

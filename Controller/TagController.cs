@@ -43,7 +43,7 @@ public class TagController : MonoBehaviour
                 hpGauge.color = Color.red;
                 break;
         }
-        transform.parent = TagManager.Instance.tagCanvas.transform;
+        transform.SetParent(TagManager.Instance.tagCanvas.transform,false);
         transform.localScale = Vector3.one;
     }
     public void UpdateHPUI()

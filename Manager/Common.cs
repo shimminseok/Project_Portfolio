@@ -30,6 +30,7 @@ public enum POOL_TYPE
     MONSTER,
     MAP,
     TAG,
+    EFFECT
 }
 public enum OBJ_ANIMATION_STATE
 {
@@ -43,13 +44,30 @@ public enum OBJ_ANIMATION_STATE
     SKILL_1 = 101,
     SKILL_2
 }
+public enum GOOD_TYPE
+{
+    DIA = 1,
+    GOLD,
+}
+public enum SKILL_TYPE
+{
+    CIRCLE,
+    BAR,
+    ANGLE
+}
+public enum SPRITE_TYPE
+{
+    SKILL_ICON,
+    SKILL_LISTICON,
+    BTN_ICON,
+}
 #endregion
 #region [Interface]
 public interface IAttackable
 {    
     ObjectController Target { get; }
     int FinalDamage { get;}
-    float Damage { get; set; }
+    float Damage { get; }
     float AttackSpd {  get; set; }
     float AttackRange {  get; set; }
     float CriDam { get; }
@@ -67,12 +85,12 @@ public interface IHittable
 {
 
     float GenTime { get; set; }
-    bool IsDead { get; set; }
-    float MaxHP { get; set; }
+    bool IsDead { get; }
+    float MaxHP { get; }
     float CurHP { get; set; }
-    float HPRegen {  get; set; }
-    float Defense { get; set; }
-    float Dodge { get; set; }
+    float HPRegen {  get; }
+    float Defense { get; }
+    float Dodge { get; }
     TagController TagController { get; set; }
     void InitHitData();
     void UpdateHPUI();
@@ -100,23 +118,45 @@ public interface IControlable
 
 public interface IUseSkill
 {
-    List<SkillInfo> SkillInfoList { get; set; }
-    int UseSkillNum {  get; set; }
+    List<SkillInfo> SkillInfoList { get; }
+    int UseSkillNum {  get; }
     Dictionary<int,float> SkillCoolTime { get; set; }
 
     float UpdateSkillCoolTime(int _index,bool _isFill);
     int CalculateSkillDamage(SkillInfo _skillInfo);
     bool IsTargetAngle(GameObject _target, float _angle);
-    List<GameObject> GetInBarObjects(Transform _start, float _width, float _range);
+    List<IHittable> GetInCircleObjects(Transform _start, float _radius);
+    List<IHittable> GetInBarObjects(Transform _start, float _width, float _range);
     void UseSkill(int _index);
     void SetSkillCoolDown(int _index);
-
+    void PlaySkillEffect(string[] _name);
+    void SkillAniEvent();
+}
+public interface IContent : IEventSystemHandler
+{
+    bool Update(int index);
+}
+public interface IReuseCellData
+{
+    int Index { get; set; }
+    public void Clear();
 }
 #endregion
 
 #region[Class]
 
+#region[CellData]
+public class GrowthSlotCellData
+{
+    int index;
+    public int Index { get => index; set => index = value; }
 
+    public void Clear()
+    {
+
+    }
+}
+#endregion[]
 public class SkillInfo
 {
     public int skillKey;

@@ -10,6 +10,8 @@ using UnityEngine;
 public class MonsterController : ObjectController, IAttackable, IMoveable, IHittable
 {
     public Monster monsterTb;
+    public Face face;
+    [SerializeField] Material faceMaterial;
     PlayerController targetObj;
 
     TagController m_TagController;
@@ -225,6 +227,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         if (aniCtrl.GetAniState != OBJ_ANIMATION_STATE.ATTACK)
         {
             ChangeState(OBJ_ANIMATION_STATE.ATTACK);
+            SetFace(OBJ_ANIMATION_STATE.ATTACK);
             Rotate(TargetDir);
         }
 
@@ -232,6 +235,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public override void ObjectGetComponent()
     {
         aniCtrl = GetComponent<AnimationController>();
+        faceMaterial = transform.GetChild(1).GetComponent<Renderer>().materials[1];
         rigi = GetComponent<Rigidbody>();
         rigi.useGravity = false;
         rigi.mass = 2000;
@@ -265,15 +269,33 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         IsDead = true;
         CurHP = 0;
-        aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.DIE);
-        MonsterManager.Instance.monsterList.Remove(this);
+        ulong gold = 0;
+        switch(monsterType)
+        {
+            case MONSTER_TYPE.COMMON:
+                gold = MonsterManager.instance.currentStageTb.MonsterGold;
+                break;
+            case MONSTER_TYPE.ELETE:
+                gold = MonsterManager.instance.currentStageTb.MonsterGold;
+                break;
+            case MONSTER_TYPE.BOSS:
+                //스테이지 클리어
+                break;
+        }
+        PoolManager.Instance.PushObj(m_TagController.name, POOL_TYPE.TAG, m_TagController.gameObject);
+        AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD,gold);
+        ChangeState(OBJ_ANIMATION_STATE.DIE);
+        SetFace(OBJ_ANIMATION_STATE.DIE);
+        MonsterManager.instance.monsterList.Remove(this);
+
         
-        //Init();
     }
 
     public void SetMoveEvent()
     {
-        aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.MOVE);
+        ChangeState(OBJ_ANIMATION_STATE.MOVE);
+        SetFace(OBJ_ANIMATION_STATE.MOVE);
+
     }
 
     public void SetMoveSpeed(float _moveSpeed)
@@ -311,5 +333,23 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         int finalDamage = Mathf.RoundToInt(isCri ? damage * 2 + CriDam : damage);
 
         return finalDamage;
+    }
+    public void SetFace(OBJ_ANIMATION_STATE _state)
+    {
+        switch(_state)
+        {
+            case OBJ_ANIMATION_STATE.IDLE:
+                faceMaterial.SetTexture("_MainTex", face.Idleface);
+                break;
+            case OBJ_ANIMATION_STATE.MOVE:
+                faceMaterial.SetTexture("_MainTex", face.WalkFace);
+                break;
+            case OBJ_ANIMATION_STATE.ATTACK:
+                faceMaterial.SetTexture("_MainTex", face.attackFace);
+                break;
+            case OBJ_ANIMATION_STATE.DIE:
+                faceMaterial.SetTexture("_MainTex", face.damageFace);
+                break;
+        }
     }
 }

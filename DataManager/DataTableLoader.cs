@@ -45,6 +45,13 @@ public static class DataTableLoader
 	{
 		switch (txt.name)
 		{
+			case "Ability":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Ability.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Ability>());
+					Debug.Log("Ability is loaded");
+				}
+				break;
 			case "Character":
 				{
 					JObject json = JObject.Parse(txt.text);
