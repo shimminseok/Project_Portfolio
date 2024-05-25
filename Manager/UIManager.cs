@@ -8,6 +8,9 @@ public class UIManager : Singleton<UIManager>
     [Header("ScriptableObj")]
     [SerializeField] List<SpriteScriptableObject> spriteScripObjList = new List<SpriteScriptableObject>();
 
+    [Header("FullPopUp")]
+    public UIFullPopUp fullPopUp;
+
     [Header("Tag")]
     public Canvas tagCanvas;
 
@@ -29,6 +32,7 @@ public class UIManager : Singleton<UIManager>
 
     public Stack<UIPopUp> openedPopupList = new Stack<UIPopUp>();
 
+    public bool isFullPopUp;
     public int SkillSlotCount { get => skillIconImg.Count; }
     void Start()
     {
@@ -40,38 +44,32 @@ public class UIManager : Singleton<UIManager>
 
     void Update()
     {
+
+        if (Input.GetKeyDown(KeyCode.Escape) && openedPopupList.Count > 0)
+        {
+            openedPopupList.Pop().ClosePopUp();
+        }
+
         for (int i = 0; i < skillCoolTimeImg.Count; i++)
         {
             UpdateSkillCoolTime(i);
         }
     }
-    public List<GameObject> CreateInfinityScrollRectItem(RectTransform _scrollviewRect, RectTransform _itemRect)
-    {
-        int createItemCount = Mathf.CeilToInt(_scrollviewRect.rect.height / _itemRect.rect.height) + 200;
 
-        List<GameObject> returnObjs = new List<GameObject>();
-        for (int i = 0; i < createItemCount; i++)
+    public void UpdateGoodText(GOOD_TYPE _type, uint _amount)
+    {
+        if(isFullPopUp)
         {
-            GameObject go = Instantiate(_itemRect.gameObject, _scrollviewRect.GetChild(0).GetChild(0));
-            returnObjs.Add(go);
+            fullPopUp.UpdateFullPopUPGoodsBox(_type, _amount);
         }
-
-        return returnObjs;
-    }
-    public string GetText(string _key)
-    {
-        string text = string.Empty;
-        return text;
-    }
-    public void UpdateGoodText(GOOD_TYPE _type, ulong _amount)
-    {
-        goodsTextList[(int)(_type -1)].text = AccountManager.Instance.ToCurrencyString(_amount);
+        else
+            goodsTextList[(int)(_type - 1)].text = AccountManager.Instance.ToCurrencyString(_amount);
     }
 
-    public void UpdateHPBarUI(float _max, float _cur)
+    public void UpdateHPBarUI(double _max, double _cur)
     {
         float pevAmount = hpBarImg.fillAmount;
-        TweenManager.Instance.TweenFill(hpBarImg,pevAmount,_cur/_max);
+        TweenManager.Instance.TweenFill(hpBarImg, pevAmount, (float)(_cur / _max));
     }
 
     public void EquipSkill(int _num, int _skillkey)
@@ -80,8 +78,13 @@ public class UIManager : Singleton<UIManager>
         skillIconImg[_num].enabled = skillTb != null;
         if (skillTb != null)
         {
-            skillIconImg[_num].sprite = GetSprite(SPRITE_TYPE.SKILL_ICON,skillTb.SkillIcon);
+            skillIconImg[_num].sprite = GetSprite(SPRITE_TYPE.SKILL_ICON, skillTb.SkillIcon);
         }
+    }
+    public string GetText(string _key)
+    {
+        string text = Tables.TextKey.Get(_key).Description;
+        return text;
     }
     public Sprite GetSprite(SPRITE_TYPE _type, string _name)
     {
@@ -103,6 +106,14 @@ public class UIManager : Singleton<UIManager>
             openedPopupList.Push(_popup);
         }
         _popup.OpenPopUp();
+    }
+    public void CloseAllPopUp()
+    {
+        while (openedPopupList.Count > 0)
+        {
+            openedPopupList.TryPop(out UIPopUp tmp);
+            tmp.ClosePopUp();
+        }
     }
     public void OnClickClosePopUp(UIPopUp _popup)
     {

@@ -73,11 +73,32 @@ public static class DataTableLoader
 					Debug.Log("Dungeon is loaded");
 				}
 				break;
+			case "EnhancementData":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.EnhancementData.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.EnhancementData>());
+					Debug.Log("EnhancementData is loaded");
+				}
+				break;
 			case "Goods":
 				{
 					JObject json = JObject.Parse(txt.text);
 					Tables.Goods.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Goods>());
 					Debug.Log("Goods is loaded");
+				}
+				break;
+			case "InGamePrice":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.InGamePrice.data = json.GetDeserializedObject("value", new Dictionary<string, Tables.InGamePrice>());
+					Debug.Log("InGamePrice is loaded");
+				}
+				break;
+			case "Item":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Item.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Item>());
+					Debug.Log("Item is loaded");
 				}
 				break;
 			case "Job":
@@ -122,11 +143,32 @@ public static class DataTableLoader
 					Debug.Log("Stage is loaded");
 				}
 				break;
+			case "StatReinforce":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.StatReinforce.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.StatReinforce>());
+					Debug.Log("StatReinforce is loaded");
+				}
+				break;
+			case "Summon":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Summon.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Summon>());
+					Debug.Log("Summon is loaded");
+				}
+				break;
 			case "TextKey":
 				{
 					JObject json = JObject.Parse(txt.text);
 					Tables.TextKey.data = json.GetDeserializedObject("value", new Dictionary<string, Tables.TextKey>());
 					Debug.Log("TextKey is loaded");
+				}
+				break;
+			case "Ticket":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Ticket.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Ticket>());
+					Debug.Log("Ticket is loaded");
 				}
 				break;
 			default:

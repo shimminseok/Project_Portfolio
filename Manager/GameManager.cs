@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Tables;
 using UnityEngine;
 using UnityEngine.Jobs;
 
@@ -22,4 +23,6 @@ public class GameManager : Singleton<GameManager>
     {
         gameSpeed = _speed;
     }
+
+
 }

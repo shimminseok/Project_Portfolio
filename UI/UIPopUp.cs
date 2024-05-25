@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,12 +10,6 @@ public class UIPopUp : MonoBehaviour
     {
         ChildSetActive(false);
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
     public void ChildSetActive(bool _isActive)
     {
         for (int i = 0; i < transform.childCount; i++)
@@ -24,9 +19,6 @@ public class UIPopUp : MonoBehaviour
     }
     public virtual void ClosePopUp()
     {
-        if (UIManager.Instance.openedPopupList.TryPop(out UIPopUp popup))
-            popup.OpenPopUp();
-
         ChildSetActive(false );
     }
     public virtual void OpenPopUp()

@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
+using Tables;
 using UnityEngine;
 
-public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable, IUseSkill
+
+public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable, IUseSkill, IEquipableItem
 {
     public static PlayerController Instance;
     [Header("PlayerController")]
@@ -16,15 +19,15 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     int attackCount;
 
-    float maxHp;
-    float curHp;
-    float hpRegen;
+    double maxHp;
+    double curHp;
+    double hpRegen;
     float genTime;
 
     float defense;
-    float criDam;
-    float damage;
-    int finalDamage;
+    double criDam;
+    double damage;
+    double finalDamage;
     float attackSpd;
     float attackRange;
     float accuracy;
@@ -47,12 +50,15 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     int equipSkillIndex;
     SkillInfo equipSkillInfo;
 
+    //Equipment
+    InvenItemInfo[] equipItem = new InvenItemInfo[6] { new(),new(), new(), new(), new(),new()};
 
-    public float Damage
+
+    public double Damage
     {
         get => damage;
     }
-    public int FinalDamage
+    public double FinalDamage
     {
         get => finalDamage;
     }
@@ -102,12 +108,12 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         }
     }
 
-    public float CriDam
+    public double CriDam
     {
         get => damage + criDam;
     }
 
-    public float MaxHP
+    public double MaxHP
     {
         get => maxHp;
     }
@@ -130,13 +136,13 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         get => attackCount;
         set => attackCount = value;
     }
-    public float CurHP
+    public double CurHP
     {
         get => curHp;
         set => curHp = value;
     }
 
-    public float HPRegen
+    public double HPRegen
     {
         get => hpRegen;
     }
@@ -206,6 +212,12 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         set => m_TagController = value;
     }
     public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
+
+    public InvenItemInfo[] EquipmentItem 
+    {
+        get => equipItem;
+    }
+
     void Awake()
     {
         if (Instance == null)
@@ -227,7 +239,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
 
 
-        //HpGen();
+        HpGen();
 
         if (Input.GetKeyDown(KeyCode.Alpha1) && IsUseableSkill(0))
         {
@@ -399,9 +411,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         //자신의 트랜스폼을 넘겨주고 UI를 뿌려준다?
     }
 
-    public int SetAttackPow(float _attackPow)
+    public double SetAttackPow(float _attackPow)
     {
-        return Mathf.RoundToInt(Damage + _attackPow);
+        return Math.Truncate(Damage + _attackPow);
     }
 
     public void SetDeadEvent()
@@ -482,9 +494,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         return aniCtrl.GetAniState == OBJ_ANIMATION_STATE.IDLE && !skillInfoList[_num].IsEmpty && SkillCoolTime[SkillInfoList[_num].skillKey] <= 0;
     }
 
-    public void GetDamage(int _damage)
+    public void GetDamage(double _damage)
     {
-        int finalDam = Mathf.RoundToInt(_damage - defense);
+        double finalDam = Math.Truncate(_damage - defense);
 
         curHp -= (finalDam <= 0 ? 1 : finalDam);
         //UpdateHPUI();
@@ -494,20 +506,30 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             SetDeadEvent();
         }
     }
-    public int CalculateAttackDamage()
+    public double CalculateAttackDamage()
     {
-        int finaldamage = Mathf.RoundToInt(isCri ? damage * 2 + CriDam : damage);
+        StatReinforce sr = StatReinforce.Get((int)STAT.ATTACK);
 
-        return finaldamage;
+        double finalDamage = 0;
+
+        //성장
+        finalDamage += GetGrowthValue(STAT.ATTACK);
+
+        //아이템 착용
+        finalDamage += GetEquipItemAbilityValue(STAT.ATTACK);
+
+        finalDamage += (isCri ? damage * 2 + CriDam : damage);
+
+        return finalDamage;
     }
-    public int CalculateSkillDamage(SkillInfo _skillInfo)
+    public double CalculateSkillDamage(SkillInfo _skillInfo)
     {
-        int finaldamage = 0;
+        double finaldamage = 0;
         Tables.Skill skillTb = Tables.Skill.Get(_skillInfo.skillKey);
-        float skillOffset = skillTb.DamageCoefficient + (_skillInfo.skillLevel * skillTb.AddDamageCoefficient);
+        double skillOffset = skillTb.DamageCoefficient + (_skillInfo.skillLevel * skillTb.AddDamageCoefficient);
         if (skillTb != null)
         {
-            finaldamage = Mathf.RoundToInt(damage * skillOffset);
+            finaldamage = Math.Truncate(damage * skillOffset);
         }
 
         return finaldamage;
@@ -548,5 +570,43 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             }
         }
         PlaySkillEffect(skillTb.ActionFx); ;
+    }
+    public float GetGrowthValue(STAT _stat)
+    {
+        StatReinforce tb = StatReinforce.Get((int)_stat + 1);
+
+        return AccountManager.Instance.GrowthLevelList[(int)_stat] * tb.StatValue;
+    }
+
+    public double GetEquipItemAbilityValue(STAT _stat)
+    {
+        double returnValue = 0;
+        for (int i = 0; i < equipItem.Length; i++)
+        {
+            Tables.Item itemTb = Item.Get(equipItem[i].key);
+            for (int j = 0; j < itemTb.Ability.Length; j++)
+            {
+                if (_stat == (STAT)itemTb.Ability[j])
+                {
+                    returnValue += itemTb.AbilityValue[i];
+                    break;
+                }
+            }
+        }
+
+        return returnValue;
+    }
+
+    public void EquipItem(InvenItemInfo _item)
+    {
+        Tables.Item itemTb = Item.Get(_item.key);
+        _item.isEquipped = true;
+        equipItem[itemTb.ItemType] = _item;
+    }
+
+    public void DequipItem(int _index)
+    {
+        equipItem[_index].isEquipped = false;
+        equipItem[_index] = new InvenItemInfo();
     }
 }

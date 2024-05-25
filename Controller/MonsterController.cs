@@ -1,4 +1,5 @@
 using NPOI.XWPF.UserModel;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Tables;
@@ -18,16 +19,16 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     MONSTER_TYPE monsterType;
     public Rigidbody rigi;
 
-    int finalDamage;
+    double finalDamage;
 
-    float maxHp;
-    float curHp;
-    float hpRegen;
+    double maxHp;
+    double curHp;
+    double hpRegen;
     float genTime;
 
     float defense;
-    float criDam;
-    float damage;
+    double criDam;
+    double damage;
     float attackSpd;
     float attackRange;
     float accuracy;
@@ -53,17 +54,17 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         get =>  isDead; 
         set => isDead = value; 
     }
-    public float MaxHP 
+    public double MaxHP 
     { 
         get => maxHp; 
         set => maxHp = value; 
     }
-    public float CurHP 
+    public double CurHP 
     { 
         get => curHp; 
         set => curHp = value; 
     }
-    public float HPRegen 
+    public double HPRegen 
     { 
         get => hpRegen; 
         set => hpRegen = value; 
@@ -73,12 +74,12 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         get => defense; 
         set => defense = value;
     }
-    public float Damage 
+    public double Damage 
     { 
         get => damage; 
         set => damage = value; 
     }
-    public int FinalDamage
+    public double FinalDamage
     {
         get => finalDamage;
     }
@@ -92,7 +93,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         get => attackRange; 
         set => attackRange = value; 
     }
-    public float CriDam
+    public double CriDam
     { 
         get => criDam;
         set => criDam = value; 
@@ -186,7 +187,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         monsterType = _type;
         Init();
-        Vector3 pos = Random.insideUnitSphere;
+        Vector3 pos = UnityEngine.Random.insideUnitSphere;
         pos.y = 0;
         pos *= 2;
 
@@ -255,7 +256,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         throw new System.NotImplementedException();
     }
 
-    public int SetAttackPow(float _attackPow)
+    public double SetAttackPow(float _attackPow)
     {
         throw new System.NotImplementedException();
     }
@@ -269,7 +270,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         IsDead = true;
         CurHP = 0;
-        ulong gold = 0;
+        uint gold = 0;
         switch(monsterType)
         {
             case MONSTER_TYPE.COMMON:
@@ -317,9 +318,9 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         targetObj = PlayerController.Instance;
     }
 
-    public void GetDamage(int _damage)
+    public void GetDamage(double _damage)
     {
-        int finalDam = Mathf.RoundToInt(_damage - defense);
+        double finalDam = Math.Truncate(_damage - defense);
         curHp -= finalDam <= 0 ? 1 : finalDam;
         
         Debug.LogFormat("Monster Name : {0}, Cur HP : {1}", gameObject.name, curHp);
@@ -328,9 +329,9 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
             SetDeadEvent();
         }
     }
-    public int CalculateAttackDamage()
+    public double CalculateAttackDamage()
     {
-        int finalDamage = Mathf.RoundToInt(isCri ? damage * 2 + CriDam : damage);
+        double finalDamage = Math.Truncate(isCri ? damage * 2 + CriDam : damage);
 
         return finalDamage;
     }

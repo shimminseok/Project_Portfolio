@@ -2,6 +2,7 @@ using NPOI.OpenXmlFormats.Dml.Chart;
 using NPOI.Util;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
@@ -104,7 +105,7 @@ public class TweenManager : Singleton<TweenManager>
         _rect.anchoredPosition = _to;
         _action?.Invoke();
     }
-    public IEnumerator TweenFill(Image _image, float _start,float _end, UnityAction _action = null)
+    public IEnumerator TweenFill(Image _image, float _start, float _end, UnityAction _action = null)
     {
         _image.fillAmount = _start;
         float time = 0;
@@ -116,5 +117,30 @@ public class TweenManager : Singleton<TweenManager>
         }
         _image.fillAmount = _end;
         _action?.Invoke();
+    }
+
+    public IEnumerator TweenAlpha(TextMeshProUGUI _target, float _startAlpha, float _endAlpha, float _time,TweenType _type = TweenType.NONE)
+    {
+        _target.alpha = _startAlpha;
+        do
+        {
+            float time = 0;
+            while (time < _time)
+            {
+                _target.alpha = Mathf.Lerp(_startAlpha, _endAlpha, time / _time);
+                time += Time.deltaTime;
+                yield return null;
+            }
+            if (_type == TweenType.PINGPONG)
+            {
+                time = 0;
+                while (time < _time)
+                {
+                    _target.alpha = Mathf.Lerp(_endAlpha, _startAlpha, time / _time);
+                    time += Time.deltaTime;
+                    yield return null;
+                }
+            }
+        } while (_type == TweenType.LOOP || _type == TweenType.PINGPONG) ;
     }
 }

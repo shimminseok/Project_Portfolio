@@ -142,6 +142,47 @@ namespace Tables
 		}
 	}
 
+	public partial class EnhancementData
+	{
+		/// <summary> 인덱스 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 요구 재화 수량 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		inGamePriceKey {get; private set;}
+		/// <summary> 성공 확률 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		probabilitySuccess {get; private set;}
+		/// <summary> 공격력 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		atk {get; private set;}
+		/// <summary> 방어력 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		def {get; private set;}
+		/// <summary> 최대체력 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		maxHp {get; private set;}
+		/// <summary> 체력회복 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		hpgen {get; private set;}
+		/// <summary> 공격속도 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		attackspeed {get; private set;}
+		/// <summary> 치명타 피해 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		CriticalDamagePoint {get; private set;}
+		/// <summary> 치명타 확률 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		CriticalChancePoint {get; private set;}
+		/// <summary> 명중 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		HitPoint {get; private set;}
+		/// <summary> 회피 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		DodgePoint {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, EnhancementData> data = new Dictionary<int, EnhancementData>();
+		public static EnhancementData Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in EnhancementData Table");
+				return null;
+			}
+		}
+	}
+
 	public partial class Goods
 	{
 		/// <summary> 재화 키 </summary>
@@ -164,6 +205,74 @@ namespace Tables
 			else
 			{
 				UnityEngine.Debug.LogWarning("This Key doesn't exist in Goods Table");
+				return null;
+			}
+		}
+	}
+
+	public partial class InGamePrice
+	{
+		/// <summary> 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		key {get; private set;}
+		/// <summary> 요구 재화 타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			demandGoodsType {get; private set;}
+		/// <summary> 요구 수량 </summary>
+		[Newtonsoft.Json.JsonProperty] public uint		demandGoodsQty {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<string, InGamePrice> data = new Dictionary<string, InGamePrice>();
+		public static InGamePrice Get(string key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in InGamePrice Table");
+				return null;
+			}
+		}
+	}
+
+	public partial class Item
+	{
+		/// <summary> 장비 인덱스 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 착용 직업 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Job {get; private set;}
+		/// <summary> 퀄리티 등급 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Quality_Grade {get; private set;}
+		/// <summary> 아이템 타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			ItemType {get; private set;}
+		/// <summary> 소환 등장 여부 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			isSummon {get; private set;}
+		/// <summary> 능력치 타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			[] Ability {get; private set;}
+		/// <summary> 능력치 값 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		[] AbilityValue {get; private set;}
+		/// <summary> 강화 인덱스 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Enhancement {get; private set;}
+		/// <summary> 보유 효과 타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			[] PassiveEffect {get; private set;}
+		/// <summary> 보유효과 값 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		[] PassiveEffectValue {get; private set;}
+		/// <summary> 장비 이름 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		ItemName {get; private set;}
+		/// <summary> 장비 아이콘 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		ItemIcon {get; private set;}
+		/// <summary> 장비 설명 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		ItemDescription {get; private set;}
+		/// <summary> 아이템 등급 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			ItemGrade {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, Item> data = new Dictionary<int, Item>();
+		public static Item Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in Item Table");
 				return null;
 			}
 		}
@@ -375,7 +484,7 @@ namespace Tables
 		/// <summary> 몬스터 레벨 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			MonsterLv {get; private set;}
 		/// <summary> 일반 몬스터 골드 </summary>
-		[Newtonsoft.Json.JsonProperty] public ulong		MonsterGold {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public uint		MonsterGold {get; private set;}
 		/// <summary> 일반 몬스터 경험치 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			MonsterExp {get; private set;}
 		/// <summary> 스테이지 클리어 보상 </summary>
@@ -403,6 +512,74 @@ namespace Tables
 		}
 	}
 
+	public partial class StatReinforce
+	{
+		/// <summary> 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 텍스트 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		NameText {get; private set;}
+		/// <summary>  </summary>
+		[Newtonsoft.Json.JsonProperty] public int			ReinforceType {get; private set;}
+		/// <summary> 스탯 타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			StatType {get; private set;}
+		/// <summary> 상승 값 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		StatValue {get; private set;}
+		/// <summary> 최대 레벨 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			MaxLv {get; private set;}
+		/// <summary> 소모재화타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			PriceType {get; private set;}
+		/// <summary> 소모 재화 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Price {get; private set;}
+		/// <summary> 참조 아이콘 인덱스 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		Icon {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, StatReinforce> data = new Dictionary<int, StatReinforce>();
+		public static StatReinforce Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in StatReinforce Table");
+				return null;
+			}
+		}
+	}
+
+	public partial class Summon
+	{
+		/// <summary> 뽑기 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 뽑기 타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Type {get; private set;}
+		/// <summary> 뽑기 확률 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		[] ItemRate {get; private set;}
+		/// <summary> 픽업 아이템 등급 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			[] PickupItemRank {get; private set;}
+		/// <summary> 픽업 아이템키 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			[] PickupItemKey {get; private set;}
+		/// <summary> 픽업 확률 </summary>
+		[Newtonsoft.Json.JsonProperty] public float		[] PickupItemRate {get; private set;}
+		/// <summary> 뽑기 재화 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			GachaCostType {get; private set;}
+		/// <summary> 1회 뽑기 가격 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			OneGachaCost {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, Summon> data = new Dictionary<int, Summon>();
+		public static Summon Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in Summon Table");
+				return null;
+			}
+		}
+	}
+
 	public partial class TextKey
 	{
 		/// <summary> 키 </summary>
@@ -419,6 +596,37 @@ namespace Tables
 			else
 			{
 				UnityEngine.Debug.LogWarning("This Key doesn't exist in TextKey Table");
+				return null;
+			}
+		}
+	}
+
+	public partial class Ticket
+	{
+		/// <summary> 티켓 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 티켓타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			TicketType {get; private set;}
+		/// <summary> 티켓 표시 유무 </summary>
+		[Newtonsoft.Json.JsonProperty] public uint		DisplayType {get; private set;}
+		/// <summary> 티켓 아이템 이름 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		TicketName {get; private set;}
+		/// <summary> 티켓 아이템 설명 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		TicketDescription {get; private set;}
+		/// <summary> 티켓 아이템 아이콘 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		TicketIcon {get; private set;}
+		/// <summary> 티켓 구매 가격 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			TicketPrice {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, Ticket> data = new Dictionary<int, Ticket>();
+		public static Ticket Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarning("This Key doesn't exist in Ticket Table");
 				return null;
 			}
 		}

@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Tables;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,44 +15,35 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
 
     bool isHodding = false;
     float hoddingTime = 0f;
+
+    Tables.StatReinforce m_StatReinforceTb;
     void Update()
     {
         if (isHodding)
         {
             hoddingTime += Time.deltaTime;
-            if(hoddingTime > 0.5f)
+            if (hoddingTime > 0.5f)
             {
                 OnClickGrowthLevelUp();
                 hoddingTime = 0.45f;
             }
         }
     }
-    public void SetSlotInfo()
-    {
-    }
     public void OnClickGrowthLevelUp()
     {
+        bool isEnougt = false;
+        int upgradeMultiple = (AccountManager.Instance.GrowthLevelList[Index] * (AccountManager.Instance.GrowthLevelList[Index] / 3000 + 1));
+        uint cost = (uint)(m_StatReinforceTb.Price * upgradeMultiple);
+        AccountManager.Instance.UseGoods((GOOD_TYPE)m_StatReinforceTb.PriceType,cost,out isEnougt);
+        if (!isEnougt)
+        {
+            ReleaseGrowthLevelUp();
+            return;
+        }
+
         isHodding = true;
         count++;
-        int levelUpMultiple = 1;
-        switch (UIGrowth.instance.SelectMultipleNum)
-        {
-            case 0:
-                levelUpMultiple *= 1;
-                break;
-            case 1:
-                levelUpMultiple *= 10;
-                break;
-            case 2:
-                levelUpMultiple *= 100;
-                break;
-            case 3:
-                levelUpMultiple *= 1000;
-                break;
-            default:
-                break;
-        }
-        AccountManager.Instance.GrowthLevelList[Index] += levelUpMultiple * count;
+        AccountManager.Instance.GrowthLevelList[Index] += UIGrowth.instance.SelectMultipleNum * count;
         UpdateData();
     }
     public void ReleaseGrowthLevelUp()
@@ -68,7 +56,7 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
             if (i < AccountManager.Instance.GrowthLevelList.Count - 1)
                 saveData += ",";
         }
-        PlayerPrefs.SetString("GrowthData",saveData);
+        PlayerPrefs.SetString("GrowthData", saveData);
         isHodding = false;
         hoddingTime = 0f;
         UpdateData();
@@ -77,17 +65,16 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
     public override void UpdateContent(GrowthSlotCellData _itemData)
     {
         Index = _itemData.Index;
+        m_StatReinforceTb = Tables.StatReinforce.Get(Index + 1);
         UpdateData();
     }
 
-    void UpdateData()
+    public void UpdateData()
     {
-        Tables.Ability abilityTb = Tables.Ability.Get(Index + 1);
-        if(abilityTb != null)
-        {
-            growthSlotName.text = string.Format("{0}  Lv.{1}", abilityTb.AbilityName, AccountManager.Instance.GrowthLevelList[Index]);
-            growthLevel.text = string.Format("Lv.{0} ▶ Lv.{1}", AccountManager.Instance.GrowthLevelList[Index], AccountManager.Instance.GrowthLevelList[Index] + 1);
-            growthCostText.text = "아직 안정함";
-        }
+        growthImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.GROWTH_ICON, m_StatReinforceTb.Icon);
+        growthSlotName.text = string.Format("{0}  Lv.{1}", UIManager.Instance.GetText(m_StatReinforceTb.NameText), AccountManager.Instance.GrowthLevelList[Index]);
+        growthLevel.text = string.Format("Lv.{0} ▶ Lv.{1}", AccountManager.Instance.GrowthLevelList[Index], AccountManager.Instance.GrowthLevelList[Index] + UIGrowth.instance.SelectMultipleNum);
+        int upgradePrice = (AccountManager.Instance.GrowthLevelList[Index] * (AccountManager.Instance.GrowthLevelList[Index] / 3000 + 1));
+        growthCostText.text = string.Format("{0}", AccountManager.Instance.ToCurrencyString(m_StatReinforceTb.Price * upgradePrice));
     }
 }

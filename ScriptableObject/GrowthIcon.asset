@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c719c2a7ec569446b3e546158fd33bf, type: 3}
+  m_Name: GrowthIcon
+  m_EditorClassIdentifier: 
+  spriteList:
+  - {fileID: 21300000, guid: 0de8a950548dc934dbce06f3ff5709f1, type: 3}
+  - {fileID: 21300000, guid: ad3eaefdbb54a444eaaef5258491f78f, type: 3}
+  - {fileID: 21300000, guid: b903491a17e7a2e4db8d703a99666a96, type: 3}
+  - {fileID: 21300000, guid: ef830043a4d2f8f4ba85dca638089010, type: 3}
+  - {fileID: 21300000, guid: 9fd71b37cd23d2c4090c335959d09e14, type: 3}
+  - {fileID: 21300000, guid: 84b44e7b4abfd124f9b4680e38b717b2, type: 3}
+  - {fileID: 21300000, guid: e7ac34e9bae56de44b990325d3cd10d6, type: 3}
+  - {fileID: 21300000, guid: c5c8a5c9fbbcbb64b960dc3789700dfd, type: 3}
+  - {fileID: 21300000, guid: 09cbb57a5e2fdd84a9abea2195f1141b, type: 3}
+  - {fileID: 21300000, guid: 7a1ab177a2eab794abfed0b13198c557, type: 3}

@@ -54,7 +54,7 @@ public class TagController : MonoBehaviour
             {
                 case OBJ_TYPE.PLAYER:
                     {
-                        hpGauge.fillAmount  = PlayerController.Instance.CurHP / PlayerController.Instance.MaxHP;
+                        hpGauge.fillAmount  = (float)(PlayerController.Instance.CurHP / PlayerController.Instance.MaxHP);
                     }
                     break;
             }

@@ -1,10 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Xml.Serialization;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.EventSystems;
+using System.Linq;
 
 #region [Enum]
 public enum CHARACTER_JOB
@@ -32,6 +29,15 @@ public enum POOL_TYPE
     TAG,
     EFFECT
 }
+public enum ITEM_TYPE
+{
+    WEAPONE,
+    ARMOR,
+    GLOVES,
+    SHOES,
+    ACC_1,
+    ACC_2
+}
 public enum OBJ_ANIMATION_STATE
 {
     IDLE,
@@ -46,8 +52,8 @@ public enum OBJ_ANIMATION_STATE
 }
 public enum GOOD_TYPE
 {
-    DIA = 1,
-    GOLD,
+    GOLD = 1,
+    DIA,
 }
 public enum SKILL_TYPE
 {
@@ -60,25 +66,52 @@ public enum SPRITE_TYPE
     SKILL_ICON,
     SKILL_LISTICON,
     BTN_ICON,
+    GROWTH_ICON,
+    ITEM_GRADE,
+    ITEM_ICON
+}
+public enum STAT
+{
+    ATTACK,
+    HP,
+    HP_REGEN,
+    DEFENCE,
+    ATTACK_SPD,
+    MOVE_SPD,
+    CRI_DAM,
+    CRI_RATE,
+    HIT,
+    DODGE,
+}
+public enum SUMMON_TYPE
+{
+    WEAPONE,
+    ARMOR,
+    ACC,
+}
+public enum SLOT_TYPE
+{
+    INVENITEM,
+    SUMMON_RESULT
 }
 #endregion
 #region [Interface]
 public interface IAttackable
-{    
+{
     ObjectController Target { get; }
-    int FinalDamage { get;}
-    float Damage { get; }
-    float AttackSpd {  get; set; }
-    float AttackRange {  get; set; }
-    float CriDam { get; }
+    double FinalDamage { get; }
+    double Damage { get; }
+    float AttackSpd { get; set; }
+    float AttackRange { get; set; }
+    double CriDam { get; }
     float Accuracy { get; set; }
 
-    bool IsCri {  get; set; }
+    bool IsCri { get; set; }
 
     void InitAttackData();
-    int SetAttackPow(float _attackPow);
     void SetDamageText();
-    int CalculateAttackDamage();
+    double SetAttackPow(float _attackPow);
+    double CalculateAttackDamage();
 
 }
 public interface IHittable
@@ -86,22 +119,22 @@ public interface IHittable
 
     float GenTime { get; set; }
     bool IsDead { get; }
-    float MaxHP { get; }
-    float CurHP { get; set; }
-    float HPRegen {  get; }
+    double MaxHP { get; }
+    double CurHP { get; set; }
+    double HPRegen { get; }
     float Defense { get; }
     float Dodge { get; }
     TagController TagController { get; set; }
     void InitHitData();
     void UpdateHPUI();
     void SetDeadEvent();
-    void GetDamage(int _damage);
+    void GetDamage(double _damage);
 }
 
-    public interface IMoveable
+public interface IMoveable
 {
     bool IsMove { get; set; }
-    float MoveSpd {  get; set; }
+    float MoveSpd { get; set; }
     void InitMoveData();
     void SetMoveSpeed(float _moveSpeed);
     void SetMoveEvent();
@@ -119,11 +152,11 @@ public interface IControlable
 public interface IUseSkill
 {
     List<SkillInfo> SkillInfoList { get; }
-    int UseSkillNum {  get; }
-    Dictionary<int,float> SkillCoolTime { get; set; }
+    int UseSkillNum { get; }
+    Dictionary<int, float> SkillCoolTime { get; set; }
 
-    float UpdateSkillCoolTime(int _index,bool _isFill);
-    int CalculateSkillDamage(SkillInfo _skillInfo);
+    float UpdateSkillCoolTime(int _index, bool _isFill);
+    double CalculateSkillDamage(SkillInfo _skillInfo);
     bool IsTargetAngle(GameObject _target, float _angle);
     List<IHittable> GetInCircleObjects(Transform _start, float _radius);
     List<IHittable> GetInBarObjects(Transform _start, float _width, float _range);
@@ -132,14 +165,12 @@ public interface IUseSkill
     void PlaySkillEffect(string[] _name);
     void SkillAniEvent();
 }
-public interface IContent : IEventSystemHandler
+public interface IEquipableItem
 {
-    bool Update(int index);
-}
-public interface IReuseCellData
-{
-    int Index { get; set; }
-    public void Clear();
+    public InvenItemInfo[] EquipmentItem { get; }
+    void EquipItem(InvenItemInfo _item);
+    void DequipItem(int _index);
+    double GetEquipItemAbilityValue(STAT _stat);
 }
 #endregion
 
@@ -149,14 +180,171 @@ public interface IReuseCellData
 public class GrowthSlotCellData
 {
     int index;
-    public int Index { get => index; set => index = value; }
 
-    public void Clear()
-    {
+    public int Index { get => index; set { index = value; } }
+}
+public class InvenSlotCellData
+{
+    int index;
+    public Tables.Item m_ItemTb;
 
-    }
+    public int Index { get => index; set { index = value; } }
 }
 #endregion[]
+[Serializable]
+public class InvenItemInfo
+{
+    public int key;
+    public int count = 0;
+    public int enhanceCount = 0;
+
+    public bool isEquipped = false;
+
+    public List<string> GetAbilityText()
+    {
+        List<string> str = new List<string>();
+        Tables.Item itemTb = Tables.Item.Get(key);
+        if (itemTb != null)
+        {
+            for (int i = 0; i < itemTb.Ability.Length; i++)
+            {
+                switch ((STAT)(itemTb.Ability[i] - 1))
+                {
+                    case STAT.ATTACK:
+                        str.Add(UIManager.Instance.GetText("AttackPoint"));
+                        break;
+                    case STAT.HP:
+                        str.Add(UIManager.Instance.GetText("HealthPoint"));
+                        break;
+                    case STAT.HP_REGEN:
+                        str.Add(UIManager.Instance.GetText("HealthPointRegen"));
+                        break;
+                    case STAT.DEFENCE:
+                        str.Add(UIManager.Instance.GetText("DefencePoint"));
+                        break;
+                    case STAT.ATTACK_SPD:
+                        str.Add(UIManager.Instance.GetText("AttackSpeed"));
+                        break;
+                    case STAT.MOVE_SPD:
+                        str.Add(UIManager.Instance.GetText("MoveSpeed"));
+                        break;
+                    case STAT.DODGE:
+                        str.Add(UIManager.Instance.GetText("Dodge"));
+                        break;
+                    case STAT.HIT:
+                        str.Add(UIManager.Instance.GetText("Hit"));
+                        break;
+                    case STAT.CRI_DAM:
+                        str.Add(UIManager.Instance.GetText("CriticalDamage"));
+                        break;
+                    case STAT.CRI_RATE:
+                        str.Add(UIManager.Instance.GetText("CriticalRate"));
+                        break;
+                }
+            }
+
+        }
+        return str;
+    }
+    public List<double> GetEquipEffectValues(int _enhanceCnt = 0)
+    {
+        List<double> str = new List<double>();
+        Tables.Item itemTb = Tables.Item.Get(key);
+        if (itemTb != null)
+        {
+            Tables.EnhancementData enhanceData = Tables.EnhancementData.Get(itemTb.Enhancement);
+            if (enhanceData != null)
+            {
+                for (int i = 0; i < itemTb.Ability.Length; i++)
+                {
+                    switch ((STAT)(itemTb.Ability[i] - 1))
+                    {
+                        case STAT.ATTACK:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.atk * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.HP:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.maxHp * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.HP_REGEN:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.hpgen * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.DEFENCE:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.def * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.ATTACK_SPD:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.attackspeed * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.DODGE:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.DodgePoint * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.HIT:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.HitPoint * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.CRI_DAM:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.CriticalDamagePoint * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.CRI_RATE:
+                            str.Add(itemTb.AbilityValue[i] + enhanceData.CriticalChancePoint * (enhanceCount + _enhanceCnt));
+                            break;
+                    }
+                }
+            }
+        }
+        return str;
+    }
+    public List<double> GetPassiveEffectValues(int _enhanceCnt = 0)
+    {
+        List<double> str = new List<double>();
+        Tables.Item itemTb = Tables.Item.Get(key);
+        if (itemTb != null)
+        {
+            Tables.EnhancementData enhanceData = Tables.EnhancementData.Get(itemTb.Enhancement);
+            if (enhanceData != null)
+            {
+                for (int i = 0; i < itemTb.PassiveEffect.Length; i++)
+                {
+                    switch ((STAT)(itemTb.PassiveEffect[i] - 1))
+                    {
+                        case STAT.ATTACK:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.atk * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.HP:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.maxHp * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.HP_REGEN:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.hpgen * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.DEFENCE:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.def * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.ATTACK_SPD:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.attackspeed * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.DODGE:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.DodgePoint * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.HIT:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.HitPoint * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.CRI_DAM:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.CriticalDamagePoint * (enhanceCount + _enhanceCnt));
+                            break;
+                        case STAT.CRI_RATE:
+                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.CriticalChancePoint * (enhanceCount + _enhanceCnt));
+                            break;
+                    }
+                }
+            }
+        }
+        return str;
+    }
+}
+[System.Serializable]
+public class DictionaryWrapper<TKey, TValue>
+{
+    public TKey key;
+    public TValue value;
+}
 public class SkillInfo
 {
     public int skillKey;

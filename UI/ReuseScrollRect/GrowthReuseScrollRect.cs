@@ -15,11 +15,12 @@ public class GrowthReuseScrollRect : ReuseScrollview<GrowthSlotCellData>
     public void CreateGrowthListSlot()
     {
         tableData = new List<GrowthSlotCellData>();
-        for (int i = 0; i < Tables.Ability.data.Count; i++) 
+        for (int i = 0; i < Tables.StatReinforce.data.Count; i++) 
         {
             GrowthSlotCellData cell = new GrowthSlotCellData();
             cell.Index = i;
             tableData.Add(cell);
+
         }
         InitTableView();
     }
