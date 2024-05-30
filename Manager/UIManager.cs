@@ -32,7 +32,7 @@ public class UIManager : Singleton<UIManager>
 
     public Stack<UIPopUp> openedPopupList = new Stack<UIPopUp>();
 
-    public bool isFullPopUp;
+    public FULL_POPUP_TYPE popupType = FULL_POPUP_TYPE.NONE;
     public int SkillSlotCount { get => skillIconImg.Count; }
     void Start()
     {
@@ -47,7 +47,7 @@ public class UIManager : Singleton<UIManager>
 
         if (Input.GetKeyDown(KeyCode.Escape) && openedPopupList.Count > 0)
         {
-            openedPopupList.Pop().ClosePopUp();
+            OnClickClosePopUp(openedPopupList.Peek());
         }
 
         for (int i = 0; i < skillCoolTimeImg.Count; i++)
@@ -56,9 +56,9 @@ public class UIManager : Singleton<UIManager>
         }
     }
 
-    public void UpdateGoodText(GOOD_TYPE _type, uint _amount)
+    public void UpdateGoodText(GOOD_TYPE _type, double _amount)
     {
-        if(isFullPopUp)
+        if(popupType != FULL_POPUP_TYPE.NONE)
         {
             fullPopUp.UpdateFullPopUPGoodsBox(_type, _amount);
         }
@@ -106,6 +106,11 @@ public class UIManager : Singleton<UIManager>
             openedPopupList.Push(_popup);
         }
         _popup.OpenPopUp();
+        if(popupType != FULL_POPUP_TYPE.NONE)
+        {
+            fullPopUp.ChildSetActive(true);
+            fullPopUp.SettingUI();
+        }
     }
     public void CloseAllPopUp()
     {
@@ -122,6 +127,8 @@ public class UIManager : Singleton<UIManager>
             closePopup.ClosePopUp();
         else
             _popup.ClosePopUp();
+
+
 
     }
 
@@ -152,8 +159,18 @@ public class UIManager : Singleton<UIManager>
                 skillCoolTimeText[_num].text = string.Format("{0:0.#}", skillCoolTime);
             }
             skillCoolTimeText[_num].enabled = skillCoolTime > 0;
-
         }
+    }
+
+
+    public void CheatAddGold()
+    {
+        AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD, 100000000);
+
+    }
+    public void CheatAddDia()
+    {
+        AccountManager.Instance.AddGoods(GOOD_TYPE.DIA, 100000);
     }
     #endregion
 }

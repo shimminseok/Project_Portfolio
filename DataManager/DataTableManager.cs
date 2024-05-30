@@ -19,7 +19,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Ability Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Ability Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -62,7 +62,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Character Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Character Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -83,7 +83,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Define Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Define Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -136,7 +136,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Dungeon Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Dungeon Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -177,7 +177,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in EnhancementData Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in EnhancementData Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -204,7 +204,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Goods Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Goods Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -227,7 +227,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in InGamePrice Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in InGamePrice Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -272,7 +272,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Item Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Item Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -297,7 +297,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Job Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Job Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -344,7 +344,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Monster Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Monster Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -381,7 +381,32 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Quest Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Quest Table Key : {0}",key);
+				return null;
+			}
+		}
+	}
+
+	public partial class Reward
+	{
+		/// <summary> 리워드 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		key {get; private set;}
+		/// <summary> 보상 아이템 타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			RewardItemType {get; private set;}
+		/// <summary> 아이템 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			[] ItemKey {get; private set;}
+		/// <summary> 아이템 수량 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		[] ItemQty {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<string, Reward> data = new Dictionary<string, Reward>();
+		public static Reward Get(string key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Reward Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -432,7 +457,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Skill Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Skill Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -455,7 +480,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Spawn Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Spawn Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -506,7 +531,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Stage Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Stage Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -541,7 +566,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in StatReinforce Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in StatReinforce Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -574,7 +599,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Summon Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Summon Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -595,7 +620,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in TextKey Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in TextKey Table Key : {0}",key);
 				return null;
 			}
 		}
@@ -626,7 +651,7 @@ namespace Tables
 				return data[key];
 			else
 			{
-				UnityEngine.Debug.LogWarning("This Key doesn't exist in Ticket Table");
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Ticket Table Key : {0}",key);
 				return null;
 			}
 		}

@@ -73,6 +73,16 @@ namespace UI
             }
         }
 
+
+        protected void ResetCell()
+        {
+            int i = 0;
+            foreach (var cell in cells)
+            {
+                UpdateCellForIndex(cell, i++);
+
+            }
+        }
         /// <summary>
         /// 셀의 높이값을 리턴하는 함수
         /// </summary>
@@ -144,7 +154,7 @@ namespace UI
         /// </summary>
         /// <param name="_cell"></param>
         /// <param name="_index"></param>
-        void UpdateCellForIndex(ReuseCellData<T> _cell, int _index)
+        protected void UpdateCellForIndex(ReuseCellData<T> _cell, int _index)
         {
             // 셀에 대응하는 리스트 항목의 인덱스를 설정한다.
             _cell.Index = _index;
@@ -157,6 +167,7 @@ namespace UI
                 _cell.UpdateContent(tableData[_cell.Index]);
                 _cell.Height = GetCellHeightAtIndex(_cell.Index);
                 _cell.Widht = GetCellWidthAtIndex(_cell.Index);
+                _cell.m_data = tableData[_cell.Index];
             }
             else
             {

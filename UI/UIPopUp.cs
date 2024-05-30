@@ -19,7 +19,12 @@ public class UIPopUp : MonoBehaviour
     }
     public virtual void ClosePopUp()
     {
-        ChildSetActive(false );
+        ChildSetActive(false);
+        if (UIManager.Instance.popupType != FULL_POPUP_TYPE.NONE)
+        {   
+            UIManager.Instance.popupType = FULL_POPUP_TYPE.NONE;
+            UIManager.Instance.fullPopUp.ChildSetActive(false);
+        }
     }
     public virtual void OpenPopUp()
     {

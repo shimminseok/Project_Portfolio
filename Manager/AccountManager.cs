@@ -1,13 +1,6 @@
-using Newtonsoft.Json;
-using NPOI.OpenXmlFormats.Shared;
-using NPOI.Util;
-using System.Collections;
 using System.Collections.Generic;
-using Tables;
-using UnityEngine;
 using System.Linq;
-using Unity.VisualScripting;
-using Newtonsoft.Json.Linq;
+using UnityEngine;
 
 
 
@@ -17,44 +10,59 @@ public class AccountManager : Singleton<AccountManager>
     int playerLevel = 100;
     List<int> growthLevelList = new List<int>();
     Dictionary<ITEM_TYPE, List<InvenItemInfo>> hasItemDictionary = new Dictionary<ITEM_TYPE, List<InvenItemInfo>>();
-    uint gold = 0;
-    uint dia = 0;
+    double gold = 0;
+    double dia = 0;
     public int PlayerLevel { get { return playerLevel; } set => playerLevel = value; }
-    public int CurStageKey { get => curStageKey;    set => curStageKey = value; }
+    public int CurStageKey { get => curStageKey; set => curStageKey = value; }
 
     string[] CurrencyUnits = new string[] { "", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" };
-    
+
     public Dictionary<ITEM_TYPE, List<InvenItemInfo>> HasItemDictionary => hasItemDictionary;
 
     int[] summonCount = Enumerable.Repeat(0, 4).ToArray();
-    
+    int[] summonRewardLevel = Enumerable.Repeat(1, 4).ToArray();
 
-    public int[] SummonLevel => summonCount;
+    public int[] SummonCount => summonCount;
+    public int[] SummonRewardLevel => summonRewardLevel;
     public List<int> GrowthLevelList
     {
         get => growthLevelList;
         set => growthLevelList = value;
     }
-    public ulong Gold => gold;
-    public ulong Dia => dia;
+    public double Gold
+    {
+        get { return gold; }
+        set 
+        {
+            gold = value;
+            UIManager.instance.UpdateGoodText(GOOD_TYPE.GOLD,gold);
+            PlayerPrefs.SetInt("Gold", (int)gold);
+        }
+    }
+    public double Dia
+    {
+        get { return dia; }
+        set
+        {
+            dia = value;
+            UIManager.instance.UpdateGoodText(GOOD_TYPE.DIA, dia);
+            PlayerPrefs.SetInt("Dia", (int)dia);
+        }
+    }
 
     void Start()
     {
-        dia = (uint)PlayerPrefs.GetInt("Dia", 0);
-        gold = (uint)PlayerPrefs.GetInt("Gold", 0);
+        Dia = (uint)PlayerPrefs.GetInt("Dia", 0);
+        Gold = (uint)PlayerPrefs.GetInt("Gold", 0);
         string invenData = PlayerPrefs.GetString("Inventory", string.Empty);
-        if(!string.IsNullOrEmpty(invenData))
+        if (!string.IsNullOrEmpty(invenData))
         {
-            hasItemDictionary = DictionaryJsonUtility.FromJson<ITEM_TYPE,List<InvenItemInfo>>(invenData);
+            hasItemDictionary = DictionaryJsonUtility.FromJson<ITEM_TYPE, List<InvenItemInfo>>(invenData);
         }
-        AddGoods(GOOD_TYPE.GOLD, 1000000000);
-
-
     }
 
-    public void UseGoods(GOOD_TYPE _type, uint _amount, out bool _isEnough)
+    public void UseGoods(GOOD_TYPE _type, ulong _amount, out bool _isEnough)
     {
-        uint goods = 0;
         switch (_type)
         {
             case GOOD_TYPE.DIA:
@@ -63,9 +71,7 @@ public class AccountManager : Singleton<AccountManager>
                     _isEnough = false;
                     return;
                 }
-                dia -= _amount; // 다이아 사용
-                goods = dia;
-                PlayerPrefs.SetInt("Dia", (int)dia);
+                Dia -= _amount; // 다이아 사용
                 break;
             case GOOD_TYPE.GOLD:
                 if (gold < _amount)
@@ -73,32 +79,23 @@ public class AccountManager : Singleton<AccountManager>
                     _isEnough = false;
                     return;
                 }
-                gold -= _amount; // 골드 사용
-                goods = gold;
-                PlayerPrefs.SetInt("Gold", (int)gold);
+                Gold -= _amount; // 골드 사용
                 break;
         }
         _isEnough = true;
-        UIManager.Instance.UpdateGoodText(_type, goods);
 
     }
-    public void AddGoods(GOOD_TYPE _type, uint _amount)
+    public void AddGoods(GOOD_TYPE _type, double _amount)
     {
-        uint goods = 0;
         switch (_type)
         {
             case GOOD_TYPE.DIA:
-                dia += _amount;
-                goods = dia;
-                PlayerPrefs.SetInt("Dia", (int)dia);
+                Dia += _amount;
                 break;
             case GOOD_TYPE.GOLD:
-                gold += _amount;
-                goods = gold;
-                PlayerPrefs.SetInt("Gold", (int)gold);
+                Gold += _amount;
                 break;
         }
-        UIManager.Instance.UpdateGoodText(_type, goods);
     }
 
     public string ToCurrencyString(double number)
@@ -168,9 +165,9 @@ public class AccountManager : Singleton<AccountManager>
 
     public InvenItemInfo GetHasInvenItem(Tables.Item _item)
     {
-        hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType,out List<InvenItemInfo> list);
+        hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType, out  List<InvenItemInfo> list);
         InvenItemInfo itemInfo = new InvenItemInfo();
-        if (list.Count > 0)
+        if (list != null && list.Count > 0)
         {
             itemInfo = list.Find(x => x.key == _item.key);
             if (itemInfo == null)
@@ -190,7 +187,7 @@ public class AccountManager : Singleton<AccountManager>
         double count = summonCount[(int)_type];
         uint demandCnt = 0;
         int level = 1;
-        while(count >= demandCnt)
+        while (count >= demandCnt)
         {
             switch (_type)
             {
@@ -205,30 +202,32 @@ public class AccountManager : Singleton<AccountManager>
                     break;
             }
             Tables.InGamePrice ingameTb = Tables.InGamePrice.Get(tbKey);
-            count -= ingameTb.demandGoodsQty;
-            demandCnt = ingameTb.demandGoodsQty;
-            if (count >= 0)
-                level++;
+            if (ingameTb != null)
+            {
+                count -= ingameTb.demandGoodsQty;
+                demandCnt = ingameTb.demandGoodsQty;
+                if (count >= 0)
+                    level++;
+            }
         }
         return level;
     }
     public void GetEquipItem(ITEM_TYPE _type, InvenItemInfo _info)
     {
-        _info.count = 1;
-        if(hasItemDictionary.ContainsKey(_type))
+        if (hasItemDictionary.ContainsKey(_type))
         {
             InvenItemInfo invenItem = hasItemDictionary[_type].Find(x => x.key == _info.key);
 
             if (invenItem != null)
             {
-                invenItem.count++;
+                invenItem.count += _info.count;
             }
             else
                 hasItemDictionary[_type].Add(_info);
         }
         else
         {
-            hasItemDictionary.Add(_type,new List<InvenItemInfo> { _info });
+            hasItemDictionary.Add(_type, new List<InvenItemInfo> { _info });
         }
     }
     private void OnApplicationQuit()

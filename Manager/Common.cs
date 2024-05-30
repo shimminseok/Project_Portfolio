@@ -70,6 +70,11 @@ public enum SPRITE_TYPE
     ITEM_GRADE,
     ITEM_ICON
 }
+public enum ITEM_CATEGORY
+{
+    GOODS = 1,
+    ITEM = 2
+}
 public enum STAT
 {
     ATTACK,
@@ -92,7 +97,13 @@ public enum SUMMON_TYPE
 public enum SLOT_TYPE
 {
     INVENITEM,
-    SUMMON_RESULT
+    SUMMON_RESULT,
+    REWARD
+}
+public enum FULL_POPUP_TYPE
+{
+    NONE,
+    SUMMON,
 }
 #endregion
 #region [Interface]
@@ -195,7 +206,7 @@ public class InvenSlotCellData
 public class InvenItemInfo
 {
     public int key;
-    public int count = 0;
+    public uint count = 0;
     public int enhanceCount = 0;
 
     public bool isEquipped = false;
@@ -338,6 +349,8 @@ public class InvenItemInfo
         }
         return str;
     }
+
+    public bool IsEmpty => key == 0;
 }
 [System.Serializable]
 public class DictionaryWrapper<TKey, TValue>

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +18,7 @@ public class UIInventory : UIPopUp
     
 
     int currentItemTab;
+
     void Awake()
     {
         if(instance == null)
@@ -35,7 +37,10 @@ public class UIInventory : UIPopUp
     }
     public override void ClosePopUp()
     {
+
         base.ClosePopUp();
+
+
     }
 
 
@@ -55,7 +60,13 @@ public class UIInventory : UIPopUp
         }
 
         scrollRect.StopMovement();
-        scrollRect.content.anchoredPosition = Vector2.zero;
+    }
+    public void UpdateInvenSlot()
+    {
+        foreach (var cells in invenitemScollRect.Cells)
+        {
+            cells.UpdateContent(cells.m_data);
+        }
     }
 
 
@@ -63,6 +74,7 @@ public class UIInventory : UIPopUp
     {
         itemDetailPopup.m_invenItem = _itemInfo;
         UIManager.Instance.OnClickOpenPopUp(itemDetailPopup);
+
     }
 
 }

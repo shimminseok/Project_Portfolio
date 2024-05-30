@@ -9,6 +9,7 @@ namespace UI
         public RectTransform CachedRectTransform => GetComponent<RectTransform>();
 
         public int Index { get; set; }
+        public T m_data;
         public float Height
         {
             get { return CachedRectTransform.sizeDelta.y; }

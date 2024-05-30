@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Tables;
 using TMPro;
+using UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,6 +25,7 @@ public class PopupItemDetail : UIPopUp
     bool isHoldding = false;
 
     int enhanceCount;
+
     void Update()
     {
         if (isHoldding)
@@ -71,6 +73,8 @@ public class PopupItemDetail : UIPopUp
             enhanceCostText.text = AccountManager.Instance.ToCurrencyString(10000);
 
             equipText.text = _item.isEquipped ? "¿Â¬¯¡ﬂ" : "¿Â¬¯«œ±‚";
+
+            UIInventory.instance.UpdateInvenSlot();
         }
     }
 
@@ -78,10 +82,10 @@ public class PopupItemDetail : UIPopUp
     {
         PlayerController.Instance.EquipItem(m_invenItem);
         SetItemDetailInfo(m_invenItem);
+
     }
     public void OnClickEnhanceBtn()
     {
-        bool isEnougt = false;
 
         Tables.Item itemTb = Tables.Item.Get(m_invenItem.key);
         if (itemTb != null)
@@ -92,17 +96,17 @@ public class PopupItemDetail : UIPopUp
                 InGamePrice ingamePriceTb = InGamePrice.Get(enhanceData.inGamePriceKey);
                 if (ingamePriceTb != null)
                 {
-                    AccountManager.Instance.UseGoods((GOOD_TYPE)ingamePriceTb.demandGoodsType, ingamePriceTb.demandGoodsQty, out isEnougt);
+                    AccountManager.Instance.UseGoods((GOOD_TYPE)ingamePriceTb.demandGoodsType, ingamePriceTb.demandGoodsQty, out bool isEnougt);
+                    if (!isEnougt)
+                    {
+                        ReleaseEnhanceBtn();
+                        return;
+                    }
+                    isHoldding = true;
+                    enhanceCount++;
+                    m_invenItem.enhanceCount++;
+                    SetItemDetailInfo(m_invenItem);
                 }
-                if (!isEnougt)
-                {
-                    ReleaseEnhanceBtn();
-                    return;
-                }
-                isHoldding = true;
-                enhanceCount++;
-                m_invenItem.enhanceCount++;
-                SetItemDetailInfo(m_invenItem);
             }
         }
     }
@@ -111,5 +115,6 @@ public class PopupItemDetail : UIPopUp
         isHoldding = false;
         enhanceCount = 0;
         SetItemDetailInfo(m_invenItem);
+
     }
 }

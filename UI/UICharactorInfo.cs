@@ -4,11 +4,16 @@ using UnityEngine;
 
 public class UICharactorInfo : UIPopUp
 {
+    public static UICharactorInfo instance;
     [SerializeField] List<ItemSlot> equippedItemSlot =new List<ItemSlot>();
 
 
 
-
+    void Awake()
+    {
+        if(instance == null)
+            instance = this;
+    }
     private void Start()
     {
         ChildSetActive(false);
@@ -34,6 +39,6 @@ public class UICharactorInfo : UIPopUp
 
     public void SetEquippengItemSlot(int _index)
     {
-        equippedItemSlot[_index].SetItemSlotInfo(SLOT_TYPE.INVENITEM,PlayerController.Instance.EquipmentItem[_index].key);
+        equippedItemSlot[_index].SetItemSlotInfo(SLOT_TYPE.INVENITEM,PlayerController.Instance.EquipmentItem[_index]);
     }
 }

@@ -122,6 +122,13 @@ public static class DataTableLoader
 					Debug.Log("Quest is loaded");
 				}
 				break;
+			case "Reward":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Reward.data = json.GetDeserializedObject("value", new Dictionary<string, Tables.Reward>());
+					Debug.Log("Reward is loaded");
+				}
+				break;
 			case "Skill":
 				{
 					JObject json = JObject.Parse(txt.text);

@@ -24,4 +24,6 @@ public class GrowthReuseScrollRect : ReuseScrollview<GrowthSlotCellData>
         }
         InitTableView();
     }
+
+
 }

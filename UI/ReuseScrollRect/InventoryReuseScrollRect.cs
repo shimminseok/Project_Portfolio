@@ -24,4 +24,8 @@ public class InventoryReuseScrollRect : ReuseScrollview<InvenSlotCellData>
         }
         InitTableView();
     }
+    public void ResetScrollRect()
+    {
+        ResetCell();
+    }
 }

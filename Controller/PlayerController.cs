@@ -213,7 +213,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
 
-    public InvenItemInfo[] EquipmentItem 
+    public InvenItemInfo[] EquipmentItem
     {
         get => equipItem;
     }
@@ -583,15 +583,22 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         double returnValue = 0;
         for (int i = 0; i < equipItem.Length; i++)
         {
+            if (equipItem[i].IsEmpty)
+                continue;
+
             Tables.Item itemTb = Item.Get(equipItem[i].key);
-            for (int j = 0; j < itemTb.Ability.Length; j++)
+            if(itemTb != null)
             {
-                if (_stat == (STAT)itemTb.Ability[j])
+                for (int j = 0; j < itemTb.Ability.Length; j++)
                 {
-                    returnValue += itemTb.AbilityValue[i];
-                    break;
+                    if (_stat == (STAT)itemTb.Ability[j])
+                    {
+                        returnValue += itemTb.AbilityValue[i];
+                        break;
+                    }
                 }
             }
+
         }
 
         return returnValue;
@@ -600,13 +607,19 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public void EquipItem(InvenItemInfo _item)
     {
         Tables.Item itemTb = Item.Get(_item.key);
+        if (!equipItem[itemTb.ItemType].IsEmpty)
+            DequipItem(itemTb.ItemType);
+
+
         _item.isEquipped = true;
         equipItem[itemTb.ItemType] = _item;
+        UICharactorInfo.instance.SetEquippengItemSlot(itemTb.ItemType);
     }
 
     public void DequipItem(int _index)
     {
         equipItem[_index].isEquipped = false;
         equipItem[_index] = new InvenItemInfo();
+        UICharactorInfo.instance.SetEquippengItemSlot(_index);
     }
 }

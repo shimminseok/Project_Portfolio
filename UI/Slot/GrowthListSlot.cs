@@ -31,10 +31,9 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
     }
     public void OnClickGrowthLevelUp()
     {
-        bool isEnougt = false;
         int upgradeMultiple = (AccountManager.Instance.GrowthLevelList[Index] * (AccountManager.Instance.GrowthLevelList[Index] / 3000 + 1));
         uint cost = (uint)(m_StatReinforceTb.Price * upgradeMultiple);
-        AccountManager.Instance.UseGoods((GOOD_TYPE)m_StatReinforceTb.PriceType,cost,out isEnougt);
+        AccountManager.Instance.UseGoods((GOOD_TYPE)m_StatReinforceTb.PriceType,cost,out bool isEnougt);
         if (!isEnougt)
         {
             ReleaseGrowthLevelUp();
