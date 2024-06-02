@@ -1,7 +1,7 @@
+using NPOI.POIFS.Storage;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 
 #region [Enum]
 public enum CHARACTER_JOB
@@ -44,8 +44,8 @@ public enum OBJ_ANIMATION_STATE
     DIE,
     MOVE,
     ATTACK,
-    LESS_HP,
-
+    WIN,
+    READY,
 
     SKILL_1 = 101,
     SKILL_2
@@ -57,7 +57,7 @@ public enum GOOD_TYPE
 }
 public enum SKILL_TYPE
 {
-    CIRCLE,
+    CIRCLE = 1,
     BAR,
     ANGLE
 }
@@ -77,7 +77,7 @@ public enum ITEM_CATEGORY
 }
 public enum STAT
 {
-    ATTACK,
+    ATTACK = 1,
     HP,
     HP_REGEN,
     DEFENCE,
@@ -87,6 +87,12 @@ public enum STAT
     CRI_RATE,
     HIT,
     DODGE,
+}
+public enum STAT_TARGET_TYPE
+{
+    PLAYER = 1,
+    COLLEAGUE,
+    ALL
 }
 public enum SUMMON_TYPE
 {
@@ -105,6 +111,15 @@ public enum FULL_POPUP_TYPE
     NONE,
     SUMMON,
 }
+public enum GAME_STATE
+{
+    READY,
+    PLAYING,
+    WIN,
+    END,
+    BOSS,
+    LOADING
+}
 #endregion
 #region [Interface]
 public interface IAttackable
@@ -112,18 +127,21 @@ public interface IAttackable
     ObjectController Target { get; }
     double FinalDamage { get; }
     double Damage { get; }
-    float AttackSpd { get; set; }
-    float AttackRange { get; set; }
+    float AttackSpd { get; }
+    float AttackRange { get; }
     double CriDam { get; }
     float Accuracy { get; set; }
 
-    bool IsCri { get; set; }
+    bool IsCri { get; }
 
-    void InitAttackData();
     void SetDamageText();
     double SetAttackPow(float _attackPow);
     double CalculateAttackDamage();
-
+}
+public interface IAffectedGrowth
+{
+    Dictionary<STAT, int> GrowthLevelDic { get; }
+    double CalculateGrowthStat(STAT _stat);
 }
 public interface IHittable
 {
@@ -135,8 +153,7 @@ public interface IHittable
     double HPRegen { get; }
     float Defense { get; }
     float Dodge { get; }
-    TagController TagController { get; set; }
-    void InitHitData();
+    TagController TagController { get; }
     void UpdateHPUI();
     void SetDeadEvent();
     void GetDamage(double _damage);
@@ -145,9 +162,7 @@ public interface IHittable
 public interface IMoveable
 {
     bool IsMove { get; set; }
-    float MoveSpd { get; set; }
-    void InitMoveData();
-    void SetMoveSpeed(float _moveSpeed);
+    float MoveSpd { get; }
     void SetMoveEvent();
     void Move(Vector3 dir);
     void Rotate(Vector3 dir);
@@ -183,6 +198,7 @@ public interface IEquipableItem
     void DequipItem(int _index);
     double GetEquipItemAbilityValue(STAT _stat);
 }
+
 #endregion
 
 #region[Class]
@@ -206,7 +222,7 @@ public class InvenSlotCellData
 public class InvenItemInfo
 {
     public int key;
-    public uint count = 0;
+    public double count = 0;
     public int enhanceCount = 0;
 
     public bool isEquipped = false;
@@ -219,7 +235,7 @@ public class InvenItemInfo
         {
             for (int i = 0; i < itemTb.Ability.Length; i++)
             {
-                switch ((STAT)(itemTb.Ability[i] - 1))
+                switch ((STAT)itemTb.Ability[i])
                 {
                     case STAT.ATTACK:
                         str.Add(UIManager.Instance.GetText("AttackPoint"));
@@ -268,7 +284,7 @@ public class InvenItemInfo
             {
                 for (int i = 0; i < itemTb.Ability.Length; i++)
                 {
-                    switch ((STAT)(itemTb.Ability[i] - 1))
+                    switch ((STAT)itemTb.Ability[i])
                     {
                         case STAT.ATTACK:
                             str.Add(itemTb.AbilityValue[i] + enhanceData.atk * (enhanceCount + _enhanceCnt));
@@ -314,7 +330,7 @@ public class InvenItemInfo
             {
                 for (int i = 0; i < itemTb.PassiveEffect.Length; i++)
                 {
-                    switch ((STAT)(itemTb.PassiveEffect[i] - 1))
+                    switch ((STAT)itemTb.PassiveEffect[i])
                     {
                         case STAT.ATTACK:
                             str.Add(itemTb.PassiveEffectValue[i] + enhanceData.atk * (enhanceCount + _enhanceCnt));
@@ -375,6 +391,11 @@ public class SkillInfo
         skillKey = 0;
         skillLevel = 0;
     }
+}
+public class GrowthInfo
+{
+    public int key;
+    public int level;
 }
 [System.Serializable]
 public class Map
@@ -442,6 +463,39 @@ public class Node
     }
 }
 
+[System.Serializable]
+public class PlayerSaveData
+{
+    public int level = AccountManager.Instance.PlayerLevel;
+
+    public double gold = AccountManager.Instance.Gold;
+    public double dia = AccountManager.Instance.Dia;
+
+    public int stageKey = AccountManager.Instance.CurStageKey;
+
+    public string growhLevel = DictionaryJsonUtility.ToJson(PlayerController.Instance.GrowthLevelDic);
+    public string inventory = DictionaryJsonUtility.ToJson(AccountManager.Instance.HasItemDictionary);
+
+    public int[] summonCount = AccountManager.Instance.SummonCount;
+    public int[] summonRewardLevel = AccountManager.Instance.SummonRewardLevel;
+
+
+    public void LoadData()
+    {
+        AccountManager.Instance.PlayerLevel = level;
+
+        AccountManager.Instance.Gold = gold;
+        AccountManager.Instance.Dia = dia;
+
+        AccountManager.Instance.CurStageKey = stageKey;
+
+        PlayerController.Instance.GrowthLevelDic = DictionaryJsonUtility.FromJson<STAT,int>(growhLevel);
+        AccountManager.Instance.HasItemDictionary = DictionaryJsonUtility.FromJson<ITEM_TYPE, List<InvenItemInfo>>(inventory);
+        summonCount = AccountManager.Instance.SummonCount;
+        summonRewardLevel =AccountManager.Instance.SummonRewardLevel;
+    }
+
+}
 #endregion
 
 

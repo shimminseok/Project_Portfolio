@@ -42,7 +42,7 @@ public abstract class ObjectController : MonoBehaviour
     public List<IHittable> GetInCircleObjects(Transform _start, float _radius)
     {
         List<IHittable> hitObjs = new List<IHittable>();
-        Collider[] cols = Physics.OverlapSphere(_start.localPosition, _radius);
+        Collider[] cols = Physics.OverlapSphere(_start.localPosition + new Vector3(0,0.3f,0), _radius);
         for (int i = 0; i < cols.Length; i++)
         {
             IHittable hitObj = cols[i].GetComponent<IHittable>();

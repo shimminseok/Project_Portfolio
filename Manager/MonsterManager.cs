@@ -2,9 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Tables;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class MonsterManager : MonoBehaviour
 {
@@ -15,9 +13,17 @@ public class MonsterManager : MonoBehaviour
     public Tables.Stage currentStageTb;
 
     MonsterController bossMon;
+
+
     int genMonsterStep;
+    int stageStep = 1;
 
+    public bool isChallengeableBoss;
 
+    public MonsterController BossMon => bossMon;
+
+    public int GenMonsterStep => genMonsterStep;
+    public int StageStep => stageStep;
     void Awake()
     {
         if (instance == null)
@@ -25,13 +31,6 @@ public class MonsterManager : MonoBehaviour
     }
     void Start()
     {
-    }
-    void Update()
-    {
-        if(monsterList.Count <= 2)
-        {
-            CheckStageStep();
-        }
     }
 
     public void CreateMonsterPool(int _index, Vector3 _genPos, bool isBoss = false)
@@ -78,6 +77,7 @@ public class MonsterManager : MonoBehaviour
             {
                 bossMon = monsterCon;
                 monsterCon.SetMonster(_genPos, MONSTER_TYPE.BOSS);
+                monsterList.Add(monsterCon);
             }
         }
         else
@@ -86,44 +86,62 @@ public class MonsterManager : MonoBehaviour
         }
     }
 
-    public void CheckStageStep()
+    public void RemoveMonsterList(MonsterController _target)
+    {
+        monsterList.Remove(_target);
+
+        if (monsterList.Count == 0 && GameManager.Instance.GameState == GAME_STATE.PLAYING)
+        {
+            stageStep++;
+            MonsterRegen();
+        }
+    }
+
+    public void MonsterRegen()
     {
         currentStageTb = Stage.Get(AccountManager.Instance.CurStageKey);
-        if(currentStageTb != null)
+        if (currentStageTb != null)
         {
             genMonsterStep = currentStageTb.SpawnCount;
 
-            if (GameManager.Instance.stageStep >= genMonsterStep)
+            if (stageStep >= genMonsterStep && !isChallengeableBoss)
             {
-                //보스도전을 누르면 보스를 도전하는 형식으로
-                StartCoroutine(BossSpawn());
+                isChallengeableBoss = true;
+                ChallengeBoss();
             }
             else
             {
-                GameManager.Instance.stageStep = 0;
-            }
-            if(GameManager.Instance.stageStep == 0)
-            {
                 List<Vector3> spawnPoint = Navigation.Instance.monsterSpawnPoints.ToList();
-                for (int i = 0; i < genMonsterStep; i++)
+                for (int i = 0; i < 5; i++)
                 {
                     int randomPointIndex = Random.Range(0, spawnPoint.Count);
 
                     Tables.Spawn spwanTb = Tables.Spawn.Get(currentStageTb.SpawnGroup);
-                    if(spwanTb != null)
+                    if (spwanTb != null)
                     {
                         int spwanMonIndex = Random.Range(0, spwanTb.MonsterIndex.Length);
                         CreateMonsterPool(spwanTb.MonsterIndex[spwanMonIndex], spawnPoint[randomPointIndex]);
                     }
                 }
-
             }
-
+            UIManager.Instance.SetWaveProsessUI();
         }
     }
-
+    public void ChallengeBoss()
+    {
+        if (isChallengeableBoss)
+        {
+            StartCoroutine(BossSpawn());
+        }
+    }
     IEnumerator BossSpawn()
     {
-        yield return null;
+        stageStep = 1;
+        Vector3 genPos = new Vector3(Navigation.Instance.start.Position.x - 4, 0, Navigation.Instance.start.Position.z);
+        CreateMonsterPool(currentStageTb.BossIndex, genPos, true);
+        GameManager.Instance.ChangeGameState(GAME_STATE.BOSS);
+        yield return new WaitForSeconds(3f);
+        GameManager.Instance.ChangeGameState(GAME_STATE.PLAYING);
+
     }
 }

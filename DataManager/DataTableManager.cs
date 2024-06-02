@@ -392,7 +392,7 @@ namespace Tables
 		/// <summary> 리워드 키 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		key {get; private set;}
 		/// <summary> 보상 아이템 타입 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			RewardItemType {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public int			[] RewardItemType {get; private set;}
 		/// <summary> 아이템 키 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			[] ItemKey {get; private set;}
 		/// <summary> 아이템 수량 </summary>
@@ -445,9 +445,9 @@ namespace Tables
 		/// <summary> 캐스팅 FX </summary>
 		[Newtonsoft.Json.JsonProperty] public string		[] ActionFx {get; private set;}
 		/// <summary> 스킬 애니 </summary>
-		[Newtonsoft.Json.JsonProperty] public string		[] SkillAnimation {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public int			SkillAnimation {get; private set;}
 		/// <summary> 사운드 </summary>
-		[Newtonsoft.Json.JsonProperty] public string		[] Sound {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public string		Sound {get; private set;}
 
 		// 메인 저장소
 		public static Dictionary<int, Skill> data = new Dictionary<int, Skill>();
@@ -513,9 +513,7 @@ namespace Tables
 		/// <summary> 일반 몬스터 경험치 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			MonsterExp {get; private set;}
 		/// <summary> 스테이지 클리어 보상 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			StageClearReward {get; private set;}
-		/// <summary> 스테이지 최초 클리어 보상 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			StageFirstClearReward {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public string		StageClearReward {get; private set;}
 		/// <summary> 챕터 이름 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		ChapterName {get; private set;}
 		/// <summary> 스테이지 이름 </summary>
@@ -545,6 +543,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public string		NameText {get; private set;}
 		/// <summary>  </summary>
 		[Newtonsoft.Json.JsonProperty] public int			ReinforceType {get; private set;}
+		/// <summary> 적용 대상 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Target {get; private set;}
 		/// <summary> 스탯 타입 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			StatType {get; private set;}
 		/// <summary> 상승 값 </summary>

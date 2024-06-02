@@ -37,7 +37,7 @@ public class PoolManager : Singleton<PoolManager>
     }
     public void CreateTagPool()
     {
-        CreateObj("HP_Guage", POOL_TYPE.TAG, 20);
+        CreateObj("HP_Guage", POOL_TYPE.TAG, 30);
     }
     public void CreateObj(string _name, POOL_TYPE _poolType, int _count)
     {
@@ -68,20 +68,17 @@ public class PoolManager : Singleton<PoolManager>
                 case POOL_TYPE.EFFECT: path = string.Format("Effect/{0}", _name); break;
                 default: break;
             }
-
             poolObject[_name] = Resources.Load<GameObject>(path);
             poolObjects[_name] = new Queue<GameObject>();
             parent = new GameObject();
             parent.transform.parent = poolRoot;
             parent.name = string.Format("{0}Parent", _name);
         }
-
         if (poolObject[_name] == null)
         {
             Debug.LogError(string.Format("{0} in null in CreateObj", _name));
             return;
         }
-
         for (int i = 0; i < _count; i++)
         {
             GameObject pool = Instantiate(poolObject[_name], parent.transform);
@@ -96,8 +93,18 @@ public class PoolManager : Singleton<PoolManager>
                             if (monster.Prefabs == _name)
                             {
                                 monsterTb = monster;
-                                pool.GetComponent<MonsterController>().monsterTb = monsterTb;
-                                pool.transform.localScale *= monster.Scale;
+                                if (monsterTb != null)
+                                {
+                                    MonsterController monctrl = pool.GetComponent<MonsterController>();
+                                    if(monctrl == null)
+                                        monctrl = pool.AddComponent<MonsterController>();
+
+                                    monctrl.monsterTb = monsterTb;
+                                    pool.transform.localScale *= monster.Scale;
+                                }
+                                else
+                                    Debug.LogWarningFormat("Monster Table is Null");
+
 
                                 break;
                             }
@@ -107,11 +114,8 @@ public class PoolManager : Singleton<PoolManager>
                 case POOL_TYPE.MAP:
                     break;
                 case POOL_TYPE.TAG:
-                    {
-                    }
                     break;
                 case POOL_TYPE.EFFECT:
-                    pool.transform.localScale *= 0.001f;
                     break;
             }
             pool.transform.localPosition = Vector3.zero;
@@ -159,4 +163,5 @@ public class PoolManager : Singleton<PoolManager>
         go.SetActive(true);
         return go;
     }
+
 }

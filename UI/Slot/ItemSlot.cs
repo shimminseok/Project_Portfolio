@@ -61,20 +61,20 @@ public class ItemSlot : MonoBehaviour
         ActiveNotGetImg(false);
         ActiveNotiImg(false);
     }
-    void SetGoodsSlot(Tables.Goods _goods, uint _count)
+    void SetGoodsSlot(Tables.Goods _goods, double _count)
     {
         if (_goods != null)
         {
             itemIconImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_ICON, _goods.GoodsIcon);
             itemGradeBG.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, "item_bg_001");
-            hasCountTxt.text = $"x{_count}";
+            hasCountTxt.text = $"x{Utility.ToCurrencyString(_count)}";
 
             qualityImg.gameObject.SetActive(false);
             enhanceCountTxt.gameObject.SetActive(false);
             equippingTxt.SetActive(false);
         }
     }
-    void SetRewardItemSlot(int _key, uint _count)
+    void SetRewardItemSlot(int _key, double _count)
     {
         if (_key < 100)
         {

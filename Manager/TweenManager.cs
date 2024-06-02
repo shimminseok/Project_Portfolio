@@ -19,7 +19,10 @@ public class TweenManager : Singleton<TweenManager>
 {
     
 
-
+    public void StartTweenFunc(IEnumerator _co)
+    {
+        StartCoroutine(_co);
+    }
     public IEnumerator FadeOut(GameObject _go, float _alpha, float _time, float _delay = 0, UnityAction _action = null)
     {
         CanvasGroup render = _go.GetComponent<CanvasGroup>();
@@ -143,4 +146,35 @@ public class TweenManager : Singleton<TweenManager>
             }
         } while (_type == TweenType.LOOP || _type == TweenType.PINGPONG) ;
     }
+    public IEnumerator TweenAlpha(GameObject _target, float _startAlpha, float _endAlpha, float _time, TweenType _type = TweenType.NONE)
+    {
+        CanvasRenderer rederer = _target.GetComponent<CanvasRenderer>();
+        if(rederer != null)
+        {
+            rederer.SetAlpha(_startAlpha);
+            do
+            {
+                float time = 0;
+                while (time < _time)
+                {
+                    rederer.SetAlpha( Mathf.Lerp(_startAlpha, _endAlpha, time / _time));
+                    time += Time.deltaTime;
+                    yield return null;
+                }
+                if (_type == TweenType.PINGPONG)
+                {
+                    time = 0;
+                    while (time < _time)
+                    {
+                        rederer.SetAlpha(Mathf.Lerp(_endAlpha, _startAlpha, time / _time));
+                        time += Time.deltaTime;
+                        yield return null;
+                    }
+                }
+            } while (_type == TweenType.LOOP || _type == TweenType.PINGPONG);
+        }
+        
+    }
+
+
 }

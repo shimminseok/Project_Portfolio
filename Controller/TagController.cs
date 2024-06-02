@@ -1,15 +1,17 @@
-using NPOI.POIFS.Properties;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using JetBrains.Annotations;
 
 public class TagController : MonoBehaviour
 {
     [SerializeField] Image hpGauge;
     [SerializeField] ObjectController targetObj;
     [SerializeField] Vector2 offset;
+    [SerializeField] List<TextMeshProUGUI> damageFontList;
+
 
     RectTransform parent;
     Camera mainCamera;
@@ -30,9 +32,11 @@ public class TagController : MonoBehaviour
         targetObj = null;
         hpGauge.fillAmount = 1;
         hpGauge.color = Color.white;
+        damageFontList.ForEach(x => x.gameObject.SetActive(false));
     }
     public void SetTag(ObjectController _target)
     {
+        InitTag();
         targetObj = _target;
         switch (targetObj.objType)
         {
@@ -46,19 +50,50 @@ public class TagController : MonoBehaviour
         transform.SetParent(TagManager.Instance.tagCanvas.transform,false);
         transform.localScale = Vector3.one;
     }
-    public void UpdateHPUI()
+
+    void OnDisable()
+    {
+        StopAllCoroutines();
+    }
+    public void UpdateHPUI(double _max, double _cur)
     {
         if (targetObj != null)
         {
-            switch(targetObj.objType)
-            {
-                case OBJ_TYPE.PLAYER:
-                    {
-                        hpGauge.fillAmount  = (float)(PlayerController.Instance.CurHP / PlayerController.Instance.MaxHP);
-                    }
-                    break;
-            }
+            hpGauge.fillAmount = (float)(_cur / _max);
         }
     }
+
+    public void SetDamageFontText(double _damage)
+    {
+        TextMeshProUGUI text = damageFontList.Find(x => x.gameObject.activeSelf == false);
+        if (text == null)
+        {
+            text = Instantiate(damageFontList[0],transform);
+            damageFontList.Add(text);
+        }
+
+        text.gameObject.SetActive(true);
+        text.text = Utility.ToCurrencyString(_damage);
+        switch(targetObj.objType)
+        {
+            case OBJ_TYPE.PLAYER:
+                text.color = Color.red;
+                break;
+            case OBJ_TYPE.MONSTER:
+                text.color = Color.yellow;
+                break;
+        }
+        if(gameObject.activeSelf)
+        {
+            StartCoroutine(TweenManager.Instance.TweenMove(text.rectTransform, text.rectTransform.localPosition, text.rectTransform.localPosition + new Vector3(0, 30, 0), 1, 0, TweenType.NONE, () =>
+            {
+                text.gameObject.SetActive(false);
+                text.rectTransform.localPosition = Vector3.zero;
+                text.alpha = 1f;
+            }));
+            StartCoroutine(TweenManager.Instance.TweenAlpha(text, 1, 0, 0.5f));
+        }
+    }
+
 
 }

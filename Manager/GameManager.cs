@@ -1,23 +1,41 @@
-using System.Collections;
-using System.Collections.Generic;
-using Tables;
 using UnityEngine;
-using UnityEngine.Jobs;
+using System.Linq;
 
 public class GameManager : Singleton<GameManager>
 {
     public JoystickController joystickController;
+
+
     float gameSpeed = 1;
-
-    public int stageStep;
-
     public bool isAuto = true;
-
+    GAME_STATE gameState;
 
     public float GameSpeed { get { return gameSpeed; } }
-    public void BossChallenge()
-    {
 
+    public GAME_STATE GameState { get { return gameState; } }
+
+    void Start()
+    {
+        ChangeGameState(GAME_STATE.LOADING);
+    }
+
+    public void ChangeGameState(GAME_STATE _state)
+    {
+        gameState = _state;
+
+        switch(gameState)
+        {
+            case GAME_STATE.PLAYING:
+                {
+                }
+                break;
+            case GAME_STATE.WIN:
+                UIStageClear.instance.StageClear();
+                break;
+            case GAME_STATE.LOADING:
+                UIManager.Instance.LoadingUISet();
+                break;
+        }
     }
     public void SetGameSpeed(float _speed)
     {
@@ -27,32 +45,54 @@ public class GameManager : Singleton<GameManager>
     {
         if (_rewardTb == null)
         {
+            Debug.LogWarning("Get Reward Fail");
             _result = false;
             return;
         }
-        switch((ITEM_CATEGORY)_rewardTb.RewardItemType)
+        for (int i = 0; i < _rewardTb.RewardItemType.Length; i++)
         {
-            case ITEM_CATEGORY.GOODS:
-                for (int i = 0; i < _rewardTb.ItemKey.Length; i++)
-                {
-                    AccountManager.Instance.AddGoods((GOOD_TYPE)_rewardTb.ItemKey[i], _rewardTb.ItemQty[i]);
-                }
-                break;
-            case ITEM_CATEGORY.ITEM:
-                for (int i = 0; i < _rewardTb.ItemKey.Length; i++)
-                {
-                    Tables.Item itemTb = Tables.Item.Get(_rewardTb.ItemKey[i]);
-                    if(itemTb != null)
+            switch ((ITEM_CATEGORY)_rewardTb.RewardItemType[i])
+            {
+                case ITEM_CATEGORY.GOODS:
+                    for (int j = 0; j < _rewardTb.ItemKey.Length; j++)
                     {
-                        InvenItemInfo iteminfo = new InvenItemInfo();
-                        iteminfo.key = _rewardTb.ItemKey[i];
-                        iteminfo.count = (uint)_rewardTb.ItemQty[i];
-                        AccountManager.Instance.GetEquipItem((ITEM_TYPE)itemTb.ItemType,iteminfo);
+                        AccountManager.Instance.AddGoods((GOOD_TYPE)_rewardTb.ItemKey[j], _rewardTb.ItemQty[j]);
                     }
-                }
-                break;
+                    break;
+                case ITEM_CATEGORY.ITEM:
+                    for (int j = 0; j < _rewardTb.ItemKey.Length; j++)
+                    {
+                        Tables.Item itemTb = Tables.Item.Get(_rewardTb.ItemKey[j]);
+                        if (itemTb != null)
+                        {
+                            InvenItemInfo iteminfo = new InvenItemInfo();
+                            iteminfo.key = _rewardTb.ItemKey[j];
+                            iteminfo.count = (uint)_rewardTb.ItemQty[j];
+                            AccountManager.Instance.GetEquipItem((ITEM_TYPE)itemTb.ItemType, iteminfo);
+                        }
+                    }
+                    break;
+            }
         }
         _result = true;
     }
+
+    public int GetNextStage()
+    {
+        bool check = false;
+        foreach(var key in Tables.Stage.data.Keys)
+        {
+            if (AccountManager.Instance.CurStageKey == Tables.Stage.data.Last().Key)
+                return Tables.Stage.data.Last().Key;
+
+            if (check)
+                return key;
+
+            if(key == AccountManager.Instance.CurStageKey)
+                check = true;
+        }
+        return AccountManager.Instance.CurStageKey;
+    }
+
 
 }

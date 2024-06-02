@@ -1,11 +1,5 @@
-using NPOI.XWPF.UserModel;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Tables;
-using TMPro;
-using Unity.VisualScripting;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class MonsterController : ObjectController, IAttackable, IMoveable, IHittable
@@ -39,64 +33,61 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     bool isDead;
 
 
-    public float MoveSpd 
-    { 
-        get => moveSpeed; 
-        set => moveSpeed = value; 
+    public float MoveSpd
+    {
+        get => moveSpeed;
     }
-    public float GenTime 
-    { 
-        get => genTime; 
-        set => genTime = value; 
+    public float GenTime
+    {
+        get => genTime;
+        set => genTime = value;
     }
     public bool IsDead
-    { 
-        get =>  isDead; 
-        set => isDead = value; 
+    {
+        get => isDead;
+        set => isDead = value;
     }
-    public double MaxHP 
-    { 
-        get => maxHp; 
-        set => maxHp = value; 
+    public double MaxHP
+    {
+        get => maxHp;
+        set => maxHp = value;
     }
-    public double CurHP 
-    { 
-        get => curHp; 
-        set => curHp = value; 
+    public double CurHP
+    {
+        get => curHp;
+        set => curHp = value;
     }
-    public double HPRegen 
-    { 
-        get => hpRegen; 
-        set => hpRegen = value; 
+    public double HPRegen
+    {
+        get => hpRegen;
+        set => hpRegen = value;
     }
-    public float Defense 
-    { 
-        get => defense; 
+    public float Defense
+    {
+        get => defense;
         set => defense = value;
     }
-    public double Damage 
-    { 
-        get => damage; 
-        set => damage = value; 
+    public double Damage
+    {
+        get => damage;
+        set => damage = value;
     }
     public double FinalDamage
     {
         get => finalDamage;
     }
-    public float AttackSpd 
-    { 
-        get =>attackSpd; 
-        set => attackSpd = value; 
+    public float AttackSpd
+    {
+        get => attackSpd;
     }
-    public float AttackRange 
-    { 
-        get => attackRange; 
-        set => attackRange = value; 
+    public float AttackRange
+    {
+        get => attackRange;
     }
     public double CriDam
-    { 
+    {
         get => criDam;
-        set => criDam = value; 
+        set => criDam = value;
     }
     public float Accuracy
     {
@@ -108,20 +99,19 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         get => dodge;
         set => dodge = value;
     }
-    public bool IsCri 
-    { 
+    public bool IsCri
+    {
         get => isCri;
-        set => isCri = value; 
+        set => isCri = value;
     }
-    public bool IsMove 
-    { 
-        get => throw new System.NotImplementedException(); 
-        set => throw new System.NotImplementedException(); 
+    public bool IsMove
+    {
+        get => throw new System.NotImplementedException();
+        set => throw new System.NotImplementedException();
     }
     public TagController TagController
     {
         get => m_TagController;
-        set => m_TagController = value;
     }
     public ObjectController Target => targetObj;
 
@@ -133,38 +123,40 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         ObjectGetComponent();
         objType = OBJ_TYPE.MONSTER;
     }
-    void Start()
-    {
-    }
-    void Update()
-    {
-
-    }
     void FixedUpdate()
     {
-        if(isDead) 
+        if (isDead)
             return;
 
-        if(targetObj != null)
+        if (GameManager.Instance.GameState == GAME_STATE.END || GameManager.Instance.GameState == GAME_STATE.READY)
         {
-            if (targetObj.IsDead)
+            ChangeState(OBJ_ANIMATION_STATE.IDLE);
+        }
+        else if(GameManager.Instance.GameState == GAME_STATE.BOSS)
+        {
+            ChangeState(OBJ_ANIMATION_STATE.READY);
+        }
+        else
+        {
+            if (targetObj != null)
             {
-                FindEnemy();
-            }
-            else
-            {
-                if (GetTargetDistance(targetObj.transform) > attackRange)
+                if (targetObj.IsDead)
                 {
-                    Move(Target.transform.localPosition - transform.localPosition);
+                    FindEnemy();
                 }
                 else
                 {
-                    Attack();
+                    if (GetTargetDistance(targetObj.transform) > attackRange)
+                    {
+                        Move(Target.transform.localPosition - transform.localPosition);
+                    }
+                    else
+                    {
+                        Attack();
+                    }
                 }
             }
         }
-
-
     }
 
     public override void Init()
@@ -177,11 +169,13 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         damage = monsterTb.Attack;
         targetObj = FindObjectOfType(typeof(PlayerController)) as PlayerController;
         aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
-
+        SetFace(OBJ_ANIMATION_STATE.IDLE);
         m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
         m_TagController.SetTag(this);
-        InitMoveData();
-        InitAttackData();
+
+        attackSpd = monsterTb.AttackSpeed;
+        attackRange = monsterTb.AttackRange;
+        moveSpeed = monsterTb.MoveSpeed;
     }
     public void SetMonster(Vector3 _pos, MONSTER_TYPE _type)
     {
@@ -196,20 +190,6 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
         transform.localScale *= monsterTb.Scale;
 
-    }
-    public void InitAttackData()
-    {
-        attackSpd = monsterTb.AttackSpeed;
-        attackRange = monsterTb.AttackRange;
-    }
-
-    public void InitHitData()
-    {
-    }
-
-    public void InitMoveData()
-    {
-        moveSpeed = 3;
     }
     public void Move(Vector3 dir)
     {
@@ -265,13 +245,12 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         throw new System.NotImplementedException();
     }
-
     public void SetDeadEvent()
     {
         IsDead = true;
         CurHP = 0;
         uint gold = 0;
-        switch(monsterType)
+        switch (monsterType)
         {
             case MONSTER_TYPE.COMMON:
                 gold = MonsterManager.instance.currentStageTb.MonsterGold;
@@ -281,15 +260,16 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
                 break;
             case MONSTER_TYPE.BOSS:
                 //스테이지 클리어
+                GameManager.Instance.ChangeGameState(GAME_STATE.WIN);
+                MonsterManager.instance.isChallengeableBoss = false;
+                PlayerController.Instance.ChangeState(OBJ_ANIMATION_STATE.WIN);
+                UIManager.Instance.OnClickOpenPopUp(UIStageClear.instance);
                 break;
         }
-        PoolManager.Instance.PushObj(m_TagController.name, POOL_TYPE.TAG, m_TagController.gameObject);
-        AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD,gold);
+        AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD, gold);
         ChangeState(OBJ_ANIMATION_STATE.DIE);
         SetFace(OBJ_ANIMATION_STATE.DIE);
-        MonsterManager.instance.monsterList.Remove(this);
-
-        
+        MonsterManager.instance.RemoveMonsterList(this);
     }
 
     public void SetMoveEvent()
@@ -299,14 +279,9 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     }
 
-    public void SetMoveSpeed(float _moveSpeed)
-    {
-        throw new System.NotImplementedException();
-    }
-
     public void UpdateHPUI()
     {
-        throw new System.NotImplementedException();
+        TagController.UpdateHPUI(MaxHP, CurHP);
     }
 
     public float GetTargetDistance(Transform _target)
@@ -322,8 +297,9 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         double finalDam = Math.Truncate(_damage - defense);
         curHp -= finalDam <= 0 ? 1 : finalDam;
-        
-        Debug.LogFormat("Monster Name : {0}, Cur HP : {1}", gameObject.name, curHp);
+        TagController.SetDamageFontText(finalDam);
+
+        UpdateHPUI();
         if (curHp <= 0)
         {
             SetDeadEvent();
@@ -337,7 +313,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     }
     public void SetFace(OBJ_ANIMATION_STATE _state)
     {
-        switch(_state)
+        switch (_state)
         {
             case OBJ_ANIMATION_STATE.IDLE:
                 faceMaterial.SetTexture("_MainTex", face.Idleface);

@@ -17,7 +17,6 @@ public class JsonDataArray<TKey, TValue>
 }
 public static class DictionaryJsonUtility
 {
-
     public static string ToJson<TKey, TValue>(Dictionary<TKey,TValue> jsonDicData)
     {
         List<DataDictionary<TKey, TValue>> dataList = new List<DataDictionary<TKey, TValue>>();

@@ -17,7 +17,7 @@ public class InvenItemSlot : ReuseCellData<InvenSlotCellData>
         itemName.text = UIManager.Instance.GetText(_item.ItemName);
         itemSlot.SetItemSlotInfo(SLOT_TYPE.INVENITEM, itemInfo);
         itemCount.text = string.Format("{0}/5 ", itemInfo.count);
-        itemCountFillAmount.fillAmount = itemInfo.count / 5f;
+        itemCountFillAmount.fillAmount = (float)itemInfo.count / 5f;
     }
 
 

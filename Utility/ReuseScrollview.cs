@@ -94,12 +94,6 @@ namespace UI
             //셀마다 크기가 다를 경우 상속받은 클래스에서 재 구현
             return cellBase.GetComponent<RectTransform>().sizeDelta.y;
         }
-        protected virtual float GetCellWidthAtIndex(int _index)
-        {
-            //실제 값을 반환하는 처리는 상속한 클래스에서 구현
-            //셀마다 크기가 다를 경우 상속받은 클래스에서 재 구현
-            return cellBase.GetComponent<RectTransform>().sizeDelta.x;
-        }
         /// <summary>
         /// 스크롤할 내용 전체의 높이를 갱신하는 함수
         /// </summary>
@@ -166,7 +160,6 @@ namespace UI
                 _cell.gameObject.SetActive(true);
                 _cell.UpdateContent(tableData[_cell.Index]);
                 _cell.Height = GetCellHeightAtIndex(_cell.Index);
-                _cell.Widht = GetCellWidthAtIndex(_cell.Index);
                 _cell.m_data = tableData[_cell.Index];
             }
             else

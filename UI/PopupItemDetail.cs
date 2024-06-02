@@ -58,19 +58,19 @@ public class PopupItemDetail : UIPopUp
             for (int i = 0; i < passiveEffect_Name.Count; i++)
             {
                 passiveEffect_Name[i].text = _item.GetAbilityText()[i];
-                passiveEffect_Value[i].text = AccountManager.Instance.ToCurrencyString(_item.GetPassiveEffectValues()[i]);
+                passiveEffect_Value[i].text = Utility.ToCurrencyString(_item.GetPassiveEffectValues()[i]);
             }
 
             for (int i = 0; i < equippedEffect_Name.Count; i++)
             {
                 equippedEffect_Name[i].text = _item.GetAbilityText()[i];
-                string str = string.Format("{0} -> {1}", AccountManager.Instance.ToCurrencyString(_item.GetEquipEffectValues()[i]), AccountManager.Instance.ToCurrencyString(_item.GetEquipEffectValues(1)[i]));
+                string str = string.Format("{0} -> {1}", Utility.ToCurrencyString(_item.GetEquipEffectValues()[i]), Utility.ToCurrencyString(_item.GetEquipEffectValues(1)[i]));
                 equippedEffect_Value[i].text = str;
             }
 
 
 
-            enhanceCostText.text = AccountManager.Instance.ToCurrencyString(10000);
+            enhanceCostText.text = Utility.ToCurrencyString(10000);
 
             equipText.text = _item.isEquipped ? "¿Â¬¯¡ﬂ" : "¿Â¬¯«œ±‚";
 

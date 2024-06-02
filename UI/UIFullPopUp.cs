@@ -35,7 +35,7 @@ public class UIFullPopUp : MonoBehaviour
     }
     public void UpdateFullPopUPGoodsBox(GOOD_TYPE _type, double _amount)
     {
-        fullPopUpGoodsTextList[(int)_type - 1].text = AccountManager.Instance.ToCurrencyString(_amount);
+        fullPopUpGoodsTextList[(int)_type - 1].text = Utility.ToCurrencyString(_amount);
     }
     public void SettingUI()
     {

@@ -50,6 +50,10 @@ public class AnimationController : MonoBehaviour
                     }
                 }
                 break;
+            case OBJ_ANIMATION_STATE.WIN:
+                {
+                }
+                break;
             default:
                 animator.speed = GameManager.Instance.GameSpeed;
                 break;
@@ -118,6 +122,7 @@ public class AnimationController : MonoBehaviour
             case OBJ_TYPE.MONSTER:
                 MonsterController monsterCon = m_Controller as MonsterController;
                 PoolManager.Instance.PushObj(gameObject.name, POOL_TYPE.MONSTER, gameObject);
+                PoolManager.Instance.PushObj(monsterCon.TagController.name, POOL_TYPE.TAG, monsterCon.TagController.gameObject);
                 break;
         }
 

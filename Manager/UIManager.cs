@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -8,6 +9,7 @@ public class UIManager : Singleton<UIManager>
     [Header("ScriptableObj")]
     [SerializeField] List<SpriteScriptableObject> spriteScripObjList = new List<SpriteScriptableObject>();
 
+
     [Header("FullPopUp")]
     public UIFullPopUp fullPopUp;
 
@@ -15,8 +17,15 @@ public class UIManager : Singleton<UIManager>
     public Canvas tagCanvas;
 
     [Header("SystemMessage")]
+    [SerializeField] Image loadingBox;
     [SerializeField] Image systemMessageObj;
     [SerializeField] Text systemMessageTxt;
+
+    [Header("TopAnchor")]
+    [SerializeField] TextMeshProUGUI waveProcessText;
+    [SerializeField] Image bossChellangeBtn;
+    [SerializeField] Image processFillImg;
+
 
     [Header("RightTopAnchor")]
     [SerializeField] List<Text> goodsTextList;
@@ -49,7 +58,11 @@ public class UIManager : Singleton<UIManager>
         {
             OnClickClosePopUp(openedPopupList.Peek());
         }
-
+        if(Input.GetKeyDown(KeyCode.F10))
+        {
+            Debug.LogWarning("Reset Account");
+            PlayerPrefs.DeleteAll();
+        }
         for (int i = 0; i < skillCoolTimeImg.Count; i++)
         {
             UpdateSkillCoolTime(i);
@@ -63,13 +76,13 @@ public class UIManager : Singleton<UIManager>
             fullPopUp.UpdateFullPopUPGoodsBox(_type, _amount);
         }
         else
-            goodsTextList[(int)(_type - 1)].text = AccountManager.Instance.ToCurrencyString(_amount);
+            goodsTextList[(int)(_type - 1)].text = Utility.ToCurrencyString(_amount);
     }
 
     public void UpdateHPBarUI(double _max, double _cur)
     {
-        float pevAmount = hpBarImg.fillAmount;
-        TweenManager.Instance.TweenFill(hpBarImg, pevAmount, (float)(_cur / _max));
+        //float pevAmount = hpBarImg.fillAmount;
+        //TweenManager.Instance.TweenFill(hpBarImg, pevAmount, (float)(_cur / _max));
     }
 
     public void EquipSkill(int _num, int _skillkey)
@@ -83,7 +96,11 @@ public class UIManager : Singleton<UIManager>
     }
     public string GetText(string _key)
     {
-        string text = Tables.TextKey.Get(_key).Description;
+        string text = string.Empty;
+        Tables.TextKey textTb = Tables.TextKey.Get(_key);
+        if(textTb != null)
+            text = Tables.TextKey.Get(_key).Description;
+
         return text;
     }
     public Sprite GetSprite(SPRITE_TYPE _type, string _name)
@@ -97,6 +114,36 @@ public class UIManager : Singleton<UIManager>
         {
             StartCoroutine(TweenManager.Instance.FadeOut(systemMessageObj.gameObject, 0, _time, _delay, _action));
         }));
+    }
+    public void LoadingUISet()
+    {
+        loadingBox.raycastTarget = true;
+        StartCoroutine(TweenManager.Instance.FadeIn(loadingBox.gameObject, 1, 0.1f, 0, () =>
+        {
+            StartCoroutine(TweenManager.Instance.FadeOut(loadingBox.gameObject, 0, 2f, 0.5f, () =>
+            {
+                loadingBox.raycastTarget = false;
+                GameManager.instance.ChangeGameState(GAME_STATE.PLAYING);
+                MonsterManager.instance.MonsterRegen();
+            }));
+        }));
+    }
+    public void SetWaveProsessUI()
+    {
+        float fillAmount = 0f;
+        if(MonsterManager.instance.isChallengeableBoss)
+        {
+            waveProcessText.gameObject.SetActive(false);
+            fillAmount = 1;
+            waveProcessText.text = "보스 소환";
+        }
+        else
+        {
+            waveProcessText.gameObject.SetActive(true);
+            fillAmount = MonsterManager.instance.StageStep / MonsterManager.instance.GenMonsterStep;
+            waveProcessText.text = string.Format("웨이브 : {0} / {1}", MonsterManager.instance.StageStep, MonsterManager.instance.GenMonsterStep);
+        }
+        processFillImg.fillAmount = fillAmount;
     }
     #region[Button Event]
     public void OnClickOpenPopUp(UIPopUp _popup)
@@ -131,11 +178,9 @@ public class UIManager : Singleton<UIManager>
 
 
     }
-
-
     public void OnClickBossChallenge()
     {
-
+        MonsterManager.instance.ChallengeBoss();
     }
     public void OnClickAuto()
     {
@@ -161,16 +206,14 @@ public class UIManager : Singleton<UIManager>
             skillCoolTimeText[_num].enabled = skillCoolTime > 0;
         }
     }
-
-
     public void CheatAddGold()
     {
         AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD, 100000000);
-
     }
     public void CheatAddDia()
     {
         AccountManager.Instance.AddGoods(GOOD_TYPE.DIA, 100000);
     }
+
     #endregion
 }
