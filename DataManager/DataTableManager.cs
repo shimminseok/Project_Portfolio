@@ -313,6 +313,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public string		Prefabs {get; private set;}
 		/// <summary> 인게임 크기 </summary>
 		[Newtonsoft.Json.JsonProperty] public float		Scale {get; private set;}
+		/// <summary> 공격타입 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			AttackType {get; private set;}
 		/// <summary> 공격력 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			Attack {get; private set;}
 		/// <summary> 체력 </summary>
@@ -496,8 +498,10 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			Chapter {get; private set;}
 		/// <summary> 스테이지 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			Zone {get; private set;}
-		/// <summary> 스테이지 권장 전투력 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			Stage_Battle_Difficulty {get; private set;}
+		/// <summary> 스테이지 권장 공격력 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			 Stage_Recommend_Atk {get; private set;}
+		/// <summary> 스테이지 권장 방어력 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			 Stage_Recommend_Def {get; private set;}
 		/// <summary> 웨이브 개수 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			SpawnCount {get; private set;}
 		/// <summary> 보스 인덱스 </summary>

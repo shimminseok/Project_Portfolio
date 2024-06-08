@@ -6,7 +6,7 @@ public class GameManager : Singleton<GameManager>
     public JoystickController joystickController;
 
 
-    float gameSpeed = 1;
+    float gameSpeed = 2.9f;
     public bool isAuto = true;
     GAME_STATE gameState;
 

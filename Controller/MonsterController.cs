@@ -1,12 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Tables;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class MonsterController : ObjectController, IAttackable, IMoveable, IHittable
 {
     public Monster monsterTb;
-    public Face face;
-    [SerializeField] Material faceMaterial;
     PlayerController targetObj;
 
     TagController m_TagController;
@@ -33,6 +34,8 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     bool isDead;
 
 
+    List<Node> finalNodeList;
+    Node targetNode;
     public float MoveSpd
     {
         get => moveSpeed;
@@ -118,6 +121,9 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
 
+    Vector3 targetVec;
+
+    int monLevel = 1;
     private void Awake()
     {
         ObjectGetComponent();
@@ -132,7 +138,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         {
             ChangeState(OBJ_ANIMATION_STATE.IDLE);
         }
-        else if(GameManager.Instance.GameState == GAME_STATE.BOSS)
+        else if (GameManager.Instance.GameState == GAME_STATE.BOSS)
         {
             ChangeState(OBJ_ANIMATION_STATE.READY);
         }
@@ -169,7 +175,6 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         damage = monsterTb.Attack;
         targetObj = FindObjectOfType(typeof(PlayerController)) as PlayerController;
         aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
-        SetFace(OBJ_ANIMATION_STATE.IDLE);
         m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
         m_TagController.SetTag(this);
 
@@ -177,18 +182,17 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         attackRange = monsterTb.AttackRange;
         moveSpeed = monsterTb.MoveSpeed;
     }
-    public void SetMonster(Vector3 _pos, MONSTER_TYPE _type)
+    public void SetMonster(Vector3 _pos, MONSTER_TYPE _type, int _monLv)
     {
         monsterType = _type;
-        Init();
         Vector3 pos = UnityEngine.Random.insideUnitSphere;
         pos.y = 0;
         pos *= 2;
-
         transform.localPosition = pos;
         transform.localPosition += _pos;
-
         transform.localScale *= monsterTb.Scale;
+        monLevel = _monLv;
+        Init();
 
     }
     public void Move(Vector3 dir)
@@ -197,10 +201,34 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         if (isDead)
             return;
 
-        Vector3 monveVec = dir.normalized * MoveSpd;
-        Rotate(monveVec);
-        Vector3 tmpVec = Vector3.Lerp(transform.localPosition, transform.localPosition + monveVec, 0.01f);
-        transform.localPosition = tmpVec;
+        //³ëµå¿¡ µµÂøÇÏ¸é ³ëµå¸¦ ¹Ù²ãÁà¾ßÇÔ
+        finalNodeList = Navigation.Instance.FindPath(new Vector2(transform.localPosition.x, transform.localPosition.z), new Vector2(targetObj.transform.localPosition.x, targetObj.transform.localPosition.z));
+        
+        for (int i = 0; i < finalNodeList.Count; i++)
+        {
+            if (targetNode == null)
+            {
+                targetNode = finalNodeList.LastOrDefault();
+                break;
+            }
+            Vector3 tmpVec = new Vector3(transform.localPosition.x, transform.localPosition.z, 0);
+            if(tmpVec == finalNodeList[i].Position)
+            {
+                targetNode = finalNodeList[i - 1];
+                break;
+            }
+        }
+
+        if (targetNode != null)
+        {
+            targetVec = new Vector3(targetNode.Position.x, 0, targetNode.Position.y);
+            if (GetTargetDistance(targetVec) < 1)
+            {
+                finalNodeList.RemoveAt(finalNodeList.Count - 1);
+            }
+        }
+        transform.LookAt(targetVec);
+        transform.localPosition = Vector3.MoveTowards(transform.localPosition, targetVec, MoveSpd * Time.deltaTime);
         SetMoveEvent();
     }
     void Attack()
@@ -208,7 +236,6 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         if (aniCtrl.GetAniState != OBJ_ANIMATION_STATE.ATTACK)
         {
             ChangeState(OBJ_ANIMATION_STATE.ATTACK);
-            SetFace(OBJ_ANIMATION_STATE.ATTACK);
             Rotate(TargetDir);
         }
 
@@ -216,8 +243,9 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public override void ObjectGetComponent()
     {
         aniCtrl = GetComponent<AnimationController>();
-        faceMaterial = transform.GetChild(1).GetComponent<Renderer>().materials[1];
         rigi = GetComponent<Rigidbody>();
+        if (rigi == null)
+            rigi = gameObject.AddComponent<Rigidbody>();
         rigi.useGravity = false;
         rigi.mass = 2000;
         rigi.drag = 100;
@@ -268,14 +296,12 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         }
         AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD, gold);
         ChangeState(OBJ_ANIMATION_STATE.DIE);
-        SetFace(OBJ_ANIMATION_STATE.DIE);
         MonsterManager.instance.RemoveMonsterList(this);
     }
 
     public void SetMoveEvent()
     {
         ChangeState(OBJ_ANIMATION_STATE.MOVE);
-        SetFace(OBJ_ANIMATION_STATE.MOVE);
 
     }
 
@@ -287,6 +313,10 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public float GetTargetDistance(Transform _target)
     {
         return Vector3.Distance(transform.localPosition, _target.transform.localPosition);
+    }
+    public float GetTargetDistance(Vector3 _target)
+    {
+        return Vector3.Distance(transform.localPosition, _target);
     }
     public override void FindEnemy()
     {
@@ -310,23 +340,5 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         double finalDamage = Math.Truncate(isCri ? damage * 2 + CriDam : damage);
 
         return finalDamage;
-    }
-    public void SetFace(OBJ_ANIMATION_STATE _state)
-    {
-        switch (_state)
-        {
-            case OBJ_ANIMATION_STATE.IDLE:
-                faceMaterial.SetTexture("_MainTex", face.Idleface);
-                break;
-            case OBJ_ANIMATION_STATE.MOVE:
-                faceMaterial.SetTexture("_MainTex", face.WalkFace);
-                break;
-            case OBJ_ANIMATION_STATE.ATTACK:
-                faceMaterial.SetTexture("_MainTex", face.attackFace);
-                break;
-            case OBJ_ANIMATION_STATE.DIE:
-                faceMaterial.SetTexture("_MainTex", face.damageFace);
-                break;
-        }
     }
 }

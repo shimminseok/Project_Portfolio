@@ -20,7 +20,7 @@ namespace UI
                 CachedRectTransform.sizeDelta = sizeDelta;
             }
         }
-        public float Widht
+        public float Width
         {
             get { return CachedRectTransform.sizeDelta.x; }
             set

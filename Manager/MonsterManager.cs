@@ -70,13 +70,13 @@ public class MonsterManager : MonoBehaviour
 
             if (!isBoss)
             {
-                monsterCon.SetMonster(_genPos, MONSTER_TYPE.COMMON);
+                monsterCon.SetMonster(_genPos, MONSTER_TYPE.COMMON,currentStageTb.MonsterLv);
                 monsterList.Add(monsterCon);
             }
             else
             {
                 bossMon = monsterCon;
-                monsterCon.SetMonster(_genPos, MONSTER_TYPE.BOSS);
+                monsterCon.SetMonster(_genPos, MONSTER_TYPE.BOSS,currentStageTb.BossLv);
                 monsterList.Add(monsterCon);
             }
         }
@@ -99,6 +99,9 @@ public class MonsterManager : MonoBehaviour
 
     public void MonsterRegen()
     {
+        if (monsterList.Count > 0)
+            return;
+
         currentStageTb = Stage.Get(AccountManager.Instance.CurStageKey);
         if (currentStageTb != null)
         {
@@ -111,12 +114,12 @@ public class MonsterManager : MonoBehaviour
             }
             else
             {
-                List<Vector3> spawnPoint = Navigation.Instance.monsterSpawnPoints.ToList();
+                List<Vector3> spawnPoint = Navigation.Instance.monsterSpawnPoints.Keys.ToList();
                 for (int i = 0; i < 5; i++)
                 {
                     int randomPointIndex = Random.Range(0, spawnPoint.Count);
 
-                    Tables.Spawn spwanTb = Tables.Spawn.Get(currentStageTb.SpawnGroup);
+                    Tables.Spawn spwanTb = Tables.Spawn.Get(Navigation.Instance.monsterSpawnPoints[spawnPoint[randomPointIndex]]);
                     if (spwanTb != null)
                     {
                         int spwanMonIndex = Random.Range(0, spwanTb.MonsterIndex.Length);
@@ -137,7 +140,7 @@ public class MonsterManager : MonoBehaviour
     IEnumerator BossSpawn()
     {
         stageStep = 1;
-        Vector3 genPos = new Vector3(Navigation.Instance.start.Position.x - 4, 0, Navigation.Instance.start.Position.z);
+        Vector3 genPos = new Vector3(Navigation.Instance.start.Position.x - 10, 0, Navigation.Instance.start.Position.z + 10);
         CreateMonsterPool(currentStageTb.BossIndex, genPos, true);
         GameManager.Instance.ChangeGameState(GAME_STATE.BOSS);
         yield return new WaitForSeconds(3f);

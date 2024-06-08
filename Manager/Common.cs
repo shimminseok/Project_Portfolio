@@ -48,7 +48,13 @@ public enum OBJ_ANIMATION_STATE
     READY,
 
     SKILL_1 = 101,
-    SKILL_2
+    SKILL_3,
+    SKILL_4,
+    SKILL_5,
+    SKILL_6,
+    SKILL_7,
+    SKILL_8,
+    SKILL_9,
 }
 public enum GOOD_TYPE
 {
@@ -216,6 +222,19 @@ public class InvenSlotCellData
     public Tables.Item m_ItemTb;
 
     public int Index { get => index; set { index = value; } }
+}
+public class WorldMapSlotCellData
+{
+    int index;
+    public Tables.Stage m_StageTb;
+    public int Index { get => index; set { index = value; } }
+}
+public class WorldMapChapterCellData
+{
+    int index;
+    public int chapter;
+    public bool isSelected;
+    public int Index { get => index; set { index = value;} }
 }
 #endregion[]
 [Serializable]
@@ -400,12 +419,16 @@ public class GrowthInfo
 [System.Serializable]
 public class Map
 {
+
+
     public Node start;
     public string name;
     public string memo;
+    public TextAsset Text;
     public Node[,] MapNode;
     public Vector2 GroundSize;
-    public Dictionary<Vector3, int> MonsterSpawnPoints = new Dictionary<Vector3, int>();
+    public Dictionary<Vector3, int> monsterSpawnPointDic = new Dictionary<Vector3, int>();
+    public List<Vector3> MonsterSpawnPoints = new List<Vector3> ();
     public List<GameObject> MapList = new List<GameObject>();
 }
 public class Node

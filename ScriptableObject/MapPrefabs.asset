@@ -13,7 +13,87 @@ MonoBehaviour:
   m_Name: MapPrefabs
   m_EditorClassIdentifier: 
   Maps:
-  - name: Map_01
-    memo: "\uCD08\uC6D0 \uB9F5"
-    GroundSize: {x: 15, y: 15}
-    MapList: []
+  - name: 1Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: 7de63c0c59ad18d449950e6b73106533, type: 3}
+    GroundSize: {x: 77, y: 77}
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 1Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: 071b2553931e4e14a8186dc0ee84bad4, type: 3}
+    GroundSize: {x: 77, y: 77}
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 2Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: 402a7ed310a37c141ac3f9de693fce72, type: 3}
+    GroundSize: {x: 77, y: 77}
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 2Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: f2c7f9aeb8dd5e447bbd6ac4e68310c3, type: 3}
+    GroundSize: {x: 77, y: 77}
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 3Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: 141b65dab586a6a438ef0b930956948f, type: 3}
+    GroundSize: {x: 77, y: 77}
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 3Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: 42ec1e2b025d5a24da09f42598b0873b, type: 3}
+    GroundSize: {x: 77, y: 77}
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}

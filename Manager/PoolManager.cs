@@ -13,7 +13,7 @@ public class PoolManager : Singleton<PoolManager>
     Dictionary<string, Queue<GameObject>> poolObjects = new Dictionary<string, Queue<GameObject>>();
     Dictionary<string, GameObject> poolObject = new Dictionary<string, GameObject>();
 
-    private void Awake()
+    void Start()
     {
         Stage stageTb = Stage.Get(AccountManager.Instance.CurStageKey);
         Spawn spawnTb = Spawn.Get(stageTb.SpawnGroup);
@@ -62,7 +62,7 @@ public class PoolManager : Singleton<PoolManager>
 
             switch (_poolType)
             {
-                case POOL_TYPE.MONSTER: path = string.Format("Prefabs/Monster/{0}", _name); break;
+                case POOL_TYPE.MONSTER: path = string.Format("Model/Monster/{0}/{0}", _name); break;
                 case POOL_TYPE.MAP: path = _name; break;
                 case POOL_TYPE.TAG: path = string.Format("Prefabs/Tag/{0}", _name); break;
                 case POOL_TYPE.EFFECT: path = string.Format("Effect/{0}", _name); break;

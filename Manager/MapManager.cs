@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Bson;
 using System.Collections;
 using System.Collections.Generic;
 using Tables;
@@ -7,8 +8,10 @@ using UnityEngine.UI;
 public class MapManager : Singleton<MapManager>
 {
     public List<GameObject> MapList;
-    public Map currentMapData;
     string currentMap;
+
+
+    Dictionary<int, int> loadedMapDic = new Dictionary<int, int>();
 
     void Start()
     {
@@ -34,11 +37,40 @@ public class MapManager : Singleton<MapManager>
         {
             currentMap = _mapName;
             SetActiveMapList(false);
+
+            Map map = new Map();
             int mapIndex = PoolManager.Instance.mapPrefabs.Maps.FindIndex(x => x.name == _mapName);
-            currentMapData = PoolManager.Instance.mapPrefabs.SetMap(mapIndex);
+            if(mapIndex >= 0)
+                map = PoolManager.Instance.mapPrefabs.Maps[mapIndex];
+
+            if (map.MapList.Count == 0 || map.MapList[0] == null || loadedMapDic.Count == 0)
+            {
+                if (loadedMapDic.Count >= 10)
+                {
+                    int loadCount = 0;
+                    int findKey = -1;
+                    foreach (var mapData in loadedMapDic)
+                    {
+                        if (loadCount == 0 || mapData.Value < loadCount)
+                        {
+                            findKey = mapData.Key;
+                            loadCount = mapData.Value;
+                        }
+                    }
+                    DestroyMap(findKey);
+                }
+            }
+            else
+                loadedMapDic[mapIndex]++;
+
+            MapList = map.MapList;
+
+
+            //currentMapData = PoolManager.Instance.mapPrefabs.SetMap(mapIndex);
+            PoolManager.Instance.mapPrefabs.SetMap(mapIndex);
             MapList = PoolManager.Instance.mapPrefabs.Maps[mapIndex].MapList;
-            //юс╫ц
-            Navigation.Instance.CreateMap(currentMapData);
+            Navigation.Instance.CreateMap(map);
+
             SetActiveMapList(true);
         }
 
@@ -47,5 +79,16 @@ public class MapManager : Singleton<MapManager>
     {
         foreach (var item in MapList)
             item.SetActive(isActive);
+    }
+
+    void DestroyMap(int key)
+    {
+        loadedMapDic.Remove(key);
+        foreach (var mapData in PoolManager.Instance.mapPrefabs.Maps[key].MapList)
+        {
+            Destroy(mapData);
+        }
+        PoolManager.Instance.mapPrefabs.Maps[key].MapList.Clear();
+        PoolManager.Instance.mapPrefabs.Maps[key].MapList = new List<GameObject>();
     }
 }

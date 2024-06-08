@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,9 +52,12 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     SkillInfo equipSkillInfo;
 
     //Equipment
-    InvenItemInfo[] equipItem = new InvenItemInfo[6] { new(),new(), new(), new(), new(),new()};
+    InvenItemInfo[] equipItem = new InvenItemInfo[6] { new(), new(), new(), new(), new(), new() };
 
 
+    List<Node> finalNodeList;
+
+    Node targetNode;
     public double Damage
     {
         get => damage;
@@ -113,7 +115,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     public double CriDam
     {
-        get => criDam+ CalculateGrowthStat(STAT.CRI_DAM);
+        get => criDam + CalculateGrowthStat(STAT.CRI_DAM);
     }
 
     public double MaxHP
@@ -226,7 +228,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             Instance = this;
         foreach (var item in StatReinforce.data.Values.Where(x => x.Target == (int)STAT_TARGET_TYPE.PLAYER || x.Target == (int)STAT_TARGET_TYPE.ALL))
         {
-            growthLevelDic.Add((STAT)item.key,0 );
+            growthLevelDic.Add((STAT)item.key, 0);
         }
     }
     void Start()
@@ -262,7 +264,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                 && GetTargetDistance(targetObj.transform) <= attackRange && !aniCtrl.IsPlayingAnimation("SKILL"))
             {
                 UseSkill(i);
-                return;
+                break;
             }
         }
     }
@@ -313,7 +315,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                 }
             }
         }
-        
+
     }
     public override void Init()
     {
@@ -350,13 +352,22 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public void Move(Vector3 dir)
     {
-        if (aniCtrl.IsPlayingAnimation("ATTACK") || aniCtrl.IsPlayingAnimation("SKILL"))
-            return;
-
-        Vector3 monveVec = dir.normalized * MoveSpd;
-        Rotate(monveVec);
-        Vector3 tmpVec = Vector3.Lerp(transform.localPosition, transform.localPosition + monveVec, 0.01f);
-        transform.localPosition = tmpVec;
+        if (IsManualControl)
+        {
+            transform.localPosition = Vector3.MoveTowards(transform.position, dir, MoveSpd * Time.deltaTime);
+        }
+        targetNode = finalNodeList.LastOrDefault();
+        if (targetNode != null)
+        {
+            dir = new Vector3(targetNode.Position.x, 0, targetNode.Position.y);
+            if (GetTargetDistance(dir) < 1)
+            {
+                finalNodeList.RemoveAt(finalNodeList.Count - 1);
+            }
+            //Rotate(dir);
+        }
+        transform.LookAt(dir);
+        transform.localPosition = Vector3.MoveTowards(transform.localPosition, dir, MoveSpd * Time.deltaTime);
         SetMoveEvent();
     }
     public void Rotate(Vector3 dir)
@@ -406,7 +417,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     public void UpdateHPUI()
     {
-        TagController.UpdateHPUI(MaxHP,CurHP);
+        TagController.UpdateHPUI(MaxHP, CurHP);
         UIManager.Instance.UpdateHPBarUI(MaxHP, CurHP);
     }
 
@@ -432,19 +443,28 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         return Vector3.Distance(transform.localPosition, _target.localPosition);
     }
+    public float GetTargetDistance(Vector3 _target)
+    {
+        return Vector3.Distance(transform.localPosition, _target);
+    }
     /// <summary>
     /// 적을 찾는 함수
     /// </summary>
     /// <param name="_target"></param>
     public override void FindEnemy()
     {
+
         foreach (var mon in MonsterManager.instance.monsterList)
         {
             float dis = mon.GetTargetDistance(transform);
-            if (targetObj == null || targetObj.IsDead || dis < targetObj.GetTargetDistance(transform))
+            if (targetObj == null || targetObj.IsDead ||    dis < targetObj.GetTargetDistance(transform) )
             {
                 targetObj = mon;
             }
+        }
+        if (targetObj != null)
+        {
+            finalNodeList = Navigation.Instance.FindPath(new Vector2(transform.localPosition.x, transform.localPosition.z), new Vector2(targetObj.transform.localPosition.x, targetObj.transform.localPosition.z));
         }
     }
     //스킬장착 및 교체시 스킬 쿨타임을 초기화 시켜주는 함수
@@ -465,9 +485,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         useSkillNum = _index;
         //스킬 사용
         Tables.Skill skill = Tables.Skill.Get(skillInfoList[_index].skillKey);
-        if(skill != null)
+        if (skill != null)
         {
-            //ChangeState((OBJ_ANIMATION_STATE)skill.SkillAnimation);
+            ChangeState((OBJ_ANIMATION_STATE)skill.SkillAnimation);
             Rotate(TargetDir);
             SetSkillCoolDown(skillInfoList[_index].skillKey);
         }
@@ -498,14 +518,16 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public bool IsUseableSkill(int _num)
     {
-        return aniCtrl.GetAniState == OBJ_ANIMATION_STATE.IDLE && !skillInfoList[_num].IsEmpty && SkillCoolTime[SkillInfoList[_num].skillKey] <= 0 && GameManager.Instance.GameState == GAME_STATE.PLAYING;
+        return !skillInfoList[_num].IsEmpty && SkillCoolTime[SkillInfoList[_num].skillKey] <= 0 && GameManager.Instance.GameState == GAME_STATE.PLAYING;
     }
 
     public void GetDamage(double _damage)
     {
         double finalDam = Math.Truncate(_damage - Defense);
 
-        curHp -= (finalDam <= 0 ? 1 : finalDam);
+        if (finalDam <= 0)
+            finalDam = 1;
+        curHp -= finalDam;
         UpdateHPUI();
         TagController.SetDamageFontText(finalDam);
         if (curHp <= 0)
@@ -587,7 +609,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                 continue;
 
             Tables.Item itemTb = Item.Get(equipItem[i].key);
-            if(itemTb != null)
+            if (itemTb != null)
             {
                 for (int j = 0; j < itemTb.Ability.Length; j++)
                 {
@@ -626,7 +648,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         double value = 0;
         Tables.StatReinforce st = StatReinforce.Get((int)_stat);
-        if(st != null)
+        if (st != null)
         {
             value = growthLevelDic[_stat] * st.StatValue;
         }

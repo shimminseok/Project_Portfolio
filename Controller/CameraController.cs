@@ -21,7 +21,7 @@ public class CameraController : MonoBehaviour
         }
         else if (GameManager.Instance.GameState == GAME_STATE.BOSS)
         {
-            CameraSetting(MonsterManager.instance.BossMon.transform.position + new Vector3(0, 3, 5), MonsterManager.instance.BossMon.transform.position,20);
+            CameraSetting(MonsterManager.instance.BossMon.transform.position + new Vector3(0,15,19), MonsterManager.instance.BossMon.transform.position);
         }
         else
         {

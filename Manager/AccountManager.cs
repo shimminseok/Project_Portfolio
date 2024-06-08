@@ -50,10 +50,12 @@ public class AccountManager : Singleton<AccountManager>
             UIManager.instance.UpdateGoodText(GOOD_TYPE.DIA, dia);
         }
     }
-
+    void Awake()
+    {
+    }
     void Start()
     {
-        //LoadData();
+        LoadData();
     }
 
     public void UseGoods(GOOD_TYPE _type, ulong _amount, out bool _isEnough)
