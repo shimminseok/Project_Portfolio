@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tables;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class MonsterController : ObjectController, IAttackable, IMoveable, IHittable
@@ -14,14 +13,12 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     MONSTER_TYPE monsterType;
     public Rigidbody rigi;
 
-    double finalDamage;
-
     double maxHp;
     double curHp;
     double hpRegen;
     float genTime;
 
-    float defense;
+    double defense;
     double criDam;
     double damage;
     float attackSpd;
@@ -65,19 +62,18 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         get => hpRegen;
         set => hpRegen = value;
     }
-    public float Defense
+    public double Defense
     {
-        get => defense;
+        get
+        {
+            return defense;
+        }
         set => defense = value;
     }
     public double Damage
     {
         get => damage;
         set => damage = value;
-    }
-    public double FinalDamage
-    {
-        get => finalDamage;
     }
     public float AttackSpd
     {
@@ -121,7 +117,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
 
-    Vector3 targetVec;
+    //Vector3 targetVec;
 
     int monLevel = 1;
     private void Awake()
@@ -168,11 +164,12 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public override void Init()
     {
         isDead = false;
-        maxHp = curHp = monsterTb.HealthPoint;
+        maxHp = curHp = monsterTb.HealthPoint * monLevel;
         hpRegen = monsterTb.HealthPointRegen;
         accuracy = monsterTb.Hit;
         dodge = monsterTb.Dodge;
-        damage = monsterTb.Attack;
+        damage = monsterTb.Attack * monLevel;
+        defense = monsterTb.DefencePoint * monLevel;
         targetObj = FindObjectOfType(typeof(PlayerController)) as PlayerController;
         aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
         m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
@@ -203,7 +200,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
         //노드에 도착하면 노드를 바꿔줘야함
         finalNodeList = Navigation.Instance.FindPath(new Vector2(transform.localPosition.x, transform.localPosition.z), new Vector2(targetObj.transform.localPosition.x, targetObj.transform.localPosition.z));
-        
+
         for (int i = 0; i < finalNodeList.Count; i++)
         {
             if (targetNode == null)
@@ -212,7 +209,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
                 break;
             }
             Vector3 tmpVec = new Vector3(transform.localPosition.x, transform.localPosition.z, 0);
-            if(tmpVec == finalNodeList[i].Position)
+            if (tmpVec == finalNodeList[i].Position)
             {
                 targetNode = finalNodeList[i - 1];
                 break;
@@ -221,15 +218,15 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
         if (targetNode != null)
         {
-            targetVec = new Vector3(targetNode.Position.x, 0, targetNode.Position.y);
+            Vector3 targetVec = new Vector3(targetNode.Position.x, 0, targetNode.Position.y);
             if (GetTargetDistance(targetVec) < 1)
             {
                 finalNodeList.RemoveAt(finalNodeList.Count - 1);
             }
+            transform.LookAt(targetVec);
+            transform.localPosition = Vector3.MoveTowards(transform.localPosition, targetVec, MoveSpd * Time.deltaTime);
+            SetMoveEvent();
         }
-        transform.LookAt(targetVec);
-        transform.localPosition = Vector3.MoveTowards(transform.localPosition, targetVec, MoveSpd * Time.deltaTime);
-        SetMoveEvent();
     }
     void Attack()
     {
@@ -258,21 +255,6 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         transform.LookAt(targetObj.transform);
     }
-
-    public void SetAttackEvent()
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public double SetAttackPow(float _attackPow)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void SetDamageText()
-    {
-        throw new System.NotImplementedException();
-    }
     public void SetDeadEvent()
     {
         IsDead = true;
@@ -281,10 +263,10 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         switch (monsterType)
         {
             case MONSTER_TYPE.COMMON:
-                gold = MonsterManager.instance.currentStageTb.MonsterGold;
+                gold = MonsterManager.instance.CurrentStageTb.MonsterGold;
                 break;
             case MONSTER_TYPE.ELETE:
-                gold = MonsterManager.instance.currentStageTb.MonsterGold;
+                gold = MonsterManager.instance.CurrentStageTb.MonsterGold;
                 break;
             case MONSTER_TYPE.BOSS:
                 //스테이지 클리어
@@ -335,10 +317,8 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
             SetDeadEvent();
         }
     }
-    public double CalculateAttackDamage()
+    public double CalculateAttDam()
     {
-        double finalDamage = Math.Truncate(isCri ? damage * 2 + CriDam : damage);
-
-        return finalDamage;
+        return Math.Truncate(isCri ? Damage * 2 + CriDam : Damage); ;
     }
 }

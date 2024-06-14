@@ -92,7 +92,7 @@ public class AnimationController : MonoBehaviour
                 PlayerController characterCon = m_Controller as PlayerController;
                 MonsterController targetMon = characterCon.Target as MonsterController;
                 if (characterCon.GetTargetDistance(targetMon.transform) <= characterCon.AttackRange)
-                    targetMon.GetDamage(characterCon.CalculateAttackDamage());
+                    targetMon.GetDamage(characterCon.CalculateAttDam());
                 break;
 
             case OBJ_TYPE.MONSTER:
@@ -100,7 +100,7 @@ public class AnimationController : MonoBehaviour
                 switch (monsterCon.Target.objType)
                 {
                     case OBJ_TYPE.PLAYER:
-                        PlayerController.Instance.GetDamage(monsterCon.CalculateAttackDamage());
+                        PlayerController.Instance.GetDamage(monsterCon.CalculateAttDam());
                         break;
                     case OBJ_TYPE.COLLEAGUE:
                         break;

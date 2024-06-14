@@ -10,7 +10,7 @@ public class MonsterManager : MonoBehaviour
 
     public Transform monsterRoot;
     public List<MonsterController> monsterList = new List<MonsterController>();
-    public Tables.Stage currentStageTb;
+    Tables.Stage currentStageTb;
 
     MonsterController bossMon;
 
@@ -24,15 +24,36 @@ public class MonsterManager : MonoBehaviour
 
     public int GenMonsterStep => genMonsterStep;
     public int StageStep => stageStep;
+
+    public Tables.Stage CurrentStageTb
+    {
+        get { return currentStageTb; }
+        set
+        {
+            currentStageTb = value;
+            genMonsterStep = currentStageTb.SpawnCount;
+        }
+    }
     void Awake()
     {
         if (instance == null)
             instance = this;
     }
-    void Start()
-    {
-    }
 
+    public void Init()
+    {
+        stageStep = 0;
+        monsterList.Clear();
+        CurrentStageTb = Stage.Get(AccountManager.Instance.CurStageKey);
+        if (monsterRoot.childCount > 0)
+        {
+            for(int i = monsterRoot.childCount - 1; i > 0 ; i--)
+            {
+                GameObject pushObj = monsterRoot.GetChild(i).gameObject;
+                PoolManager.Instance.PushObj(pushObj.name,POOL_TYPE.MONSTER, pushObj);
+            }
+        }
+    }
     public void CreateMonsterPool(int _index, Vector3 _genPos, bool isBoss = false)
     {
         MonsterController monsterCon = null;
@@ -65,8 +86,6 @@ public class MonsterManager : MonoBehaviour
             capsule.height = 2;
             capsule.direction = 1;
             capsule.enabled = true;
-
-            targetMonsterOjb.SetActive(true);
 
             if (!isBoss)
             {
@@ -102,10 +121,8 @@ public class MonsterManager : MonoBehaviour
         if (monsterList.Count > 0)
             return;
 
-        currentStageTb = Stage.Get(AccountManager.Instance.CurStageKey);
         if (currentStageTb != null)
         {
-            genMonsterStep = currentStageTb.SpawnCount;
 
             if (stageStep >= genMonsterStep && !isChallengeableBoss)
             {
@@ -114,12 +131,12 @@ public class MonsterManager : MonoBehaviour
             }
             else
             {
-                List<Vector3> spawnPoint = Navigation.Instance.monsterSpawnPoints.Keys.ToList();
+                List<Vector3> spawnPoint = Navigation.Instance.monsterSpawnPoints;
                 for (int i = 0; i < 5; i++)
                 {
                     int randomPointIndex = Random.Range(0, spawnPoint.Count);
 
-                    Tables.Spawn spwanTb = Tables.Spawn.Get(Navigation.Instance.monsterSpawnPoints[spawnPoint[randomPointIndex]]);
+                    Tables.Spawn spwanTb = Tables.Spawn.Get(currentStageTb.SpawnGroup);
                     if (spwanTb != null)
                     {
                         int spwanMonIndex = Random.Range(0, spwanTb.MonsterIndex.Length);

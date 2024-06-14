@@ -1,3 +1,4 @@
+using NPOI.POIFS.Properties;
 using System.Collections.Generic;
 using Tables;
 using UnityEngine;
@@ -13,32 +14,6 @@ public class PoolManager : Singleton<PoolManager>
     Dictionary<string, Queue<GameObject>> poolObjects = new Dictionary<string, Queue<GameObject>>();
     Dictionary<string, GameObject> poolObject = new Dictionary<string, GameObject>();
 
-    void Start()
-    {
-        Stage stageTb = Stage.Get(AccountManager.Instance.CurStageKey);
-        Spawn spawnTb = Spawn.Get(stageTb.SpawnGroup);
-        for (int i = 0; i < spawnTb.MonsterIndex.Length; i++)
-        {
-            CreateMonsterPool(Monster.Get(spawnTb.MonsterIndex[i]), null);
-        }
-        CreateTagPool();
-    }
-    public void CreateMonsterPool(Tables.Monster _monster, UnityAction _action)
-    {
-        try
-        {
-            CreateObj(_monster.Prefabs, POOL_TYPE.MONSTER, 10);
-        }
-        catch (System.Exception)
-        {
-            Debug.LogErrorFormat("Create Monster Fail Name : {0}", _monster.Monster_Name);
-        }
-        _action?.Invoke();
-    }
-    public void CreateTagPool()
-    {
-        CreateObj("HP_Guage", POOL_TYPE.TAG, 30);
-    }
     public void CreateObj(string _name, POOL_TYPE _poolType, int _count)
     {
         GameObject parent = null;
@@ -158,10 +133,11 @@ public class PoolManager : Singleton<PoolManager>
         CreateObj(_name, _type, _count);
 
         GameObject go = poolObjects[_name].Dequeue();
-
-        go.transform.position = Vector3.zero;
-        go.SetActive(true);
+        if(go != null)
+        {
+            go.transform.position = Vector3.zero;
+            go.SetActive(true);
+        }
         return go;
     }
-
 }

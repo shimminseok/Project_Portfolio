@@ -212,7 +212,13 @@ namespace UI
                 _cell.gameObject.SetActive(false);
             }
         }
-
+        protected void UpdateAllCells()
+        {
+            foreach (var cell in cells)
+            {
+                cell.UpdateContent(tableData[cell.Index]);
+            }
+        }
         void UpdateVisibleRect()
         {
             visibleRect.x = -CachedScrollRect.content.anchoredPosition.x + visibleRectPadding.left;

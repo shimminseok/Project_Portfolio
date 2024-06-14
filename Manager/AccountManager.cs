@@ -1,7 +1,7 @@
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 
 
@@ -10,6 +10,9 @@ public class AccountManager : Singleton<AccountManager>
     int curStageKey = 101001;
     int bestStageKey = 101001;
     int playerLevel = 100;
+
+
+
     Dictionary<ITEM_TYPE, List<InvenItemInfo>> hasItemDictionary = new Dictionary<ITEM_TYPE, List<InvenItemInfo>>();
     double gold = 0;
     double dia = 0;
@@ -17,9 +20,51 @@ public class AccountManager : Singleton<AccountManager>
     public int CurStageKey
     {
         get => curStageKey;
-        set => curStageKey = value;
+        set
+        {
+            curStageKey = value;
+            GameManager.Instance.ChangeGameState(GAME_STATE.LOADING);
+            UIManager.Instance.SetStageName(curStageKey);
+            MapManager.Instance.Init();
+            MonsterManager.instance.Init();
+        }
     }
+    public double Total_Atk
+    {
+        //Player의 모든 공격력 관련을 종합 계산
+        get
+        {
+            //공격력
+            double total = 0;
+            total += CalculateTotalAbility(STAT.ATTACK);
+            //크리확률
+            total += CalculateTotalAbility(STAT.CRI_RATE);
+            //크리데미지
+            total += CalculateTotalAbility(STAT.CRI_DAM);
+            //공격속도
+            total += CalculateTotalAbility(STAT.ATTACK_SPD);
 
+            return total;
+        }
+    }
+    public double Total_Def
+    {
+        //Player의 모든 방어력 관련된 항목을 종합 계산
+        get
+        {
+            //체력
+            double total = 0;
+            total += CalculateTotalAbility(STAT.HP);
+            //방어력
+            total += CalculateTotalAbility(STAT.DEFENCE);
+            //명중률
+            total += CalculateTotalAbility(STAT.HIT);
+            //회피
+            total += CalculateTotalAbility(STAT.DODGE);
+
+            return total;
+        }
+    }
 
     public Dictionary<ITEM_TYPE, List<InvenItemInfo>> HasItemDictionary
     {
@@ -35,10 +80,10 @@ public class AccountManager : Singleton<AccountManager>
     public double Gold
     {
         get { return gold; }
-        set 
+        set
         {
             gold = value;
-            UIManager.instance.UpdateGoodText(GOOD_TYPE.GOLD,gold);
+            UIManager.instance.UpdateGoodText(GOOD_TYPE.GOLD, gold);
         }
     }
     public double Dia
@@ -49,9 +94,6 @@ public class AccountManager : Singleton<AccountManager>
             dia = value;
             UIManager.instance.UpdateGoodText(GOOD_TYPE.DIA, dia);
         }
-    }
-    void Awake()
-    {
     }
     void Start()
     {
@@ -99,7 +141,7 @@ public class AccountManager : Singleton<AccountManager>
 
     public InvenItemInfo GetHasInvenItem(Tables.Item _item)
     {
-        hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType, out  List<InvenItemInfo> list);
+        hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType, out List<InvenItemInfo> list);
         InvenItemInfo itemInfo = new InvenItemInfo();
         if (list != null && list.Count > 0)
         {
@@ -164,12 +206,52 @@ public class AccountManager : Singleton<AccountManager>
             hasItemDictionary.Add(_type, new List<InvenItemInfo> { _info });
         }
     }
+    double CalculateTotalAbility(STAT _st)
+    {
+        double total = 0;
+        switch (_st)
+        {
+            case STAT.ATTACK:
+                total = PlayerController.Instance.Damage;
+                break;
+            case STAT.HP:
+                total = PlayerController.Instance.MaxHP;
+                break;
+            case STAT.HP_REGEN:
+                total = PlayerController.Instance.HPRegen;
+                break;
+            case STAT.DEFENCE:
+                total = PlayerController.Instance.Defense;
+                break;
+            case STAT.ATTACK_SPD:
+                total = PlayerController.Instance.AttackSpd;
+                break;
+            case STAT.MOVE_SPD:
+                total = PlayerController.Instance.MoveSpd;
+                break;
+            case STAT.CRI_DAM:
+                total = PlayerController.Instance.CriDam;
+                break;
+            case STAT.CRI_RATE:
+                total = PlayerController.Instance.CriDam;
+                break;
+            case STAT.HIT:
+                total = PlayerController.Instance.Accuracy;
+                break;
+            case STAT.DODGE:
+                total = PlayerController.Instance.Dodge;
+                break;
+        }
+        total += PlayerController.Instance.CalculateGrowthStat(_st);
+        total += PlayerController.Instance.GetEquipItemAbilityValue(_st);
+        return total;
+    }
     private void OnApplicationQuit()
     {
-        PlayerSaveData saveData = new PlayerSaveData();
-        string data = JsonUtility.ToJson(saveData,true);
+        //PlayerSaveData saveData = new PlayerSaveData();
+        //string data = JsonUtility.ToJson(saveData, true);
 
-        PlayerPrefs.SetString("PlayerData", data);
+        //PlayerPrefs.SetString("PlayerData", data);
     }
 
     void LoadData()

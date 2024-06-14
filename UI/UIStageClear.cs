@@ -50,7 +50,7 @@ public class UIStageClear : UIPopUp
     }
     public void SetRewardItem()
     {
-        Tables.Reward rewardTb = Tables.Reward.Get(MonsterManager.instance.currentStageTb.StageClearReward);
+        Tables.Reward rewardTb = Tables.Reward.Get(MonsterManager.instance.CurrentStageTb.StageClearReward);
         int count = 0;
         if(rewardTb != null )
         {
@@ -77,8 +77,7 @@ public class UIStageClear : UIPopUp
 
     void JoinNextStage()
     {
-        AccountManager.Instance.CurStageKey = GameManager.Instance.GetNextStage();
+        GameManager.Instance.EnterStage(GameManager.Instance.GetNextStage());
         ClosePopUp();
-        GameManager.Instance.ChangeGameState(GAME_STATE.LOADING);
     }
 }

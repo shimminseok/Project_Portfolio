@@ -4,8 +4,7 @@ using UnityEngine;
 public class Navigation : MonoBehaviour
 {
     public static Navigation Instance;
-    //public List<Vector3> monsterSpawnPoints = new List<Vector3>();
-    public Dictionary<Vector3, int> monsterSpawnPoints = new Dictionary<Vector3, int>();
+    public List<Vector3> monsterSpawnPoints = new List<Vector3>();
     public Node start;
     public GameObject m_MapRoot;
 
@@ -31,7 +30,7 @@ public class Navigation : MonoBehaviour
         m_GroundSize = map.GroundSize;
         m_Map = map.MapNode;
         start = map.start;
-        monsterSpawnPoints = map.monsterSpawnPointDic;
+        monsterSpawnPoints = map.monsterSpawnPoint;
 
     }
 #if UNITY_EDITOR

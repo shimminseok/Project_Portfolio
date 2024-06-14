@@ -309,6 +309,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
 		/// <summary> 몬스터 이름 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		Monster_Name {get; private set;}
+		/// <summary> 몬스터 이미지 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		Monster_Img {get; private set;}
 		/// <summary> 프리팹 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		Prefabs {get; private set;}
 		/// <summary> 인게임 크기 </summary>
@@ -471,8 +473,6 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
 		/// <summary> 몬스터 인덱스 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			[] MonsterIndex {get; private set;}
-		/// <summary> 보스 인덱스 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			BossIndex {get; private set;}
 
 		// 메인 저장소
 		public static Dictionary<int, Spawn> data = new Dictionary<int, Spawn>();
@@ -499,9 +499,9 @@ namespace Tables
 		/// <summary> 스테이지 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			Zone {get; private set;}
 		/// <summary> 스테이지 권장 공격력 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			 Stage_Recommend_Atk {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public double		Stage_Recommend_Atk {get; private set;}
 		/// <summary> 스테이지 권장 방어력 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			 Stage_Recommend_Def {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public double		Stage_Recommend_Def {get; private set;}
 		/// <summary> 웨이브 개수 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			SpawnCount {get; private set;}
 		/// <summary> 보스 인덱스 </summary>
@@ -518,8 +518,6 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			MonsterExp {get; private set;}
 		/// <summary> 스테이지 클리어 보상 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		StageClearReward {get; private set;}
-		/// <summary> 챕터 이름 </summary>
-		[Newtonsoft.Json.JsonProperty] public string		ChapterName {get; private set;}
 		/// <summary> 스테이지 이름 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		StageName {get; private set;}
 		/// <summary> 스테이지 프리팹 </summary>

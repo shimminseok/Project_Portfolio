@@ -74,7 +74,8 @@ public enum SPRITE_TYPE
     BTN_ICON,
     GROWTH_ICON,
     ITEM_GRADE,
-    ITEM_ICON
+    ITEM_ICON,
+    MONSTER
 }
 public enum ITEM_CATEGORY
 {
@@ -131,7 +132,6 @@ public enum GAME_STATE
 public interface IAttackable
 {
     ObjectController Target { get; }
-    double FinalDamage { get; }
     double Damage { get; }
     float AttackSpd { get; }
     float AttackRange { get; }
@@ -139,10 +139,7 @@ public interface IAttackable
     float Accuracy { get; set; }
 
     bool IsCri { get; }
-
-    void SetDamageText();
-    double SetAttackPow(float _attackPow);
-    double CalculateAttackDamage();
+    double CalculateAttDam();
 }
 public interface IAffectedGrowth
 {
@@ -157,7 +154,7 @@ public interface IHittable
     double MaxHP { get; }
     double CurHP { get; set; }
     double HPRegen { get; }
-    float Defense { get; }
+    double Defense { get; }
     float Dodge { get; }
     TagController TagController { get; }
     void UpdateHPUI();
@@ -223,10 +220,26 @@ public class InvenSlotCellData
 
     public int Index { get => index; set { index = value; } }
 }
+public class WorldMapGenMonsterCellData
+{
+    int index;
+    public Tables.Monster m_MonsterTb;
+
+    public int Index { get => index; set { index = value; } }
+}
+public class WorldMapIdleRewardItemCellData
+{
+
+}
+public class WorldMapFirstClearRewardItemCellData
+{
+
+}
 public class WorldMapSlotCellData
 {
     int index;
     public Tables.Stage m_StageTb;
+    public bool isSelected;
     public int Index { get => index; set { index = value; } }
 }
 public class WorldMapChapterCellData
@@ -419,17 +432,44 @@ public class GrowthInfo
 [System.Serializable]
 public class Map
 {
-
-
     public Node start;
     public string name;
     public string memo;
     public TextAsset Text;
     public Node[,] MapNode;
     public Vector2 GroundSize;
-    public Dictionary<Vector3, int> monsterSpawnPointDic = new Dictionary<Vector3, int>();
-    public List<Vector3> MonsterSpawnPoints = new List<Vector3> ();
+    public List<Vector3> monsterSpawnPoint = new List<Vector3>();
     public List<GameObject> MapList = new List<GameObject>();
+}
+public class node
+{
+    public bool walkable;
+    public Vector3 worldPos;
+    public int gridX;
+    public int gridY;
+    public int gCost;
+    public int hCost;
+    public node parent;
+    public int fCost { get { return gCost + hCost; } }
+
+    public node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY)
+    {
+        walkable = _walkable;
+        worldPos = _worldPos;
+        gridX = _gridX;
+        gridY = _gridY;
+    }
+    public node(node _node)
+    {
+        walkable = _node.walkable;
+        worldPos = _node.worldPos;
+        gridX = _node.gridX;
+        gridY = _node.gridY;
+        gCost = _node.gCost;
+        hCost = _node.hCost;
+        parent = _node.parent;
+
+    }
 }
 public class Node
 {
@@ -469,20 +509,6 @@ public class Node
         Y = node.Y;
 
         Position = node.Position;
-    }
-
-    public void CalcCost(Node destination, int g)
-    {
-        GetH(destination);
-        G = g;
-        F = G + H;
-    }
-
-    void GetH(Node destination)
-    {
-        int diffX = Mathf.Abs(destination.X - X);
-        int diffY = Mathf.Abs(destination.Y - Y);
-        H = (diffX + diffY) * 10;
     }
 }
 

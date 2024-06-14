@@ -15,7 +15,6 @@ public class MapManager : Singleton<MapManager>
 
     void Start()
     {
-        Init();
     }
     public void Init(Tables.Dungeon dungeon = null)
     {
@@ -66,7 +65,6 @@ public class MapManager : Singleton<MapManager>
             MapList = map.MapList;
 
 
-            //currentMapData = PoolManager.Instance.mapPrefabs.SetMap(mapIndex);
             PoolManager.Instance.mapPrefabs.SetMap(mapIndex);
             MapList = PoolManager.Instance.mapPrefabs.Maps[mapIndex].MapList;
             Navigation.Instance.CreateMap(map);

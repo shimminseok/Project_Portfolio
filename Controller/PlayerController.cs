@@ -25,12 +25,13 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     float defense;
     double criDam;
     double damage;
-    double finalDamage;
+
     float attackSpd;
     float attackRange;
     float accuracy;
     float dodge;
     float moveSpeed;
+    float criRate;
 
     bool isCri;
     bool isLessHp;
@@ -60,25 +61,25 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     Node targetNode;
     public double Damage
     {
-        get => damage;
+        get
+        {
+            double dam = damage + CalculateGrowthStat(STAT.ATTACK) + GetEquipItemAbilityValue(STAT.ATTACK);
+            return dam;
+        }
     }
-    public double FinalDamage
-    {
-        get => finalDamage;
-    }
-    public float Defense
+    public double Defense
     {
         get
         {
-            float value = defense + (float)CalculateGrowthStat(STAT.DEFENCE);
-            return value;
+            double def = defense + CalculateGrowthStat(STAT.DEFENCE) + GetEquipItemAbilityValue(STAT.DEFENCE);
+            return def;
         }
     }
     public float AttackSpd
     {
         get
         {
-            float value = attackSpd + (float)CalculateGrowthStat(STAT.ATTACK_SPD);
+            float value = attackSpd + (float)CalculateGrowthStat(STAT.ATTACK_SPD) + (float)GetEquipItemAbilityValue(STAT.ATTACK_SPD);
             return value;
         }
     }
@@ -92,14 +93,18 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public float Accuracy
     {
-        get => accuracy;
+        get
+        {
+            float acc = accuracy + (float)CalculateGrowthStat(STAT.HIT) + (float)GetEquipItemAbilityValue(STAT.HIT);
+            return accuracy;
+        }
         set => accuracy = value;
     }
     public float MoveSpd
     {
         get
         {
-            float moveSpd = moveSpeed + (float)CalculateGrowthStat(STAT.MOVE_SPD);
+            float moveSpd = moveSpeed + (float)CalculateGrowthStat(STAT.MOVE_SPD) + (float)GetEquipItemAbilityValue(STAT.MOVE_SPD);
             return moveSpd;
         }
     }
@@ -107,7 +112,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         get
         {
-            float probability = Tables.Character.Get((int)job).CriticalRate + (float)CalculateGrowthStat(STAT.CRI_RATE);
+            float probability = criRate + (float)CalculateGrowthStat(STAT.CRI_RATE) + (float)GetEquipItemAbilityValue(STAT.CRI_RATE);
             isCri = probability >= UnityEngine.Random.Range(0, 1f);
             return isCri;
         }
@@ -115,12 +120,12 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     public double CriDam
     {
-        get => criDam + CalculateGrowthStat(STAT.CRI_DAM);
+        get => criDam + CalculateGrowthStat(STAT.CRI_DAM) + GetEquipItemAbilityValue(STAT.CRI_DAM);
     }
 
     public double MaxHP
     {
-        get => maxHp + CalculateGrowthStat(STAT.HP);
+        get => maxHp + CalculateGrowthStat(STAT.HP) + GetEquipItemAbilityValue(STAT.HP);
     }
 
     public bool IsDead
@@ -167,7 +172,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         get
         {
-            float value = dodge + (float)CalculateGrowthStat(STAT.DODGE);
+            float value = dodge + (float)CalculateGrowthStat(STAT.DODGE) + (float)GetEquipItemAbilityValue(STAT.DODGE);
             return value;
         }
     }
@@ -339,7 +344,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         criDam = characterTb.CriticalDamage;
         defense = characterTb.DefencePoint;
         moveSpeed = characterTb.MoveSpeed;
-
+        criRate = characterTb.CriticalRate;
 
         for (int i = 0; i < skillInfoList.Count; i++)
         {
@@ -354,20 +359,24 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         if (IsManualControl)
         {
-            transform.localPosition = Vector3.MoveTowards(transform.position, dir, MoveSpd * Time.deltaTime);
+            Vector3 targetPos = transform.localPosition + dir.normalized * MoveSpd * Time.deltaTime;
+            transform.localPosition = Vector3.MoveTowards(transform.position, targetPos, MoveSpd * Time.deltaTime);
+            transform.LookAt(dir.normalized + transform.localPosition);
         }
-        targetNode = finalNodeList.LastOrDefault();
-        if (targetNode != null)
+        else
         {
-            dir = new Vector3(targetNode.Position.x, 0, targetNode.Position.y);
-            if (GetTargetDistance(dir) < 1)
+            targetNode = finalNodeList.LastOrDefault();
+            if (targetNode != null)
             {
-                finalNodeList.RemoveAt(finalNodeList.Count - 1);
+                dir = new Vector3(targetNode.Position.x, 0, targetNode.Position.y);
+                if (GetTargetDistance(dir) < 1)
+                {
+                    finalNodeList.RemoveAt(finalNodeList.Count - 1);
+                }
             }
-            //Rotate(dir);
+            transform.LookAt(dir);
+            transform.localPosition = Vector3.MoveTowards(transform.localPosition, dir, MoveSpd * Time.deltaTime);
         }
-        transform.LookAt(dir);
-        transform.localPosition = Vector3.MoveTowards(transform.localPosition, dir, MoveSpd * Time.deltaTime);
         SetMoveEvent();
     }
     public void Rotate(Vector3 dir)
@@ -419,17 +428,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         TagController.UpdateHPUI(MaxHP, CurHP);
         UIManager.Instance.UpdateHPBarUI(MaxHP, CurHP);
-    }
-
-    public void SetDamageText()
-    {
-        //데미지 폰트를 띄워주는 함수
-        //자신의 트랜스폼을 넘겨주고 UI를 뿌려준다?
-    }
-
-    public double SetAttackPow(float _attackPow)
-    {
-        return Math.Truncate(Damage + _attackPow);
     }
 
     public void SetDeadEvent()
@@ -535,21 +533,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             SetDeadEvent();
         }
     }
-    public double CalculateAttackDamage()
+    public double CalculateAttDam()
     {
-        StatReinforce sr = StatReinforce.Get((int)STAT.ATTACK);
-
-        double finalDamage = 0;
-
-        //성장
-        finalDamage += CalculateGrowthStat(STAT.ATTACK);
-
-        //아이템 착용
-        finalDamage += GetEquipItemAbilityValue(STAT.ATTACK);
-
-        finalDamage += (IsCri ? damage * 2 + CriDam : damage);
-
-        return finalDamage;
+        return Math.Truncate(IsCri ? (Damage * 2) + CriDam : Damage); ;
     }
     public double CalculateSkillDamage(SkillInfo _skillInfo)
     {
@@ -558,7 +544,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         double skillOffset = skillTb.DamageCoefficient + (_skillInfo.skillLevel * skillTb.AddDamageCoefficient);
         if (skillTb != null)
         {
-            finaldamage = Math.Truncate(CalculateAttackDamage() * skillOffset);
+            finaldamage = Math.Truncate(Damage * skillOffset);
         }
 
         return finaldamage;
@@ -615,7 +601,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                 {
                     if (_stat == (STAT)itemTb.Ability[j])
                     {
-                        returnValue += itemTb.AbilityValue[i];
+                        returnValue += itemTb.AbilityValue[j];
                         break;
                     }
                 }

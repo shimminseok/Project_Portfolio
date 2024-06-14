@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Tables;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -23,9 +24,9 @@ public class UIManager : Singleton<UIManager>
 
     [Header("TopAnchor")]
     [SerializeField] TextMeshProUGUI waveProcessText;
+    [SerializeField] TextMeshProUGUI currentStageName;
     [SerializeField] Image bossChellangeBtn;
     [SerializeField] Image processFillImg;
-
 
     [Header("RightTopAnchor")]
     [SerializeField] List<Text> goodsTextList;
@@ -128,6 +129,14 @@ public class UIManager : Singleton<UIManager>
             }));
         }));
     }
+    public void SetStageName(int stageKey)
+    {
+        Stage stageTb = Stage.Get(stageKey);
+        if(stageTb != null)
+        {
+            currentStageName.text = string.Format("{0}-{1} {2}", stageTb.Chapter, stageTb.Zone, GetText(stageTb.StageName));
+        }            
+    }
     public void SetWaveProsessUI()
     {
         float fillAmount = 0f;
@@ -140,7 +149,7 @@ public class UIManager : Singleton<UIManager>
         else
         {
             waveProcessText.gameObject.SetActive(true);
-            fillAmount = MonsterManager.instance.StageStep / MonsterManager.instance.GenMonsterStep;
+            fillAmount = (float)MonsterManager.instance.StageStep / MonsterManager.instance.GenMonsterStep;
             waveProcessText.text = string.Format("¿þÀÌºê : {0} / {1}", MonsterManager.instance.StageStep, MonsterManager.instance.GenMonsterStep);
         }
         processFillImg.fillAmount = fillAmount;

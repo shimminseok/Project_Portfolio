@@ -35,6 +35,8 @@ public class GameManager : Singleton<GameManager>
             case GAME_STATE.LOADING:
                 UIManager.Instance.LoadingUISet();
                 break;
+            case GAME_STATE.END:
+                break;
         }
     }
     public void SetGameSpeed(float _speed)
@@ -93,6 +95,9 @@ public class GameManager : Singleton<GameManager>
         }
         return AccountManager.Instance.CurStageKey;
     }
-
+    public void EnterStage(int _stageKey)
+    {
+        AccountManager.Instance.CurStageKey = _stageKey;
+    }
 
 }

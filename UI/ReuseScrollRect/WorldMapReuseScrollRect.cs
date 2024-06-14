@@ -7,7 +7,6 @@ public class WorldMapReuseScrollRect : ReuseScrollview<WorldMapSlotCellData>
     protected override void Start()
     {
         base.Start();
-        CreateWorldMapListSlot(1);
     }
 
     public void CreateWorldMapListSlot(int _selectChapter)

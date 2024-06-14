@@ -17,6 +17,12 @@ MonoBehaviour:
     memo: 
     Text: {fileID: 4900000, guid: 7de63c0c59ad18d449950e6b73106533, type: 3}
     GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint:
+    - {x: -4.2426414, y: 0, z: -15.556349}
+    - {x: -9.899495, y: 0, z: -5.6568537}
+    - {x: -2.8284266, y: 0, z: 8.485282}
+    - {x: 16.263456, y: 0, z: 0.70710576}
+    - {x: 9.899496, y: 0, z: 11.313708}
     MapList:
     - {fileID: 0}
     - {fileID: 0}
@@ -31,6 +37,12 @@ MonoBehaviour:
     memo: 
     Text: {fileID: 4900000, guid: 071b2553931e4e14a8186dc0ee84bad4, type: 3}
     GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint:
+    - {x: -12.020816, y: 0, z: -10.606601}
+    - {x: -0.7071078, y: 0, z: -16.263456}
+    - {x: -13.435029, y: 0, z: -2.1213195}
+    - {x: 2.828428, y: 0, z: 12.7279215}
+    - {x: 15.55635, y: 0, z: 4.2426395}
     MapList:
     - {fileID: 0}
     - {fileID: 0}
@@ -45,6 +57,7 @@ MonoBehaviour:
     memo: 
     Text: {fileID: 4900000, guid: 402a7ed310a37c141ac3f9de693fce72, type: 3}
     GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
     MapList:
     - {fileID: 0}
     - {fileID: 0}
@@ -59,6 +72,7 @@ MonoBehaviour:
     memo: 
     Text: {fileID: 4900000, guid: f2c7f9aeb8dd5e447bbd6ac4e68310c3, type: 3}
     GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
     MapList:
     - {fileID: 0}
     - {fileID: 0}
@@ -73,6 +87,7 @@ MonoBehaviour:
     memo: 
     Text: {fileID: 4900000, guid: 141b65dab586a6a438ef0b930956948f, type: 3}
     GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
     MapList:
     - {fileID: 0}
     - {fileID: 0}
@@ -87,6 +102,222 @@ MonoBehaviour:
     memo: 
     Text: {fileID: 4900000, guid: 42ec1e2b025d5a24da09f42598b0873b, type: 3}
     GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 4Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: 4681c5c25890228419c11d05213b59a0, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 4Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: 3249fe65d2c13fc4683849d8039947c8, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 5Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: 801d18fd74cc15e4faf34bbe4f9bffef, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 5Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: 9152db22bf699b846873a1d91ec3a0c1, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 6Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: e648ae31037db434ba70c9ac43845f2e, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint:
+    - {x: -15.55635, y: 0, z: -14.142135}
+    - {x: -0.0000012516975, y: 0, z: -19.79899}
+    - {x: -18.384777, y: 0, z: 0.0000011622906}
+    - {x: -2.8284264, y: 0, z: 11.313708}
+    - {x: 12.020815, y: 0, z: -3.5355346}
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 6Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: 14168c5f8e718bf418b6b4167e3c2126, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 7Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: 6db455dac45959e45afc2345c7e29e6d, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 7Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: 11af6b0c77727da4dbed1e37844a660f, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 8Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: b273265a144768e43a0cf253c37d4bf4, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 8Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: b066b6a014c73474faf79b84f0460c97, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 9Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: bfbf5d99cc8893e449bef2bce761be08, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 9Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: 0871530ff82eaa04f82fb483925ce3cc, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 10Chapter_1Group
+    memo: 
+    Text: {fileID: 4900000, guid: beadd8cf69e52d348943caac7eddcdd9, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
+    MapList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - name: 10Chapter_2Group
+    memo: 
+    Text: {fileID: 4900000, guid: b224cfe73c8212a49b029c00d1299618, type: 3}
+    GroundSize: {x: 77, y: 77}
+    monsterSpawnPoint: []
     MapList:
     - {fileID: 0}
     - {fileID: 0}
