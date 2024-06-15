@@ -13,9 +13,6 @@ public class MapManager : Singleton<MapManager>
 
     Dictionary<int, int> loadedMapDic = new Dictionary<int, int>();
 
-    void Start()
-    {
-    }
     public void Init(Tables.Dungeon dungeon = null)
     {
         string mapPrefabName = string.Empty;
@@ -37,12 +34,15 @@ public class MapManager : Singleton<MapManager>
             currentMap = _mapName;
             SetActiveMapList(false);
 
+            //Map map = new Map();
+
             Map map = new Map();
+
             int mapIndex = PoolManager.Instance.mapPrefabs.Maps.FindIndex(x => x.name == _mapName);
             if(mapIndex >= 0)
                 map = PoolManager.Instance.mapPrefabs.Maps[mapIndex];
 
-            if (map.MapList.Count == 0 || map.MapList[0] == null || loadedMapDic.Count == 0)
+            if (map.mapList.Count == 0 || map.mapList[0] == null || loadedMapDic.Count == 0)
             {
                 if (loadedMapDic.Count >= 10)
                 {
@@ -62,11 +62,11 @@ public class MapManager : Singleton<MapManager>
             else
                 loadedMapDic[mapIndex]++;
 
-            MapList = map.MapList;
+            MapList = map.mapList;
 
 
             PoolManager.Instance.mapPrefabs.SetMap(mapIndex);
-            MapList = PoolManager.Instance.mapPrefabs.Maps[mapIndex].MapList;
+            MapList = PoolManager.Instance.mapPrefabs.Maps[mapIndex].mapList;
             Navigation.Instance.CreateMap(map);
 
             SetActiveMapList(true);
@@ -82,11 +82,11 @@ public class MapManager : Singleton<MapManager>
     void DestroyMap(int key)
     {
         loadedMapDic.Remove(key);
-        foreach (var mapData in PoolManager.Instance.mapPrefabs.Maps[key].MapList)
+        foreach (var mapData in PoolManager.Instance.mapPrefabs.Maps[key].mapList)
         {
             Destroy(mapData);
         }
-        PoolManager.Instance.mapPrefabs.Maps[key].MapList.Clear();
-        PoolManager.Instance.mapPrefabs.Maps[key].MapList = new List<GameObject>();
+        PoolManager.Instance.mapPrefabs.Maps[key].mapList.Clear();
+        PoolManager.Instance.mapPrefabs.Maps[key].mapList = new List<GameObject>();
     }
 }

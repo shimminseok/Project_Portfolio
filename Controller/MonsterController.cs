@@ -1,6 +1,6 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Tables;
 using UnityEngine;
 
@@ -11,7 +11,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     TagController m_TagController;
     MONSTER_TYPE monsterType;
-    public Rigidbody rigi;
+    [SerializeField] Rigidbody rigi;
 
     double maxHp;
     double curHp;
@@ -30,9 +30,9 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     bool isCri;
     bool isDead;
 
+    List<Node> path;
+    int targetIndex;
 
-    List<Node> finalNodeList;
-    Node targetNode;
     public float MoveSpd
     {
         get => moveSpeed;
@@ -117,14 +117,21 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
 
-    //Vector3 targetVec;
-
     int monLevel = 1;
     private void Awake()
     {
         ObjectGetComponent();
         objType = OBJ_TYPE.MONSTER;
     }
+
+    private void OnDrawGizmos()
+    {
+        if (path != null &&  path.Count > 0)
+        {
+            Gizmos.DrawLine(transform.localPosition, path[0].worldPos);
+        }
+    }
+
     void FixedUpdate()
     {
         if (isDead)
@@ -150,7 +157,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
                 {
                     if (GetTargetDistance(targetObj.transform) > attackRange)
                     {
-                        Move(Target.transform.localPosition - transform.localPosition);
+                        Move();
                     }
                     else
                     {
@@ -182,50 +189,74 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public void SetMonster(Vector3 _pos, MONSTER_TYPE _type, int _monLv)
     {
         monsterType = _type;
-        Vector3 pos = UnityEngine.Random.insideUnitSphere;
-        pos.y = 0;
-        pos *= 2;
-        transform.localPosition = pos;
-        transform.localPosition += _pos;
+        transform.localPosition = _pos;
         transform.localScale *= monsterTb.Scale;
         monLevel = _monLv;
         Init();
 
     }
-    public void Move(Vector3 dir)
+    public void Move()
     {
-        //캐릭터를 찾아서 따라감
         if (isDead)
             return;
 
-        //노드에 도착하면 노드를 바꿔줘야함
-        finalNodeList = Navigation.Instance.FindPath(new Vector2(transform.localPosition.x, transform.localPosition.z), new Vector2(targetObj.transform.localPosition.x, targetObj.transform.localPosition.z));
-
-        for (int i = 0; i < finalNodeList.Count; i++)
+        if (targetObj != null && !targetObj.IsDead)
         {
-            if (targetNode == null)
-            {
-                targetNode = finalNodeList.LastOrDefault();
-                break;
-            }
-            Vector3 tmpVec = new Vector3(transform.localPosition.x, transform.localPosition.z, 0);
-            if (tmpVec == finalNodeList[i].Position)
-            {
-                targetNode = finalNodeList[i - 1];
-                break;
-            }
+            Navigation.Instance.RequestPath(transform.localPosition, targetObj.transform.localPosition, OnPathFound);
         }
-
-        if (targetNode != null)
+        SetMoveEvent();
+    }
+    public IEnumerator UpdatePath()
+    {
+        while(true)
         {
-            Vector3 targetVec = new Vector3(targetNode.Position.x, 0, targetNode.Position.y);
-            if (GetTargetDistance(targetVec) < 1)
+
+            Navigation.Instance.RequestPath(transform.localPosition, targetObj.transform.localPosition,OnPathFound);
+            yield return new WaitForFixedUpdate();
+            if (aniCtrl.GetAniState != OBJ_ANIMATION_STATE.MOVE)
+                yield break;
+        }
+    }
+    public void OnPathFound(List<Node> newPath, bool pathSuccessful)
+    {
+        if (pathSuccessful)
+        {
+            path = new List<Node>(newPath);
+            targetIndex = 0;
+            StopCoroutine("FollowPath");
+            StartCoroutine("FollowPath");
+        }
+    }
+
+    IEnumerator FollowPath()
+    {
+        if (path == null || path.Count == 0)
+        {
+            yield break;
+        }
+        Node currentWaypoint = path[0];
+
+
+        while (true)
+        {
+            if (transform.localPosition == currentWaypoint.worldPos)
             {
-                finalNodeList.RemoveAt(finalNodeList.Count - 1);
+                targetIndex++;
+                if (targetIndex >= path.Count)
+                {
+                    yield break;
+                }
+                currentWaypoint = path[targetIndex];
             }
-            transform.LookAt(targetVec);
-            transform.localPosition = Vector3.MoveTowards(transform.localPosition, targetVec, MoveSpd * Time.deltaTime);
-            SetMoveEvent();
+
+            Vector3 dir = currentWaypoint.worldPos - transform.localPosition;
+            transform.localRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 10 * Time.deltaTime);
+            transform.localPosition = Vector3.MoveTowards(transform.localPosition, currentWaypoint.worldPos, MoveSpd * Time.deltaTime);
+            if (Vector3.Distance(transform.localPosition, targetObj.transform.localPosition) <= AttackRange)
+            {
+                StopCoroutine("FollowPath");
+            }
+            yield return null;
         }
     }
     void Attack()

@@ -21,6 +21,8 @@ public class TagController : MonoBehaviour
         mainCamera = Camera.main;
     }
 
+
+
     private void FixedUpdate()
     {
         Vector3 screenPoint = mainCamera.WorldToScreenPoint(targetObj.transform.localPosition);

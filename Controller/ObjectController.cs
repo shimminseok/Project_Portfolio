@@ -1,6 +1,7 @@
 using NPOI.SS.Formula.Functions;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public abstract class ObjectController : MonoBehaviour
@@ -11,10 +12,6 @@ public abstract class ObjectController : MonoBehaviour
     public List<GameObject> effectList;
     public Transform effectRoot;
 
-    void Start()
-    {
-        
-    }
 
     public abstract void ObjectGetComponent();
     public virtual void Init() { }
@@ -70,4 +67,5 @@ public abstract class ObjectController : MonoBehaviour
         }
         return hitObjs;
     }
+
 }

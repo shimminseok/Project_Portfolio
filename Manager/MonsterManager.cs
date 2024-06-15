@@ -121,6 +121,7 @@ public class MonsterManager : MonoBehaviour
         if (monsterList.Count > 0)
             return;
 
+        int index = 0;
         if (currentStageTb != null)
         {
 
@@ -132,7 +133,7 @@ public class MonsterManager : MonoBehaviour
             else
             {
                 List<Vector3> spawnPoint = Navigation.Instance.monsterSpawnPoints;
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i <5; i++)
                 {
                     int randomPointIndex = Random.Range(0, spawnPoint.Count);
 
@@ -140,7 +141,11 @@ public class MonsterManager : MonoBehaviour
                     if (spwanTb != null)
                     {
                         int spwanMonIndex = Random.Range(0, spwanTb.MonsterIndex.Length);
-                        CreateMonsterPool(spwanTb.MonsterIndex[spwanMonIndex], spawnPoint[randomPointIndex]);
+                        CreateMonsterPool(spwanTb.MonsterIndex[spwanMonIndex], spawnPoint[index++]);
+                        if(index > spawnPoint.Count)
+                        {
+                            index = 0;
+                        }
                     }
                 }
             }
@@ -157,8 +162,7 @@ public class MonsterManager : MonoBehaviour
     IEnumerator BossSpawn()
     {
         stageStep = 1;
-        Vector3 genPos = new Vector3(Navigation.Instance.start.Position.x - 10, 0, Navigation.Instance.start.Position.z + 10);
-        CreateMonsterPool(currentStageTb.BossIndex, genPos, true);
+        CreateMonsterPool(currentStageTb.BossIndex, Navigation.Instance.boss.worldPos, true);
         GameManager.Instance.ChangeGameState(GAME_STATE.BOSS);
         yield return new WaitForSeconds(3f);
         GameManager.Instance.ChangeGameState(GAME_STATE.PLAYING);

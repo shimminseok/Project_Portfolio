@@ -1,4 +1,8 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Navigation : MonoBehaviour
@@ -6,19 +10,18 @@ public class Navigation : MonoBehaviour
     public static Navigation Instance;
     public List<Vector3> monsterSpawnPoints = new List<Vector3>();
     public Node start;
+    public Node boss;
     public GameObject m_MapRoot;
 
     public Vector2 m_GroundSize;
-    public Node[,] m_Map;
 
+    public Node[,] m_Map;
     public List<Node> path;
 
+    private Dictionary<string, List<Node>> nodePathCache = new Dictionary<string, List<Node>>();
+    private const int MaxCacheSize = 100; // 캐시 크기 제한
 
-    public List<Node> OpenList = new List<Node>();
-    public List<Node> ClosedList = new List<Node>();
-
-    Node Destination;
-
+    Coroutine findPathCo;
 
     private void Awake()
     {
@@ -27,14 +30,14 @@ public class Navigation : MonoBehaviour
     }
     public void CreateMap(Map map)
     {
-        m_GroundSize = map.GroundSize;
-        m_Map = map.MapNode;
+        m_GroundSize = map.mapSize;
+        m_Map = map.mapNode;
         start = map.start;
+        boss = map.boss;
         monsterSpawnPoints = map.monsterSpawnPoint;
-
     }
 #if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
+    private void OnDrawGizmos()
     {
         if (m_Map == null)
             return;
@@ -43,279 +46,205 @@ public class Navigation : MonoBehaviour
         {
             for (int j = 0; j < m_GroundSize.y; j++)
             {
-                if (m_Map[i, j].Moveable)
+                if (m_Map[i, j].walkable)
                     Gizmos.color = Color.green - new Color(0, 0, 0, 0.5f);
                 else
                     Gizmos.color = Color.red - new Color(0, 0, 0, 0.5f);
 
-                Gizmos.DrawCube(new Vector3(m_Map[i, j].Position.x, 0, m_Map[i, j].Position.y), Vector3.one);
+                Vector3 pos = Quaternion.Euler(0, 45, 0) * m_Map[i, j].worldPos;
+                Gizmos.DrawCube(new Vector3(m_Map[i, j].worldPos.x, 0, m_Map[i, j].worldPos.z), Vector3.one);
             }
         }
     }
-#endif
-    void Init()
+    #endif
+    public Node NodeFromWorldPoint(Vector3 _worldPos)
     {
-        OpenList.Clear();
-        ClosedList.Clear();
+
+        float percentX = (_worldPos.x + m_GroundSize.x / 2) / m_GroundSize.x;
+        float percentY = (_worldPos.z + m_GroundSize.y / 2) / m_GroundSize.y;
+
+        percentX = Mathf.Clamp01(percentX);
+        percentY = Mathf.Clamp01(percentY);
+
+        int x = Mathf.RoundToInt((m_GroundSize.x) * percentX);
+        int y = Mathf.RoundToInt((m_GroundSize.y) * percentY);
+
+        return m_Map[x, y];
     }
-    public List<Node> FindPath(Vector2 _start, Vector2 _end)
+    public List<Node> GetNeighbours(Node _node)
     {
-        FindIndex(new Vector3(_start.x, 0, _start.y), out int s_x, out int s_y);
-        FindIndex(new Vector3(_end.x, 0, _end.y), out int e_x, out int e_y);
+        List<Node> neighbours = new List<Node>();
 
-        return FindPath(FindMoveableNode(_start, s_x, s_y), FindMoveableNode(_end, e_x, e_y));
-    }
-    void FindIndex(Vector3 _pos, out int _x, out int _y)
-    {
-        Vector3 result = _pos - new Vector3(m_Map[0, 0].Position.x, 0, m_Map[0, 0].Position.y);
-
-        result = Quaternion.Euler(0, 45, 0) * result;
-
-        _x = Mathf.RoundToInt(-result.z);
-        _y = Mathf.RoundToInt(result.x);
-
-        if (_x >= m_GroundSize.x)
-            _x = (int)m_GroundSize.x - 1;
-
-        if (_y >= (int)m_GroundSize.y)
-            _y = (int)m_GroundSize.y - 1;
-
-        if (_x < 0)
-            _x = 0;
-
-        if (_y < 0)
-            _y = 0;
-    }
-
-    Node FindMoveableNode(Vector3 _pos, int _indexX, int _indexY)
-    {
-        ClosedList.Clear();
-        // 해당 노드가 이동 불가능이면 검색 시작
-        if (!m_Map[_indexX, _indexY].Moveable)
+        for (int x = -1; x <= 1; x++)
         {
-            int offset = 0;
-
-            while (!m_Map[_indexX, _indexY].Moveable)
+            for (int y = -1; y <= 1; y++)
             {
-                offset++;
-                if (offset >= m_Map.Length / 2)
-                    break;
+                if (x == 0 && y == 0)
+                    continue;
 
-                bool isOn = false;
+                int checkX = _node.gridX + x;
+                int checkY = _node.gridY + y;
 
-                for (int i = -offset; i <= offset; i++)
+                if (checkX >= 0 && checkX < m_GroundSize.x && checkY >= 0 && checkY < m_GroundSize.y)
                 {
-                    for (int j = -offset; j <= offset; j++)
+                    neighbours.Add(m_Map[checkX, checkY]);
+                }
+            }
+        }
+
+        return neighbours;
+    }
+    public void RequestPath(Vector3 _startPos, Vector3 _targetPos, System.Action<List<Node>, bool> _callback)
+    {
+        string pathKey = GetPathKey(NodeFromWorldPoint(_startPos), NodeFromWorldPoint(_targetPos));
+        if(nodePathCache.TryGetValue(pathKey,out List<Node> cachedPath))
+        {
+            _callback(cachedPath, true);
+        }
+        if (findPathCo != null)
+            StopCoroutine(findPathCo);
+        findPathCo = StartCoroutine(FindPath(_startPos, _targetPos, _callback));
+    }
+
+    IEnumerator FindPath (Vector3 _startPos, Vector3 _targetPos, System.Action<List<Node>, bool> _callback)
+    {
+        List<Node> waypoints = new List<Node>();
+        bool pathSuccess = false;
+
+        Node startNode = NodeFromWorldPoint(_startPos);
+        Node targetNode = NodeFromWorldPoint(_targetPos);
+
+        if(!startNode.walkable)
+        {
+            startNode = GetClosestWalkableNode(startNode);
+        }
+        if(!targetNode.walkable)
+        {
+            targetNode = GetClosestWalkableNode(startNode);
+        }
+
+        if (startNode.walkable && targetNode.walkable)
+        {
+            List<Node> openSet = new List<Node>(100); // 초기 용량 설정
+            HashSet<Node> closedSet = new HashSet<Node>();
+            openSet.Add(startNode);
+
+            while (openSet.Count > 0)
+            {
+                Node currentNode = openSet[0];
+                for (int i = 1; i < openSet.Count; i++)
+                {
+                    if (openSet[i].fCost < currentNode.fCost || (openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost))
                     {
-                        if ((i == 0 && j == 0) || _indexX + i < 0 || _indexY + j < 0 || _indexX + i >= m_GroundSize.x || _indexY + j >= m_GroundSize.y || (Mathf.Abs(i) < offset && Mathf.Abs(j) < offset))
-                            continue;
-
-                        // 이동 가능한 근접 노드 찾은 후 CloseList에 저장 
-                        if (m_Map[_indexX + i, _indexY + j].Moveable)
-                        {
-                            _indexX += i;
-                            _indexY += j;
-
-                            if (!ClosedList.Contains(m_Map[_indexX, _indexY]))
-                                ClosedList.Add(m_Map[_indexX, _indexY]);
-
-                            isOn = true;
-                            break;  // check : FindPath()에서 문제생기면 분기처리. // y가 커질수록 거리가 커져서 더 검색할 필요없어서 break 걸음.
-                        }
+                        currentNode = openSet[i];
                     }
                 }
 
-                // 이동 가능한 근처 노드 리스트에서 거리가 제일 가까운 노드의 x,y값 저장.
-                if (isOn)
+                openSet.Remove(currentNode);
+                closedSet.Add(currentNode);
+
+                if (currentNode == targetNode)
                 {
-                    float dist = 9999;
-
-                    for (int i = 0; i < ClosedList.Count; i++)
-                    {
-                        if (Vector2.Distance(new Vector2(ClosedList[i].Position.x, ClosedList[i].Position.y), _pos) < dist)
-                        {
-                            dist = Vector2.Distance(new Vector2(ClosedList[i].Position.x, ClosedList[i].Position.y), _pos);
-                            _indexX = ClosedList[i].X;
-                            _indexY = ClosedList[i].Y;
-                        }
-                    }
-
+                    pathSuccess = true;
                     break;
                 }
-            }
-        }
 
-        return m_Map[_indexX, _indexY];
-    }
-
-
-    public List<Node> FindPath(Node _startNode, Node _destination)
-    {
-        Destination = _destination;
-
-        Init();
-        return AStar_Dir8(_startNode);
-    }
-    List<Node> AStar_Dir8(Node _startNode)
-    {
-        List<Node> resultNode = new List<Node>();
-
-        Node currentNode = new Node(_startNode);
-
-        currentNode.G = 0;
-        currentNode.F = 0;
-        currentNode.H = 0;
-        currentNode.Parent = null;
-
-        OpenList.Add(currentNode);
-        FindNode(resultNode, currentNode);  // 돌고나면 최적 경로(m_Map내)
-
-        return resultNode;
-    }
-
-    public void FindNode(List<Node> result, Node current)
-    {
-        // current(마지막 노드)가 도착지면 result에 최적경로 저장 
-        if (current.X == Destination.X && current.Y == Destination.Y)
-        {
-            Node tmp = current;
-            while (tmp != null)
-            {
-                result.Add(tmp);
-                tmp = tmp.Parent;
-            }
-            return;
-        }
-
-        Node minNode = null;
-        bool isNodeOpenListNode = false;
-        // 근접 + 이동 가능한 + closeList에 없는 노드들
-        List<Node> adjacents = FindAdjacentNodes(current);
-
-        for (int i = 0; i < adjacents.Count; i++)
-        {
-            isNodeOpenListNode = false;
-
-            for (int j = 0; j < OpenList.Count; j++)
-            {
-                if (OpenList[j].X == adjacents[i].X && OpenList[j].Y == adjacents[i].Y)
+                foreach (Node neighbour in GetNeighbours(currentNode))
                 {
-                    if (OpenList[j].G > current.G)
+                    if (!neighbour.walkable || closedSet.Contains(neighbour))
                     {
-                        OpenList[j].Parent = current;
-
-                        if (OpenList[j].X != current.X && OpenList[j].Y != current.Y)
-                        {
-                            OpenList[j].G = current.G + 14;
-                        }
-                        else
-                        {
-                            OpenList[j].G = current.G + 10;
-                        }
-                        OpenList[j].F = OpenList[j].G + OpenList[j].H;
+                        continue;
                     }
 
-                    isNodeOpenListNode = true;
-                    break;
+                    int newCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
+                    if (newCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+                    {
+                        neighbour.gCost = newCostToNeighbour;
+                        neighbour.hCost = GetDistance(neighbour, targetNode);
+                        neighbour.parent = currentNode;
+
+                        if (!openSet.Contains(neighbour))
+                            openSet.Add(neighbour);
+                    }
+                }
+
+                if (openSet.Count % 100 == 0)
+                {
+                    yield return null;
                 }
             }
-
-            if (!isNodeOpenListNode)
+        }
+        else
+        {
+            Debug.Log("Not Walkable");
+        }
+        if (pathSuccess)
+        {
+            waypoints = RetracePath(startNode, targetNode);
+            string pathKey = GetPathKey(NodeFromWorldPoint(_startPos), NodeFromWorldPoint(_targetPos));
+            if (nodePathCache.Count >= MaxCacheSize) // 캐시 크기 제한
             {
-                OpenList.Add(adjacents[i]);
-                adjacents[i].Parent = current;
-                Vector3 pos = new Vector3(Mathf.Abs(current.Position.x - adjacents[i].Position.x), 0, Mathf.Abs(current.Position.y - adjacents[i].Position.y));
-
-                if (pos.x < pos.z)
-                {
-                    adjacents[i].G = (pos.x * 14 + (pos.z - pos.x) * 10);
-                }
-                else
-                {
-                    adjacents[i].G = (pos.z * 14 + (pos.x - pos.z) * 10);
-                }
-                pos = new Vector3(Mathf.Abs(Destination.Position.x - adjacents[i].Position.x), 0, Mathf.Abs(Destination.Position.y - adjacents[i].Position.y));
-
-                if (pos.x < pos.z)
-                {
-                    adjacents[i].H = (pos.x * 14 + (pos.z - pos.x) * 10);
-                }
-                else
-                {
-                    adjacents[i].H = (pos.z * 14 + (pos.x - pos.z) * 10);
-                }
-
-                adjacents[i].F = adjacents[i].G + adjacents[i].H;
+                nodePathCache.Remove(nodePathCache.Keys.First());
             }
+            nodePathCache[pathKey] = waypoints;
         }
-
-        OpenList.Remove(current);
-        ClosedList.Add(current);
-
-        OpenList.Sort(delegate (Node a, Node b)
-        {
-            if (a.F > b.F) return 1;
-            else if (a.F < b.F) return -1;
-            else return 0;
-        });
-
-        minNode = OpenList[0];
-
-        if (minNode != null)
-        {
-            FindNode(result, minNode);
-        }
+        _callback(waypoints, pathSuccess);
     }
-
-    List<Node> FindAdjacentNodes(Node currentNode)
+    private Node GetClosestWalkableNode(Node _node)
     {
-        int x = currentNode.X;
-        int y = currentNode.Y;
+        Queue<Node> nodeQueue = new Queue<Node>();
+        HashSet<Node> visitedNodes = new HashSet<Node>();
 
-        Node[] adjArray = new Node[8];
-        adjArray[0] = AddAdjacent(x + 1, y);
-        adjArray[1] = AddAdjacent(x, y - 1);
-        adjArray[2] = AddAdjacent(x - 1, y);
-        adjArray[3] = AddAdjacent(x, y + 1);
-        adjArray[4] = AddAdjacent(x + 1, y + 1);
-        adjArray[5] = AddAdjacent(x + 1, y - 1);
-        adjArray[6] = AddAdjacent(x - 1, y + 1);
-        adjArray[7] = AddAdjacent(x - 1, y - 1);
+        nodeQueue.Enqueue(_node);
+        visitedNodes.Add(_node);
 
-        List<Node> results = new List<Node>();
-
-        for (int i = 0; i < adjArray.Length; i++)
+        while (nodeQueue.Count > 0)
         {
-            if (adjArray[i] != null)
-                results.Add(new Node(adjArray[i]));
-        }
+            Node currentNode = nodeQueue.Dequeue();
 
-        return results;
-    }
-
-    Node AddAdjacent(int x, int y)
-    {
-        if ((x < 0) || (x >= m_GroundSize.x) || (y < 0) || (y >= m_GroundSize.y))
-            return null;
-
-        var adjacent = m_Map[x, y];
-
-        if (adjacent == null)
-            return null;
-
-        if (!adjacent.Moveable)
-            return null;
-
-        for (int i = 0; i < ClosedList.Count; i++)
-        {
-            if (ClosedList[i].X == adjacent.X && ClosedList[i].Y == adjacent.Y)
+            foreach (Node neighbour in GetNeighbours(currentNode))
             {
-                return null;
+                if (neighbour.walkable)
+                {
+                    return neighbour;
+                }
+
+                if (!visitedNodes.Contains(neighbour))
+                {
+                    visitedNodes.Add(neighbour);
+                    nodeQueue.Enqueue(neighbour);
+                }
             }
         }
 
-        return adjacent;
+        return _node; // 모든 노드를 탐색했음에도 walkable한 노드가 없으면 시작 노드를 반환 (사실상 예외 처리)
+    }
+    private List<Node> RetracePath(Node startNode, Node endNode)
+    {
+        List<Node> path = new List<Node>();
+        Node currentNode = endNode;
+
+        while (currentNode != startNode)
+        {
+            path.Add(currentNode);
+            currentNode = currentNode.parent;
+        }
+        path.Reverse();
+        return path;
     }
 
+    int GetDistance(Node _nodeA, Node _nodeB)
+    {
+        int dstX = Mathf.Abs(_nodeA.gridX - _nodeB.gridX);
+        int dstY = Mathf.Abs(_nodeA.gridY - _nodeB.gridY);
 
+        if (dstX > dstY)
+            return 14 * dstY + 10 * (dstX - dstY);
+        return 14 * dstX + 10 * (dstY - dstX);
+    }
+    private string GetPathKey(Node _startNode, Node _targetPos)
+    {
+        string returnStr = string.Format("SNode : {0},{1}, TNode :{2},{3}",_startNode.gridX,_startNode.gridY,_targetPos.gridX,_targetPos.gridY);
+        return returnStr;
+    }
 }

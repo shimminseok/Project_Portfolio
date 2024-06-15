@@ -1,5 +1,6 @@
 using NPOI.POIFS.Storage;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -167,9 +168,10 @@ public interface IMoveable
     bool IsMove { get; set; }
     float MoveSpd { get; }
     void SetMoveEvent();
-    void Move(Vector3 dir);
+    IEnumerator UpdatePath();
+    void Move();
     void Rotate(Vector3 dir);
-    float GetTargetDistance(Transform _target);
+    float GetTargetDistance(Vector3 _target);
 }
 public interface IControlable
 {
@@ -433,15 +435,19 @@ public class GrowthInfo
 public class Map
 {
     public Node start;
+    public Node boss;
     public string name;
     public string memo;
-    public TextAsset Text;
-    public Node[,] MapNode;
-    public Vector2 GroundSize;
+    public TextAsset text;
+    public Node[,] mapNode;
+    public Vector2 mapSize;
     public List<Vector3> monsterSpawnPoint = new List<Vector3>();
-    public List<GameObject> MapList = new List<GameObject>();
+    public List<GameObject> mapList = new List<GameObject>();
+
+
+    int gridSizeX,gridSizeY;
 }
-public class node
+public class Node
 {
     public bool walkable;
     public Vector3 worldPos;
@@ -449,17 +455,17 @@ public class node
     public int gridY;
     public int gCost;
     public int hCost;
-    public node parent;
+    public Node parent;
     public int fCost { get { return gCost + hCost; } }
 
-    public node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY)
+    public Node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY)
     {
         walkable = _walkable;
         worldPos = _worldPos;
         gridX = _gridX;
         gridY = _gridY;
     }
-    public node(node _node)
+    public Node(Node _node)
     {
         walkable = _node.walkable;
         worldPos = _node.worldPos;
@@ -468,50 +474,8 @@ public class node
         gCost = _node.gCost;
         hCost = _node.hCost;
         parent = _node.parent;
-
     }
 }
-public class Node
-{
-    public Node Parent;
-    public bool Moveable;
-    public float F;
-    public float G;
-    public float H;
-
-    public int X;
-    public int Y;
-
-    public Vector3 Position;
-
-    public float fCost
-    {
-        get { return G + H; }
-    }
-
-    public Node(float x, float y, bool moveable = true)
-    {
-        X = (int)x;
-        Y = (int)y;
-        Moveable = moveable;
-    }
-
-    public Node(Node node)
-    {
-        Parent = node.Parent;
-        Moveable = node.Moveable;
-
-        F = node.F;
-        G = node.G;
-        H = node.H;
-
-        X = node.X;
-        Y = node.Y;
-
-        Position = node.Position;
-    }
-}
-
 [System.Serializable]
 public class PlayerSaveData
 {

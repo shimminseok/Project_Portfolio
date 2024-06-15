@@ -34,6 +34,7 @@ public class GameManager : Singleton<GameManager>
                 break;
             case GAME_STATE.LOADING:
                 UIManager.Instance.LoadingUISet();
+
                 break;
             case GAME_STATE.END:
                 break;

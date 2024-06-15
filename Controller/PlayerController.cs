@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Tables;
@@ -38,9 +39,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     bool isDead;
     bool isMove;
 
-    bool isFindEnemy;
-
-
     //Growth
     Dictionary<STAT, int> growthLevelDic = new Dictionary<STAT, int>();
 
@@ -56,9 +54,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     InvenItemInfo[] equipItem = new InvenItemInfo[6] { new(), new(), new(), new(), new(), new() };
 
 
-    List<Node> finalNodeList;
 
-    Node targetNode;
+    List<Node> path;
+    int targetIndex;
     public double Damage
     {
         get
@@ -244,9 +242,25 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         }
         InitData((int)job);
         ObjectGetComponent();
+
     }
+
+    private void OnDrawGizmos()
+    {
+        if (path == null)
+            return;
+
+        for (int i = 0; i < path.Count; i++)
+        {
+            Gizmos.color = Color.red;
+
+            Gizmos.DrawCube(path[i].worldPos, Vector3.one);
+        }
+    }
+
     void Update()
     {
+
         if (isDead)
             return;
 
@@ -281,7 +295,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         if (GameManager.Instance.GameState == GAME_STATE.LOADING || GameManager.Instance.GameState == GAME_STATE.BOSS)
         {
-            transform.localPosition = Vector3.zero;
+            transform.localPosition = Navigation.Instance.start.worldPos;
             Idle();
         }
         else
@@ -289,7 +303,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             if (IsManualControl || !GameManager.Instance.isAuto)
             {
                 if (InputDirection != Vector2.zero)
-                    Move(new Vector3(InputDirection.x, 0, InputDirection.y));
+                    Move();
                 else
                     Idle();
             }
@@ -308,9 +322,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                 {
                     if (aniCtrl.GetAniState < OBJ_ANIMATION_STATE.SKILL_1)
                     {
-                        if (GetTargetDistance(targetObj.transform) > attackRange)
+                        if (GetTargetDistance(targetObj.transform) >= AttackRange)
                         {
-                            Move(Target.transform.localPosition - transform.localPosition);
+                            Move();
                         }
                         else
                         {
@@ -320,11 +334,11 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                 }
             }
         }
-
     }
     public override void Init()
     {
         isDead = false;
+
     }
     public override void ObjectGetComponent()
     {
@@ -355,29 +369,66 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         TagController.SetTag(this);
 
     }
-    public void Move(Vector3 dir)
+    public void Move()
     {
         if (IsManualControl)
         {
+            Vector3 dir = new Vector3(InputDirection.x, 0, InputDirection.y).normalized;
             Vector3 targetPos = transform.localPosition + dir.normalized * MoveSpd * Time.deltaTime;
             transform.localPosition = Vector3.MoveTowards(transform.position, targetPos, MoveSpd * Time.deltaTime);
-            transform.LookAt(dir.normalized + transform.localPosition);
+            transform.LookAt(dir + transform.localPosition);
         }
         else
         {
-            targetNode = finalNodeList.LastOrDefault();
-            if (targetNode != null)
-            {
-                dir = new Vector3(targetNode.Position.x, 0, targetNode.Position.y);
-                if (GetTargetDistance(dir) < 1)
-                {
-                    finalNodeList.RemoveAt(finalNodeList.Count - 1);
-                }
-            }
-            transform.LookAt(dir);
-            transform.localPosition = Vector3.MoveTowards(transform.localPosition, dir, MoveSpd * Time.deltaTime);
+            if(targetObj != null && !targetObj.IsDead)
+                Navigation.Instance.RequestPath(transform.localPosition, targetObj.transform.localPosition, OnPathFound);
         }
         SetMoveEvent();
+    }
+    public void OnPathFound(List<Node> newPath, bool pathSuccessful)
+    {
+        if (pathSuccessful)
+        {
+            path = new List<Node>(newPath);
+            targetIndex = 0;
+            StopCoroutine("FollowPath");
+            StartCoroutine("FollowPath");
+        }
+        else
+        {
+            Idle();
+        }
+    }
+    IEnumerator FollowPath()
+    {
+        if (path == null || path.Count == 0)
+        {
+            yield break;
+        }
+        Node currentWaypoint = path[0];
+
+
+        while (true)
+        {
+            if (Navigation.Instance.NodeFromWorldPoint(transform.localPosition) == currentWaypoint)
+            {
+                targetIndex++;
+                if (targetIndex >= path.Count)
+                {
+                    yield break;
+                }
+                currentWaypoint = path[targetIndex];
+            }
+
+            Vector3 dir = currentWaypoint.worldPos - transform.localPosition;
+            transform.localRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 10 * Time.deltaTime);
+            transform.localPosition = Vector3.MoveTowards(transform.localPosition, currentWaypoint.worldPos, MoveSpd * Time.deltaTime);
+            if(Vector3.Distance(transform.localPosition, targetObj.transform.localPosition) <= AttackRange)
+            {
+                StopCoroutine("FollowPath");
+            }
+            yield return null;
+        }
     }
     public void Rotate(Vector3 dir)
     {
@@ -399,7 +450,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             ChangeState(OBJ_ANIMATION_STATE.ATTACK);
             Rotate(TargetDir);
         }
-
     }
     void Idle()
     {
@@ -435,7 +485,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         isDead = true;
         CurHP = 0;
         ChangeState(OBJ_ANIMATION_STATE.DIE);
+
         GameManager.Instance.ChangeGameState(GAME_STATE.END);
+        
     }
     public float GetTargetDistance(Transform _target)
     {
@@ -451,20 +503,16 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     /// <param name="_target"></param>
     public override void FindEnemy()
     {
-
         foreach (var mon in MonsterManager.instance.monsterList)
         {
             float dis = mon.GetTargetDistance(transform);
-            if (targetObj == null || targetObj.IsDead ||    dis < targetObj.GetTargetDistance(transform) )
+            if (targetObj == null || targetObj.IsDead || dis < targetObj.GetTargetDistance(transform))
             {
                 targetObj = mon;
             }
         }
-        if (targetObj != null)
-        {
-            finalNodeList = Navigation.Instance.FindPath(new Vector2(transform.localPosition.x, transform.localPosition.z), new Vector2(targetObj.transform.localPosition.x, targetObj.transform.localPosition.z));
-        }
     }
+
     //스킬장착 및 교체시 스킬 쿨타임을 초기화 시켜주는 함수
     public void SetSkillCoolDown(int _index)
     {
@@ -639,5 +687,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             value = growthLevelDic[_stat] * st.StatValue;
         }
         return value;
+    }
+
+    public IEnumerator UpdatePath()
+    {
+        throw new NotImplementedException();
     }
 }
