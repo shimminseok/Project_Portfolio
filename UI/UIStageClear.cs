@@ -1,8 +1,9 @@
+using NPOI.SS.Formula.Functions;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using Tables;
 using TMPro;
-using UnityEngine.UI;
+using UnityEngine;
 
 public class UIStageClear : UIPopUp
 {
@@ -29,6 +30,7 @@ public class UIStageClear : UIPopUp
     }
     public void StageClear()
     {
+        AccountManager.Instance.BestStageInfo = new StageInfo(GameManager.Instance.GetNextStage());
         autoNextStage = StartCoroutine(StartAutoNextStage());
         SetRewardItem();
     }
@@ -50,29 +52,37 @@ public class UIStageClear : UIPopUp
     }
     public void SetRewardItem()
     {
+        GameManager.Instance.GetReward(MonsterManager.instance.CurrentStageTb.StageClearReward, out bool result);
         Tables.Reward rewardTb = Tables.Reward.Get(MonsterManager.instance.CurrentStageTb.StageClearReward);
-        int count = 0;
-        if(rewardTb != null )
-        {
-            for (int i = 0; i < rewardTb.ItemKey.Length; i++)
-            {
-                rewardItemList[i].gameObject.SetActive(true);
-                InvenItemInfo rewardInfo = new InvenItemInfo() { key = rewardTb.ItemKey[i], count = rewardTb.ItemQty[i] };
-                rewardItemList[i].SetItemSlotInfo(SLOT_TYPE.REWARD, rewardInfo);
-                rewardItemList[i].ActiveNotiImg(false);
-                rewardItemList[i].ActiveNotGetImg(false);
-                count++;
-            }
-            while (count < rewardItemList.Count)
-            {
-                rewardItemList[count++].gameObject.SetActive(false);
-            }
-        }
-        GameManager.Instance.GetReward(rewardTb, out bool result);
         if (result)
         {
+            int count = 0;
+            if (rewardTb != null)
+            {
 
+                count = SetSlotInfo(rewardTb.GoodsKey, rewardTb.GoodsQty, count);
+                count = SetSlotInfo(rewardTb.MaterialKey, rewardTb.MaterialQty, count);
+                count = SetSlotInfo(rewardTb.ItemKey, rewardTb.ItemQty, count);
+                while (count < rewardItemList.Count)
+                {
+                    rewardItemList[count++].gameObject.SetActive(false);
+                }
+            }
         }
+    }
+
+    int SetSlotInfo(int[] _keys, double[] _count,int _startIndex)
+    {
+        for (int i = 0; i < _keys.Length; i++)
+        {
+            rewardItemList[i].gameObject.SetActive(true);
+            InvenItemInfo rewardInfo = new InvenItemInfo() { key = _keys[i], count = _count[i] };
+            rewardItemList[i].SetItemSlotInfo(SLOT_TYPE.REWARD, rewardInfo);
+            rewardItemList[i].ActiveNotiImg(false);
+            rewardItemList[i].ActiveNotGetImg(false);
+            _startIndex++;
+        }
+        return _startIndex;
     }
 
     void JoinNextStage()

@@ -191,6 +191,7 @@ namespace UI
 
         protected void UpdateCellForIndex(ReuseCellData<T> _cell, int _index)
         {
+
             _cell.Index = _index;
 
             if (_cell.Index >= 0 && _cell.Index <= tableData.Count - 1)

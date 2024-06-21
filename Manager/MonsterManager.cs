@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Tables;
 using UnityEngine;
 
@@ -10,99 +9,99 @@ public class MonsterManager : MonoBehaviour
 
     public Transform monsterRoot;
     public List<MonsterController> monsterList = new List<MonsterController>();
-    Tables.Stage currentStageTb;
 
-    MonsterController bossMon;
+    private Tables.Stage currentStageTb;
+    private MonsterController bossMon;
 
+    private int genMonsterStep;
+    private int stageStep = 1;
 
-    int genMonsterStep;
-    int stageStep = 1;
-
-    public bool isChallengeableBoss;
 
     public MonsterController BossMon => bossMon;
-
     public int GenMonsterStep => genMonsterStep;
     public int StageStep => stageStep;
-
     public Tables.Stage CurrentStageTb
     {
-        get { return currentStageTb; }
+        get => currentStageTb;
         set
         {
             currentStageTb = value;
             genMonsterStep = currentStageTb.SpawnCount;
         }
     }
+
     void Awake()
     {
         if (instance == null)
+        {
             instance = this;
+        }
     }
 
     public void Init()
     {
         stageStep = 0;
         monsterList.Clear();
-        CurrentStageTb = Stage.Get(AccountManager.Instance.CurStageKey);
-        if (monsterRoot.childCount > 0)
+        CurrentStageTb = Stage.Get(AccountManager.Instance.CurrentStageInfo.key);
+        for (int i = monsterRoot.childCount - 1; i >= 0; i--)
         {
-            for(int i = monsterRoot.childCount - 1; i > 0 ; i--)
+            GameObject pushObj = monsterRoot.GetChild(i).gameObject;
+            if (pushObj.TryGetComponent(out MonsterController monCtrl))
             {
-                GameObject pushObj = monsterRoot.GetChild(i).gameObject;
-                PoolManager.Instance.PushObj(pushObj.name,POOL_TYPE.MONSTER, pushObj);
+                monCtrl.IsDead = true;
+                monCtrl.PushObj();
             }
         }
     }
+
     public void CreateMonsterPool(int _index, Vector3 _genPos, bool isBoss = false)
     {
-        MonsterController monsterCon = null;
         Monster MonsterTb = Monster.Get(_index);
         if (MonsterTb == null)
         {
-            Debug.LogError(string.Format("{0} is not Exist in Monster Table", _index));
+            Debug.LogError($"{_index} is not Exist in Monster Table");
             return;
         }
 
-        GameObject targetMonsterOjb = null;
-
-        targetMonsterOjb = PoolManager.Instance.GetObj(MonsterTb.Prefabs, POOL_TYPE.MONSTER);
-
-        if (targetMonsterOjb != null)
+        GameObject targetMonsterObj = PoolManager.Instance.GetObj(MonsterTb.Prefabs, POOL_TYPE.MONSTER);
+        if (targetMonsterObj == null)
         {
-            targetMonsterOjb.transform.parent = monsterRoot;
+            Debug.LogError($"{_index} is null");
+            return;
+        }
 
-            targetMonsterOjb.transform.localScale = Vector3.one;
-            monsterCon = targetMonsterOjb.GetComponent<MonsterController>();
+        targetMonsterObj.layer = LayerMask.NameToLayer("Monster");
+        targetMonsterObj.transform.SetParent(monsterRoot);
+        targetMonsterObj.transform.localScale = Vector3.one;
 
+        MonsterController monsterCon = targetMonsterObj.GetComponent<MonsterController>();
+        SetupCapsuleCollider(targetMonsterObj);
 
-            CapsuleCollider capsule = targetMonsterOjb.GetComponent<CapsuleCollider>();
-            if (capsule == null)
-            {
-                capsule = targetMonsterOjb.AddComponent<CapsuleCollider>();
-            }
-            capsule.center = Vector3.up;
-            capsule.radius = 0.4f;
-            capsule.height = 2;
-            capsule.direction = 1;
-            capsule.enabled = true;
-
-            if (!isBoss)
-            {
-                monsterCon.SetMonster(_genPos, MONSTER_TYPE.COMMON,currentStageTb.MonsterLv);
-                monsterList.Add(monsterCon);
-            }
-            else
-            {
-                bossMon = monsterCon;
-                monsterCon.SetMonster(_genPos, MONSTER_TYPE.BOSS,currentStageTb.BossLv);
-                monsterList.Add(monsterCon);
-            }
+        if (isBoss)
+        {
+            bossMon = monsterCon;
+            monsterCon.SetMonster(_genPos, MONSTER_TYPE.BOSS, currentStageTb.BossLv);
         }
         else
         {
-            Debug.LogError(string.Format("{0} is null", _index));
+            monsterCon.SetMonster(_genPos, MONSTER_TYPE.COMMON, currentStageTb.MonsterLv);
         }
+
+        monsterList.Add(monsterCon);
+    }
+
+    void SetupCapsuleCollider(GameObject targetMonsterObj)
+    {
+        if (!targetMonsterObj.TryGetComponent<CapsuleCollider>(out var capsule))
+        {
+            capsule = targetMonsterObj.AddComponent<CapsuleCollider>();
+        }
+
+        capsule.center = Vector3.up;
+        capsule.radius = 0.4f;
+        capsule.height = 2;
+        capsule.direction = 1;
+        capsule.enabled = true;
     }
 
     public void RemoveMonsterList(MonsterController _target)
@@ -121,51 +120,57 @@ public class MonsterManager : MonoBehaviour
         if (monsterList.Count > 0)
             return;
 
-        int index = 0;
         if (currentStageTb != null)
         {
-
-            if (stageStep >= genMonsterStep && !isChallengeableBoss)
+            if (stageStep >= genMonsterStep && !AccountManager.Instance.CurrentStageInfo.isChallengeableBoss)
             {
-                isChallengeableBoss = true;
+                AccountManager.Instance.CurrentStageInfo.isChallengeableBoss = true;
                 ChallengeBoss();
             }
             else
             {
-                List<Vector3> spawnPoint = Navigation.Instance.monsterSpawnPoints;
-                for (int i = 0; i <5; i++)
-                {
-                    int randomPointIndex = Random.Range(0, spawnPoint.Count);
-
-                    Tables.Spawn spwanTb = Tables.Spawn.Get(currentStageTb.SpawnGroup);
-                    if (spwanTb != null)
-                    {
-                        int spwanMonIndex = Random.Range(0, spwanTb.MonsterIndex.Length);
-                        CreateMonsterPool(spwanTb.MonsterIndex[spwanMonIndex], spawnPoint[index++]);
-                        if(index > spawnPoint.Count)
-                        {
-                            index = 0;
-                        }
-                    }
-                }
+                MonsterSpawn();
             }
             UIManager.Instance.SetWaveProsessUI();
         }
     }
+
+    void MonsterSpawn()
+    {
+        List<Vector3> spawnPoints = Navigation.Instance.monsterSpawnPoints;
+        int index = 0;
+
+        for (int i = 0; i < 5; i++)
+        {
+            Tables.Spawn spawnTb = Tables.Spawn.Get(currentStageTb.SpawnGroup);
+            if (spawnTb != null)
+            {
+                int spawnMonIndex = Random.Range(0, spawnTb.MonsterIndex.Length);
+                CreateMonsterPool(spawnTb.MonsterIndex[spawnMonIndex], spawnPoints[index++]);
+
+                if (index >= spawnPoints.Count)
+                {
+                    index = 0;
+                }
+            }
+        }
+    }
+
     public void ChallengeBoss()
     {
-        if (isChallengeableBoss)
+        if (AccountManager.Instance.CurrentStageInfo.isChallengeableBoss)
         {
             StartCoroutine(BossSpawn());
         }
     }
+
     IEnumerator BossSpawn()
     {
+        Init();
         stageStep = 1;
         CreateMonsterPool(currentStageTb.BossIndex, Navigation.Instance.boss.worldPos, true);
         GameManager.Instance.ChangeGameState(GAME_STATE.BOSS);
         yield return new WaitForSeconds(3f);
         GameManager.Instance.ChangeGameState(GAME_STATE.PLAYING);
-
     }
 }

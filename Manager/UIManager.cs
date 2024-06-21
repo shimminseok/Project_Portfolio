@@ -46,10 +46,7 @@ public class UIManager : Singleton<UIManager>
     public int SkillSlotCount { get => skillIconImg.Count; }
     void Start()
     {
-        for (int i = 0; i < SkillSlotCount; i++)
-        {
-            EquipSkill(i, PlayerController.Instance.SkillInfoList[i].skillKey);
-        }
+
     }
 
     void Update()
@@ -137,20 +134,25 @@ public class UIManager : Singleton<UIManager>
             currentStageName.text = string.Format("{0}-{1} {2}", stageTb.Chapter, stageTb.Zone, GetText(stageTb.StageName));
         }            
     }
+    public string ReturnCurrentStageName()
+    {
+        return currentStageName.text;
+    }
     public void SetWaveProsessUI()
     {
         float fillAmount = 0f;
-        if(MonsterManager.instance.isChallengeableBoss)
+        if(AccountManager.Instance.CurrentStageInfo.isChallengeableBoss)
         {
-            waveProcessText.gameObject.SetActive(false);
             fillAmount = 1;
-            waveProcessText.text = "보스 소환";
+            bossChellangeBtn.gameObject.SetActive(true);
+            waveProcessText.text = "보스 도전";
         }
         else
         {
-            waveProcessText.gameObject.SetActive(true);
             fillAmount = (float)MonsterManager.instance.StageStep / MonsterManager.instance.GenMonsterStep;
             waveProcessText.text = string.Format("웨이브 : {0} / {1}", MonsterManager.instance.StageStep, MonsterManager.instance.GenMonsterStep);
+            bossChellangeBtn.gameObject.SetActive(false);
+
         }
         processFillImg.fillAmount = fillAmount;
     }
@@ -189,6 +191,7 @@ public class UIManager : Singleton<UIManager>
     }
     public void OnClickBossChallenge()
     {
+        bossChellangeBtn.raycastTarget = false;
         MonsterManager.instance.ChallengeBoss();
     }
     public void OnClickAuto()

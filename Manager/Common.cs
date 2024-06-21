@@ -1,4 +1,3 @@
-using NPOI.POIFS.Storage;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,6 +48,7 @@ public enum OBJ_ANIMATION_STATE
     READY,
 
     SKILL_1 = 101,
+    SKILL_2,
     SKILL_3,
     SKILL_4,
     SKILL_5,
@@ -56,7 +56,9 @@ public enum OBJ_ANIMATION_STATE
     SKILL_7,
     SKILL_8,
     SKILL_9,
+    SKILL_10,
 }
+
 public enum GOOD_TYPE
 {
     GOLD = 1,
@@ -71,17 +73,30 @@ public enum SKILL_TYPE
 public enum SPRITE_TYPE
 {
     SKILL_ICON,
-    SKILL_LISTICON,
     BTN_ICON,
     GROWTH_ICON,
     ITEM_GRADE,
     ITEM_ICON,
     MONSTER
 }
+public enum EFFECT_TYPE
+{
+    ATTACK,
+    HIT,
+    PROJECTILE,
+    SKILL1,
+    SKILL1_HIT,
+    SKILL1_MISSILE_FX,
+    SKILL1_TARGET_FX,
+    DEAD,
+    HIT_BOSS,
+    MAX
+}
 public enum ITEM_CATEGORY
 {
     GOODS = 1,
-    ITEM = 2
+    ITEM,
+    MATERIAL,
 }
 public enum STAT
 {
@@ -119,6 +134,29 @@ public enum FULL_POPUP_TYPE
     NONE,
     SUMMON,
 }
+public enum SOUND_BGM
+{
+    NO_0,   // 기본 bgm
+    NO_1,   // 소환 bgm
+
+}
+public enum SOUND_EFFECT
+{
+    NO_0,           // 공격 단타 1
+    NO_1,           // 공격 단타 2
+    NO_2,           // 공격 단타 3
+    NO_3,           // 공격 단타 4
+    NO_4,           // 골드 소모
+    NO_5,           // 클릭
+    NO_6,           // 무기 / 방어구 착용
+    NO_7,           // 장신구 착용
+    NO_8,           // 장착 해제
+    NO_9,           // 평타Slash 1
+    NO_10,         // 평타Slash 2
+    NO_11,          //팝업 오픈
+
+
+}
 public enum GAME_STATE
 {
     READY,
@@ -128,6 +166,13 @@ public enum GAME_STATE
     BOSS,
     LOADING
 }
+public enum QUEST_TYPE
+{
+    DAYILY,
+    WEEKLY,
+    ACHIEBEMENT
+}
+
 #endregion
 #region [Interface]
 public interface IAttackable
@@ -138,9 +183,12 @@ public interface IAttackable
     float AttackRange { get; }
     double CriDam { get; }
     float Accuracy { get; set; }
-
+    bool IsRangeAttacker { get; set; }
     bool IsCri { get; }
+    void AttackAniEvent(IHittable _target);
     double CalculateAttDam();
+
+
 }
 public interface IAffectedGrowth
 {
@@ -149,7 +197,6 @@ public interface IAffectedGrowth
 }
 public interface IHittable
 {
-
     float GenTime { get; set; }
     bool IsDead { get; }
     double MaxHP { get; }
@@ -159,7 +206,7 @@ public interface IHittable
     float Dodge { get; }
     TagController TagController { get; }
     void UpdateHPUI();
-    void SetDeadEvent();
+    IEnumerator SetDeadEvent();
     void GetDamage(double _damage);
 }
 
@@ -167,8 +214,8 @@ public interface IMoveable
 {
     bool IsMove { get; set; }
     float MoveSpd { get; }
+    List<Node> Path { get; set; }
     void SetMoveEvent();
-    IEnumerator UpdatePath();
     void Move();
     void Rotate(Vector3 dir);
     float GetTargetDistance(Vector3 _target);
@@ -182,7 +229,7 @@ public interface IControlable
 
 public interface IUseSkill
 {
-    List<SkillInfo> SkillInfoList { get; }
+    SkillInfo[] SkillInfoList { get; }
     int UseSkillNum { get; }
     Dictionary<int, float> SkillCoolTime { get; set; }
 
@@ -193,8 +240,8 @@ public interface IUseSkill
     List<IHittable> GetInBarObjects(Transform _start, float _width, float _range);
     void UseSkill(int _index);
     void SetSkillCoolDown(int _index);
-    void PlaySkillEffect(string[] _name);
-    void SkillAniEvent();
+    void PlaySkillEffect(string _name);
+    void SkillAniEvent(int _type);
 }
 public interface IEquipableItem
 {
@@ -222,6 +269,13 @@ public class InvenSlotCellData
 
     public int Index { get => index; set { index = value; } }
 }
+public class SkillListCellData
+{
+    int index;
+    public Tables.Skill m_skill;
+    public bool isSelected;
+    public int Index { get => index; set { index = value; } }
+}
 public class WorldMapGenMonsterCellData
 {
     int index;
@@ -231,11 +285,22 @@ public class WorldMapGenMonsterCellData
 }
 public class WorldMapIdleRewardItemCellData
 {
+    int index;
+    public ITEM_CATEGORY category;
+    public int rewardKey;
+    public double count;
 
+
+    public int Index { get => index; set { index = value; } }
 }
 public class WorldMapFirstClearRewardItemCellData
 {
+    int index;
+    public ITEM_CATEGORY category;
+    public int rewardKey;
+    public double count;
 
+    public int Index { get => index; set { index = value; } }
 }
 public class WorldMapSlotCellData
 {
@@ -249,7 +314,38 @@ public class WorldMapChapterCellData
     int index;
     public int chapter;
     public bool isSelected;
-    public int Index { get => index; set { index = value;} }
+    public int Index { get => index; set { index = value; } }
+}
+public class QuestSlotCellData
+{
+    int index;
+    public Tables.Quest m_QuestTb;
+    public bool isSelected;
+    public int questState;
+
+    public ITEM_CATEGORY rewardItemCartegory;
+
+
+    public int questCount;
+    public int clearCount;
+    public int Index { get => index; set { index = value; } }
+
+    public int GetQuestProcess()
+    {
+        int questState = -1;
+        int goalCount = m_QuestTb.Value;
+        while (questCount >= goalCount)
+        {
+            questCount -= goalCount;
+            clearCount++;
+            if (m_QuestTb.NextValue == 0)
+                break;
+
+            goalCount = m_QuestTb.NextValue;
+        }
+
+        return questState;
+    }
 }
 #endregion[]
 [Serializable]
@@ -402,12 +498,42 @@ public class InvenItemInfo
 
     public bool IsEmpty => key == 0;
 }
+public class MaterialInfo
+{
+    public int key;
+    public double count;
+
+    public MaterialInfo(int _key, double _count)
+    {
+        key = _key;
+        count = _count;
+    }
+}
+[System.Serializable]
+public class StageInfo
+{
+    public int key;
+    public bool isChallengeableBoss;
+
+    public StageInfo(int _key)
+    {
+        key = _key;
+        isChallengeableBoss = AccountManager.Instance.BestStageInfo.key > AccountManager.Instance.CurrentStageInfo.key;
+    }
+    public StageInfo()
+    {
+        key = 101001;
+        isChallengeableBoss = false;
+    }
+}
+
 [System.Serializable]
 public class DictionaryWrapper<TKey, TValue>
 {
     public TKey key;
     public TValue value;
 }
+[System.Serializable]
 public class SkillInfo
 {
     public int skillKey;
@@ -444,8 +570,6 @@ public class Map
     public List<Vector3> monsterSpawnPoint = new List<Vector3>();
     public List<GameObject> mapList = new List<GameObject>();
 
-
-    int gridSizeX,gridSizeY;
 }
 public class Node
 {
@@ -465,32 +589,24 @@ public class Node
         gridX = _gridX;
         gridY = _gridY;
     }
-    public Node(Node _node)
-    {
-        walkable = _node.walkable;
-        worldPos = _node.worldPos;
-        gridX = _node.gridX;
-        gridY = _node.gridY;
-        gCost = _node.gCost;
-        hCost = _node.hCost;
-        parent = _node.parent;
-    }
 }
 [System.Serializable]
 public class PlayerSaveData
 {
     public int level = AccountManager.Instance.PlayerLevel;
-
     public double gold = AccountManager.Instance.Gold;
     public double dia = AccountManager.Instance.Dia;
 
-    public int stageKey = AccountManager.Instance.CurStageKey;
+    public StageInfo currentStage = AccountManager.Instance.CurrentStageInfo;
+    public StageInfo bestStageInfo = AccountManager.Instance.BestStageInfo;
 
     public string growhLevel = DictionaryJsonUtility.ToJson(PlayerController.Instance.GrowthLevelDic);
     public string inventory = DictionaryJsonUtility.ToJson(AccountManager.Instance.HasItemDictionary);
 
     public int[] summonCount = AccountManager.Instance.SummonCount;
     public int[] summonRewardLevel = AccountManager.Instance.SummonRewardLevel;
+
+    public SkillInfo[] equipSkillInfo = PlayerController.Instance.SkillInfoList;
 
 
     public void LoadData()
@@ -500,12 +616,17 @@ public class PlayerSaveData
         AccountManager.Instance.Gold = gold;
         AccountManager.Instance.Dia = dia;
 
-        AccountManager.Instance.CurStageKey = stageKey;
+        AccountManager.Instance.CurrentStageInfo = currentStage;
+        AccountManager.Instance.BestStageInfo = bestStageInfo;
 
-        PlayerController.Instance.GrowthLevelDic = DictionaryJsonUtility.FromJson<STAT,int>(growhLevel);
+
+
+        PlayerController.Instance.GrowthLevelDic = DictionaryJsonUtility.FromJson<STAT, int>(growhLevel);
         AccountManager.Instance.HasItemDictionary = DictionaryJsonUtility.FromJson<ITEM_TYPE, List<InvenItemInfo>>(inventory);
         summonCount = AccountManager.Instance.SummonCount;
-        summonRewardLevel =AccountManager.Instance.SummonRewardLevel;
+        summonRewardLevel = AccountManager.Instance.SummonRewardLevel;
+
+        equipSkillInfo = PlayerController.Instance.SkillInfoList;
     }
 
 }

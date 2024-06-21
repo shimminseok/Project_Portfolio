@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class UIPopUp : MonoBehaviour
 {
     // Start is called before the first frame update
-    void Start()
+    protected virtual void Start()
     {
         ChildSetActive(false);
     }
@@ -29,6 +29,7 @@ public class UIPopUp : MonoBehaviour
     public virtual void OpenPopUp()
     {
         ChildSetActive(true);
+        SoundManager.Instance.PlayEffectSound(SOUND_EFFECT.NO_11);
     }
 
 }

@@ -1,9 +1,5 @@
-using NPOI.OpenXmlFormats.Dml.Chart;
-using NPOI.Util;
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -17,19 +13,14 @@ public enum TweenType
 }
 public class TweenManager : Singleton<TweenManager>
 {
-    
 
-    public void StartTweenFunc(IEnumerator _co)
-    {
-        StartCoroutine(_co);
-    }
     public IEnumerator FadeOut(GameObject _go, float _alpha, float _time, float _delay = 0, UnityAction _action = null)
     {
         CanvasGroup render = _go.GetComponent<CanvasGroup>();
         yield return new WaitForSeconds(_delay);
         float startAlpha = render.alpha;
         float time = 0;
-        while(time < _time)
+        while (time < _time)
         {
             render.alpha = Mathf.Lerp(startAlpha, _alpha, time / _time);
             time += Time.deltaTime;
@@ -38,7 +29,7 @@ public class TweenManager : Singleton<TweenManager>
         render.alpha = _alpha;
         _action?.Invoke();
     }
-    public IEnumerator FadeIn(GameObject _go, float _alpha,float _time, float _delay = 0, UnityAction _action = null)
+    public IEnumerator FadeIn(GameObject _go, float _alpha, float _time, float _delay = 0, UnityAction _action = null)
     {
         CanvasGroup render = _go.GetComponent<CanvasGroup>();
         yield return new WaitForSeconds(_delay);
@@ -54,11 +45,11 @@ public class TweenManager : Singleton<TweenManager>
         _action?.Invoke();
     }
 
-    public IEnumerator TweenMove(RectTransform _rect,Vector2 _from, Vector2 _to, float _time, float _delay = 0, TweenType _type = TweenType.NONE, UnityAction _action = null)
+    public IEnumerator TweenMove(RectTransform _rect, Vector2 _from, Vector2 _to, float _time, float _delay = 0, TweenType _type = TweenType.NONE, UnityAction _action = null)
     {
         yield return new WaitForSeconds(_delay);
         float time = 0;
-        switch(_type)
+        switch (_type)
         {
             case TweenType.NONE:
                 {
@@ -112,7 +103,7 @@ public class TweenManager : Singleton<TweenManager>
     {
         _image.fillAmount = _start;
         float time = 0;
-        while(time < 0.5f)
+        while (time < 0.5f)
         {
             _image.fillAmount = Mathf.Lerp(_start, _end, time / 0.5f);
             time += Time.deltaTime;
@@ -122,7 +113,7 @@ public class TweenManager : Singleton<TweenManager>
         _action?.Invoke();
     }
 
-    public IEnumerator TweenAlpha(TextMeshProUGUI _target, float _startAlpha, float _endAlpha, float _time,TweenType _type = TweenType.NONE)
+    public IEnumerator TweenAlpha(TextMeshProUGUI _target, float _startAlpha, float _endAlpha, float _time, TweenType _type = TweenType.NONE)
     {
         _target.alpha = _startAlpha;
         do
@@ -144,12 +135,12 @@ public class TweenManager : Singleton<TweenManager>
                     yield return null;
                 }
             }
-        } while (_type == TweenType.LOOP || _type == TweenType.PINGPONG) ;
+        } while (_type == TweenType.LOOP || _type == TweenType.PINGPONG);
     }
     public IEnumerator TweenAlpha(GameObject _target, float _startAlpha, float _endAlpha, float _time, TweenType _type = TweenType.NONE)
     {
         CanvasRenderer rederer = _target.GetComponent<CanvasRenderer>();
-        if(rederer != null)
+        if (rederer != null)
         {
             rederer.SetAlpha(_startAlpha);
             do
@@ -157,7 +148,7 @@ public class TweenManager : Singleton<TweenManager>
                 float time = 0;
                 while (time < _time)
                 {
-                    rederer.SetAlpha( Mathf.Lerp(_startAlpha, _endAlpha, time / _time));
+                    rederer.SetAlpha(Mathf.Lerp(_startAlpha, _endAlpha, time / _time));
                     time += Time.deltaTime;
                     yield return null;
                 }
@@ -173,8 +164,6 @@ public class TweenManager : Singleton<TweenManager>
                 }
             } while (_type == TweenType.LOOP || _type == TweenType.PINGPONG);
         }
-        
+
     }
-
-
 }

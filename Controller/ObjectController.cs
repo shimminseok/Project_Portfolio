@@ -1,7 +1,4 @@
-using NPOI.SS.Formula.Functions;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 public abstract class ObjectController : MonoBehaviour
@@ -9,16 +6,15 @@ public abstract class ObjectController : MonoBehaviour
     [Header("ObjController")]
     public OBJ_TYPE objType;
     public AnimationController aniCtrl;
-    public List<GameObject> effectList;
     public Transform effectRoot;
-
 
     public abstract void ObjectGetComponent();
     public virtual void Init() { }
     public virtual void FindEnemy() { }
-    public  void ChangeState(OBJ_ANIMATION_STATE _state) 
+    public void ChangeState(OBJ_ANIMATION_STATE _state)
     {
-        aniCtrl.ChangeAnimation(_state);
+        if (aniCtrl.CurrentState != _state)
+            aniCtrl.ChangeAnimation(_state);
     }
     public bool IsTargetAngle(GameObject _target, float _angle)
     {
@@ -36,10 +32,12 @@ public abstract class ObjectController : MonoBehaviour
         float theta = Mathf.Acos(dot) * Mathf.Rad2Deg;
         return theta <= _angle;
     }
+
     public List<IHittable> GetInCircleObjects(Transform _start, float _radius)
     {
         List<IHittable> hitObjs = new List<IHittable>();
-        Collider[] cols = Physics.OverlapSphere(_start.localPosition + new Vector3(0,0.3f,0), _radius);
+        Collider[] cols = Physics.OverlapSphere(_start.position, _radius, 1 << LayerMask.NameToLayer("Monster"));
+
         for (int i = 0; i < cols.Length; i++)
         {
             IHittable hitObj = cols[i].GetComponent<IHittable>();
@@ -55,8 +53,8 @@ public abstract class ObjectController : MonoBehaviour
         List<IHittable> hitObjs = new List<IHittable>();
         Vector3 dir = new Vector3(Input.GetAxis("Mouse X"), 0, Input.GetAxis("Mouse Y"));
         Vector3 skillRange = new Vector3(_width, 0.5f, _range);
-        Vector3 boxSenter = _start.localPosition + (_start.forward * skillRange.z * 0.5f);
-        Collider[] cols = Physics.OverlapBox(boxSenter, skillRange / 2, Quaternion.LookRotation(_start.forward));
+        Vector3 boxSenter = _start.position + (_start.forward * skillRange.z * 0.5f);
+        Collider[] cols = Physics.OverlapBox(boxSenter, skillRange / 2, Quaternion.LookRotation(_start.forward), 1 << LayerMask.NameToLayer("Monster"));
         for (int i = 0; i < cols.Length; i++)
         {
             IHittable hitObj = cols[i].GetComponent<IHittable>();

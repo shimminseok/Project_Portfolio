@@ -30,7 +30,6 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     bool isCri;
     bool isDead;
 
-    List<Node> path;
     int targetIndex;
 
     public float MoveSpd
@@ -55,7 +54,11 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     public double CurHP
     {
         get => curHp;
-        set => curHp = value;
+        set
+        {
+            curHp = value;
+            UpdateHPUI();
+        }
     }
     public double HPRegen
     {
@@ -117,19 +120,14 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
 
+    public List<Node> Path { get; set; }
+    public bool IsRangeAttacker { get; set; }
+
     int monLevel = 1;
     private void Awake()
     {
         ObjectGetComponent();
         objType = OBJ_TYPE.MONSTER;
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (path != null &&  path.Count > 0)
-        {
-            Gizmos.DrawLine(transform.localPosition, path[0].worldPos);
-        }
     }
 
     void FixedUpdate()
@@ -143,7 +141,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         }
         else if (GameManager.Instance.GameState == GAME_STATE.BOSS)
         {
-            ChangeState(OBJ_ANIMATION_STATE.READY);
+            ChangeState(OBJ_ANIMATION_STATE.IDLE);
         }
         else
         {
@@ -178,13 +176,16 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         damage = monsterTb.Attack * monLevel;
         defense = monsterTb.DefencePoint * monLevel;
         targetObj = FindObjectOfType(typeof(PlayerController)) as PlayerController;
-        aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
         m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
         m_TagController.SetTag(this);
 
         attackSpd = monsterTb.AttackSpeed;
         attackRange = monsterTb.AttackRange;
         moveSpeed = monsterTb.MoveSpeed;
+
+        IsRangeAttacker = monsterTb.AttackType != 1;
+
+        aniCtrl.ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
     }
     public void SetMonster(Vector3 _pos, MONSTER_TYPE _type, int _monLv)
     {
@@ -193,35 +194,23 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         transform.localScale *= monsterTb.Scale;
         monLevel = _monLv;
         Init();
-
     }
     public void Move()
     {
         if (isDead)
             return;
 
+        ChangeState(OBJ_ANIMATION_STATE.MOVE);
         if (targetObj != null && !targetObj.IsDead)
         {
             Navigation.Instance.RequestPath(transform.localPosition, targetObj.transform.localPosition, OnPathFound);
-        }
-        SetMoveEvent();
-    }
-    public IEnumerator UpdatePath()
-    {
-        while(true)
-        {
-
-            Navigation.Instance.RequestPath(transform.localPosition, targetObj.transform.localPosition,OnPathFound);
-            yield return new WaitForFixedUpdate();
-            if (aniCtrl.GetAniState != OBJ_ANIMATION_STATE.MOVE)
-                yield break;
         }
     }
     public void OnPathFound(List<Node> newPath, bool pathSuccessful)
     {
         if (pathSuccessful)
         {
-            path = new List<Node>(newPath);
+            Path = new List<Node>(newPath);
             targetIndex = 0;
             StopCoroutine("FollowPath");
             StartCoroutine("FollowPath");
@@ -230,11 +219,11 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     IEnumerator FollowPath()
     {
-        if (path == null || path.Count == 0)
+        if (Path == null || Path.Count == 0)
         {
             yield break;
         }
-        Node currentWaypoint = path[0];
+        Node currentWaypoint = Path[0];
 
 
         while (true)
@@ -242,17 +231,17 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
             if (transform.localPosition == currentWaypoint.worldPos)
             {
                 targetIndex++;
-                if (targetIndex >= path.Count)
+                if (targetIndex >= Path.Count)
                 {
                     yield break;
                 }
-                currentWaypoint = path[targetIndex];
+                currentWaypoint = Path[targetIndex];
             }
 
             Vector3 dir = currentWaypoint.worldPos - transform.localPosition;
             transform.localRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 10 * Time.deltaTime);
             transform.localPosition = Vector3.MoveTowards(transform.localPosition, currentWaypoint.worldPos, MoveSpd * Time.deltaTime);
-            if (Vector3.Distance(transform.localPosition, targetObj.transform.localPosition) <= AttackRange)
+            if (aniCtrl.CurrentState != OBJ_ANIMATION_STATE.MOVE)
             {
                 StopCoroutine("FollowPath");
             }
@@ -261,12 +250,8 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     }
     void Attack()
     {
-        if (aniCtrl.GetAniState != OBJ_ANIMATION_STATE.ATTACK)
-        {
-            ChangeState(OBJ_ANIMATION_STATE.ATTACK);
-            Rotate(TargetDir);
-        }
-
+        ChangeState(OBJ_ANIMATION_STATE.ATTACK);
+        Rotate(TargetDir);
     }
     public override void ObjectGetComponent()
     {
@@ -286,7 +271,19 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     {
         transform.LookAt(targetObj.transform);
     }
-    public void SetDeadEvent()
+    public IEnumerator SetDeadEvent()
+    {
+        yield return new WaitUntil(() => aniCtrl.m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name == "dead");
+        yield return new WaitUntil(() => !aniCtrl.IsPlayingAnimation("DEAD"));
+        PushObj();
+
+    }
+    public void PushObj()
+    {
+        PoolManager.Instance.PushObj(gameObject.name, POOL_TYPE.MONSTER, gameObject);
+        PoolManager.Instance.PushObj(TagController.name, POOL_TYPE.TAG, TagController.gameObject);
+    }
+    void Dead()
     {
         IsDead = true;
         CurHP = 0;
@@ -294,28 +291,27 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         switch (monsterType)
         {
             case MONSTER_TYPE.COMMON:
-                gold = MonsterManager.instance.CurrentStageTb.MonsterGold;
+                {
+                    GameManager.Instance.GetReward(MonsterManager.instance.CurrentStageTb.StageIdleReward, out bool result);
+                    if (result)
+                    {
+
+                    }
+                }
                 break;
-            case MONSTER_TYPE.ELETE:
-                gold = MonsterManager.instance.CurrentStageTb.MonsterGold;
-                break;
+
             case MONSTER_TYPE.BOSS:
                 //스테이지 클리어
                 GameManager.Instance.ChangeGameState(GAME_STATE.WIN);
-                MonsterManager.instance.isChallengeableBoss = false;
-                PlayerController.Instance.ChangeState(OBJ_ANIMATION_STATE.WIN);
-                UIManager.Instance.OnClickOpenPopUp(UIStageClear.instance);
                 break;
         }
         AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD, gold);
         ChangeState(OBJ_ANIMATION_STATE.DIE);
         MonsterManager.instance.RemoveMonsterList(this);
     }
-
     public void SetMoveEvent()
     {
-        ChangeState(OBJ_ANIMATION_STATE.MOVE);
-
+        //ChangeState(OBJ_ANIMATION_STATE.MOVE);
     }
 
     public void UpdateHPUI()
@@ -338,18 +334,25 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
 
     public void GetDamage(double _damage)
     {
-        double finalDam = Math.Truncate(_damage - defense);
-        curHp -= finalDam <= 0 ? 1 : finalDam;
-        TagController.SetDamageFontText(finalDam);
+        double finalDam = Math.Truncate(_damage - Defense);
+        CurHP -= finalDam <= 0 ? 1 : finalDam;
 
-        UpdateHPUI();
-        if (curHp <= 0)
+        TagController.SetDamageFontText(finalDam);
+        if (CurHP <= 0)
         {
-            SetDeadEvent();
+            Dead();
         }
     }
     public double CalculateAttDam()
     {
         return Math.Truncate(isCri ? Damage * 2 + CriDam : Damage); ;
+    }
+
+    public void AttackAniEvent(IHittable _target)
+    {
+        if (_target.IsDead)
+            return;
+
+        _target.GetDamage(CalculateAttDam());
     }
 }

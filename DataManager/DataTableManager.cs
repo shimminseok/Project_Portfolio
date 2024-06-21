@@ -105,8 +105,6 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public string		StagePrefabs {get; private set;}
 		/// <summary> 권장 전투력 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			RecommendPower {get; private set;}
-		/// <summary> 크리스탈 키 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			CrystalKey {get; private set;}
 		/// <summary> 몬스터 레벨 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			MonsterLv {get; private set;}
 		/// <summary> 몬스터 레벨 증가량 </summary>
@@ -119,8 +117,6 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			PerfectClear {get; private set;}
 		/// <summary> 클리어 보상 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		[] ClearReward {get; private set;}
-		/// <summary> 실패 보상 </summary>
-		[Newtonsoft.Json.JsonProperty] public string		[] FailReward {get; private set;}
 		/// <summary> 보스 인덱스 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			BossIndex {get; private set;}
 		/// <summary> 보스 레벨 </summary>
@@ -303,6 +299,31 @@ namespace Tables
 		}
 	}
 
+	public partial class Material
+	{
+		/// <summary> 재료 키 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 재료 아이템 이름 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		MaterialName {get; private set;}
+		/// <summary> 재료 아이템 아이콘 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		MaterialIcon {get; private set;}
+		/// <summary> 재료 아이템 설명 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		MaterialDescription {get; private set;}
+
+		// 메인 저장소
+		public static Dictionary<int, Material> data = new Dictionary<int, Material>();
+		public static Material Get(int key)
+		{
+			if (data.ContainsKey(key))
+				return data[key];
+			else
+			{
+				UnityEngine.Debug.LogWarningFormat("This Key doesn't exist in Material Table Key : {0}",key);
+				return null;
+			}
+		}
+	}
+
 	public partial class Monster
 	{
 		/// <summary> 몬스터 인덱스 </summary>
@@ -313,6 +334,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public string		Monster_Img {get; private set;}
 		/// <summary> 프리팹 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		Prefabs {get; private set;}
+		/// <summary> 사망 이펙트 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		Death_Effect {get; private set;}
 		/// <summary> 인게임 크기 </summary>
 		[Newtonsoft.Json.JsonProperty] public float		Scale {get; private set;}
 		/// <summary> 공격타입 </summary>
@@ -362,8 +385,6 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			QuestGroupType {get; private set;}
 		/// <summary> 임무 타입  </summary>
 		[Newtonsoft.Json.JsonProperty] public int			QuestType {get; private set;}
-		/// <summary> 임무 반복 여부 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			loop {get; private set;}
 		/// <summary> 달성 요구치 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			Value {get; private set;}
 		/// <summary> 달성 시 증가 요구치 </summary>
@@ -375,7 +396,7 @@ namespace Tables
 		/// <summary> 임무 설명 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		QuestDescription {get; private set;}
 		/// <summary> 완료시 지급 보상 </summary>
-		[Newtonsoft.Json.JsonProperty] public string		[] QuestReward {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public string		 QuestReward {get; private set;}
 
 		// 메인 저장소
 		public static Dictionary<int, Quest> data = new Dictionary<int, Quest>();
@@ -395,8 +416,14 @@ namespace Tables
 	{
 		/// <summary> 리워드 키 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		key {get; private set;}
-		/// <summary> 보상 아이템 타입 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			[] RewardItemType {get; private set;}
+		/// <summary> Goods보상 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			[] GoodsKey {get; private set;}
+		/// <summary> Goods수량 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		[] GoodsQty {get; private set;}
+		/// <summary> Material보상 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			[] MaterialKey {get; private set;}
+		/// <summary> Material수량 </summary>
+		[Newtonsoft.Json.JsonProperty] public double		[] MaterialQty {get; private set;}
 		/// <summary> 아이템 키 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			[] ItemKey {get; private set;}
 		/// <summary> 아이템 수량 </summary>
@@ -436,12 +463,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			SkillRange {get; private set;}
 		/// <summary> 스킬 범위 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			SkillRadius {get; private set;}
-		/// <summary> 해금 레벨 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			UnLockLevel {get; private set;}
 		/// <summary> 쿨타임 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			CoolTime {get; private set;}
-		/// <summary> 타격횟수 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			AttackCount {get; private set;}
 		/// <summary> 데미지 계수 </summary>
 		[Newtonsoft.Json.JsonProperty] public float		DamageCoefficient {get; private set;}
 		/// <summary> 강화 시 증가 계수 </summary>
@@ -512,10 +535,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			SpawnGroup {get; private set;}
 		/// <summary> 몬스터 레벨 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			MonsterLv {get; private set;}
-		/// <summary> 일반 몬스터 골드 </summary>
-		[Newtonsoft.Json.JsonProperty] public uint		MonsterGold {get; private set;}
-		/// <summary> 일반 몬스터 경험치 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			MonsterExp {get; private set;}
+		/// <summary> 스테이지 방치 보상 </summary>
+		[Newtonsoft.Json.JsonProperty] public string		StageIdleReward {get; private set;}
 		/// <summary> 스테이지 클리어 보상 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		StageClearReward {get; private set;}
 		/// <summary> 스테이지 이름 </summary>

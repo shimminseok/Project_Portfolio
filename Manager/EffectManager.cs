@@ -12,20 +12,20 @@ public class EffectManager : MonoBehaviour
             instance = this;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void PlayEffect(GameObject _go, float _time = 1)
     {
+        if (_go.TryGetComponent(out ObjectMove moveGo))
+        {
+            moveGo.Set();
+        }
 
-    }
-
-    public void PlayEffect(GameObject _go)
-    {
         ParticleSystem[] partycles = _go.GetComponentsInChildren<ParticleSystem>();
         float longestDurating = 0f;
         for (int i = 0; i < partycles.Length; i++)
         {
+            
             var main = partycles[i].main;
-            main.simulationSpeed = GameManager.Instance.GameSpeed;
+            main.simulationSpeed = (GameManager.Instance.GameSpeed / 1.5f) * _time;
 
             if (longestDurating < main.duration)
                 longestDurating = main.duration;

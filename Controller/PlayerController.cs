@@ -1,9 +1,9 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Tables;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 
 public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable, IUseSkill, IEquipableItem, IAffectedGrowth
@@ -43,20 +43,21 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     Dictionary<STAT, int> growthLevelDic = new Dictionary<STAT, int>();
 
     //Skill
-    List<SkillInfo> skillInfoList = new List<SkillInfo>();
+    SkillInfo[] equipSkillArr = new SkillInfo[4];
+    SkillInfo equipSkillInfo;
     Dictionary<int, float> skillCoolTime = new Dictionary<int, float>();
     int useSkillNum;
-
     int equipSkillIndex;
-    SkillInfo equipSkillInfo;
-
+    public int UseSkillSlotIndex => useSkillNum;
     //Equipment
     InvenItemInfo[] equipItem = new InvenItemInfo[6] { new(), new(), new(), new(), new(), new() };
 
 
 
-    List<Node> path;
+    public List<Node> Path { get; set; }
     int targetIndex;
+
+
     public double Damage
     {
         get
@@ -141,7 +142,11 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public double CurHP
     {
         get => curHp;
-        set => curHp = value;
+        set
+        {
+            curHp = value;
+            UpdateHPUI();
+        }
     }
 
     public double HPRegen
@@ -184,16 +189,15 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         }
     }
     public ObjectController Target => targetObj;
-
-    public List<SkillInfo> SkillInfoList
+    public SkillInfo[] SkillInfoList
     {
         get
         {
-            return skillInfoList;
+            return equipSkillArr;
         }
         set
         {
-            skillInfoList = value;
+            equipSkillArr = value;
         }
     }
     public int UseSkillNum
@@ -224,6 +228,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         get => growthLevelDic;
         set => growthLevelDic = value;
     }
+    public bool IsRangeAttacker { get; set; }
 
     void Awake()
     {
@@ -236,10 +241,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     void Start()
     {
-        for (int i = 0; i < UIManager.Instance.SkillSlotCount; i++)
-        {
-            skillInfoList.Add(new SkillInfo());
-        }
         InitData((int)job);
         ObjectGetComponent();
 
@@ -247,24 +248,22 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     private void OnDrawGizmos()
     {
-        if (path == null)
+        if (Path == null)
             return;
 
-        for (int i = 0; i < path.Count; i++)
+        for (int i = 0; i < Path.Count; i++)
         {
             Gizmos.color = Color.red;
 
-            Gizmos.DrawCube(path[i].worldPos, Vector3.one);
+            Gizmos.DrawCube(Path[i].worldPos, Vector3.one);
         }
     }
 
     void Update()
     {
 
-        if (isDead)
+        if (isDead || GameManager.Instance.GameState == GAME_STATE.WIN)
             return;
-
-
 
         HpGen();
 
@@ -277,13 +276,19 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             UseSkill(1);
         }
 
-        for (int i = 0; i < skillInfoList.Count; i++)
+        if (targetObj == null)
+            return;
+
+        for (int i = 0; i < SkillInfoList.Length; i++)
         {
             if (GameManager.Instance.isAuto && !IsManualControl && IsUseableSkill(i)
-                && GetTargetDistance(targetObj.transform) <= attackRange && !aniCtrl.IsPlayingAnimation("SKILL"))
+                && GetTargetDistance(targetObj.transform.localPosition) <= attackRange)
             {
-                UseSkill(i);
-                break;
+                if (aniCtrl.CurrentState < OBJ_ANIMATION_STATE.SKILL_1 && aniCtrl.CurrentState != OBJ_ANIMATION_STATE.DIE)
+                {
+                    UseSkill(i);
+                    break;
+                }
             }
         }
     }
@@ -320,7 +325,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
                 }
                 else
                 {
-                    if (aniCtrl.GetAniState < OBJ_ANIMATION_STATE.SKILL_1)
+                    if (aniCtrl.CurrentState < OBJ_ANIMATION_STATE.SKILL_1)
                     {
                         if (GetTargetDistance(targetObj.transform) >= AttackRange)
                         {
@@ -337,8 +342,17 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public override void Init()
     {
+        Idle();
         isDead = false;
+        targetObj = null;
+        transform.localPosition = Navigation.Instance.start.worldPos;
+        StopCoroutine("FollowPath");
 
+        CurHP = MaxHP;
+        foreach (var key in SkillCoolTime.Keys.ToList())
+        {
+            SkillCoolTime[key] = 0;
+        }
     }
     public override void ObjectGetComponent()
     {
@@ -347,6 +361,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     void InitData(int job)
     {
         characterTb = Tables.Character.Get(job);
+        m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
         objType = OBJ_TYPE.PLAYER;
 
         damage = characterTb.Attack;
@@ -360,12 +375,14 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         moveSpeed = characterTb.MoveSpeed;
         criRate = characterTb.CriticalRate;
 
-        for (int i = 0; i < skillInfoList.Count; i++)
+        for (int i = 0; i < SkillInfoList.Length; i++)
         {
-            UIManager.Instance.EquipSkill(i, skillInfoList[i].skillKey);
+            if (SkillInfoList[i] != null)
+                UIManager.Instance.EquipSkill(i, SkillInfoList[i].skillKey);
+            else
+                UIManager.Instance.EquipSkill(i, 0);
         }
 
-        m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
         TagController.SetTag(this);
 
     }
@@ -380,16 +397,17 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         }
         else
         {
-            if(targetObj != null && !targetObj.IsDead)
+            if (targetObj != null && !targetObj.IsDead)
                 Navigation.Instance.RequestPath(transform.localPosition, targetObj.transform.localPosition, OnPathFound);
         }
-        SetMoveEvent();
+        if (aniCtrl.CurrentState != OBJ_ANIMATION_STATE.MOVE)
+            ChangeState(OBJ_ANIMATION_STATE.MOVE);
     }
     public void OnPathFound(List<Node> newPath, bool pathSuccessful)
     {
         if (pathSuccessful)
         {
-            path = new List<Node>(newPath);
+            Path = new List<Node>(newPath);
             targetIndex = 0;
             StopCoroutine("FollowPath");
             StartCoroutine("FollowPath");
@@ -401,11 +419,11 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     IEnumerator FollowPath()
     {
-        if (path == null || path.Count == 0)
+        if (Path == null || Path.Count == 0)
         {
             yield break;
         }
-        Node currentWaypoint = path[0];
+        Node currentWaypoint = Path[0];
 
 
         while (true)
@@ -413,17 +431,15 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             if (Navigation.Instance.NodeFromWorldPoint(transform.localPosition) == currentWaypoint)
             {
                 targetIndex++;
-                if (targetIndex >= path.Count)
+                if (targetIndex >= Path.Count)
                 {
                     yield break;
                 }
-                currentWaypoint = path[targetIndex];
+                currentWaypoint = Path[targetIndex];
             }
-
-            Vector3 dir = currentWaypoint.worldPos - transform.localPosition;
-            transform.localRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 10 * Time.deltaTime);
+            Rotate(currentWaypoint.worldPos - transform.localPosition);
             transform.localPosition = Vector3.MoveTowards(transform.localPosition, currentWaypoint.worldPos, MoveSpd * Time.deltaTime);
-            if(Vector3.Distance(transform.localPosition, targetObj.transform.localPosition) <= AttackRange)
+            if (aniCtrl.CurrentState != OBJ_ANIMATION_STATE.MOVE)
             {
                 StopCoroutine("FollowPath");
             }
@@ -432,12 +448,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public void Rotate(Vector3 dir)
     {
-        Quaternion rotation = Quaternion.LookRotation(dir, Vector3.up);
-        transform.rotation = rotation;
+        transform.localRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 100 * Time.deltaTime);
     }
     public void SetMoveEvent()
     {
-        ChangeState(OBJ_ANIMATION_STATE.MOVE);
     }
 
     void Attack()
@@ -445,15 +459,15 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         if (aniCtrl.IsPlayingAnimation("SKILL"))
             return;
 
-        if (aniCtrl.GetAniState != OBJ_ANIMATION_STATE.ATTACK)
+        if (aniCtrl.CurrentState != OBJ_ANIMATION_STATE.ATTACK)
         {
             ChangeState(OBJ_ANIMATION_STATE.ATTACK);
-            Rotate(TargetDir);
         }
     }
     void Idle()
     {
         FindEnemy();
+
         ChangeState(OBJ_ANIMATION_STATE.IDLE);
     }
     void HpGen()
@@ -480,14 +494,12 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         UIManager.Instance.UpdateHPBarUI(MaxHP, CurHP);
     }
 
-    public void SetDeadEvent()
+    public IEnumerator SetDeadEvent()
     {
         isDead = true;
         CurHP = 0;
-        ChangeState(OBJ_ANIMATION_STATE.DIE);
-
         GameManager.Instance.ChangeGameState(GAME_STATE.END);
-        
+        yield return null;
     }
     public float GetTargetDistance(Transform _target)
     {
@@ -519,10 +531,21 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         Tables.Skill skillTb = Tables.Skill.Get(_index);
         if (skillTb != null)
         {
+            if (GameManager.Instance.isTest)
+            {
+                if (!SkillCoolTime.ContainsKey(skillTb.key))
+                    SkillCoolTime.Add(_index, 0);
+                else
+                    SkillCoolTime[_index] = 0;
+
+                return;
+            }
+
             if (!SkillCoolTime.ContainsKey(skillTb.key))
                 SkillCoolTime.Add(_index, skillTb.CoolTime);
             else
                 SkillCoolTime[_index] = skillTb.CoolTime;
+
         }
 
     }
@@ -530,18 +553,17 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         useSkillNum = _index;
         //스킬 사용
-        Tables.Skill skill = Tables.Skill.Get(skillInfoList[_index].skillKey);
+        Tables.Skill skill = Tables.Skill.Get(SkillInfoList[_index].skillKey);
         if (skill != null)
         {
             ChangeState((OBJ_ANIMATION_STATE)skill.SkillAnimation);
             Rotate(TargetDir);
-            SetSkillCoolDown(skillInfoList[_index].skillKey);
+            SetSkillCoolDown(SkillInfoList[_index].skillKey);
         }
 
     }
     public float UpdateSkillCoolTime(int _index, bool _isFill)
     {
-
         if (skillCoolTime.ContainsKey(_index))
         {
             SkillCoolTime[_index] -= Time.deltaTime;
@@ -564,26 +586,25 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public bool IsUseableSkill(int _num)
     {
-        return !skillInfoList[_num].IsEmpty && SkillCoolTime[SkillInfoList[_num].skillKey] <= 0 && GameManager.Instance.GameState == GAME_STATE.PLAYING;
+        return !SkillInfoList[_num].IsEmpty && SkillCoolTime[SkillInfoList[_num].skillKey] <= 0 && GameManager.Instance.GameState == GAME_STATE.PLAYING;
     }
 
     public void GetDamage(double _damage)
     {
-        double finalDam = Math.Truncate(_damage - Defense);
+        double finalDam = System.Math.Truncate(_damage - Defense);
 
         if (finalDam <= 0)
             finalDam = 1;
         curHp -= finalDam;
-        UpdateHPUI();
         TagController.SetDamageFontText(finalDam);
         if (curHp <= 0)
         {
-            SetDeadEvent();
+            ChangeState(OBJ_ANIMATION_STATE.DIE);
         }
     }
     public double CalculateAttDam()
     {
-        return Math.Truncate(IsCri ? (Damage * 2) + CriDam : Damage); ;
+        return System.Math.Truncate(IsCri ? (Damage * 2) + CriDam : Damage); ;
     }
     public double CalculateSkillDamage(SkillInfo _skillInfo)
     {
@@ -592,46 +613,25 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         double skillOffset = skillTb.DamageCoefficient + (_skillInfo.skillLevel * skillTb.AddDamageCoefficient);
         if (skillTb != null)
         {
-            finaldamage = Math.Truncate(Damage * skillOffset);
+            finaldamage = System.Math.Truncate(Damage * skillOffset);
         }
 
         return finaldamage;
     }
 
-    public void PlaySkillEffect(string[] _name)
+    public void PlaySkillEffect(string _name)
     {
-        for (int i = 0; i < _name.Length; i++)
-        {
-            GameObject go = EffectManager.instance.GetEffect(_name[i]);
-            EffectManager.instance.PlayEffect(go);
-            go.transform.parent = effectRoot;
-            go.transform.localPosition = Vector3.zero;
-        }
+        GameObject go = EffectManager.instance.GetEffect(_name);
+        go.transform.parent = effectRoot;
+        go.transform.localPosition = Vector3.zero;
+        go.transform.eulerAngles = transform.eulerAngles;
+        EffectManager.instance.PlayEffect(go);
     }
 
-    public void SkillAniEvent()
+    public void SkillAniEvent(int _type)
     {
-        List<IHittable> gos = new List<IHittable>();
-        Tables.Skill skillTb = Tables.Skill.Get(skillInfoList[useSkillNum].skillKey);
-        switch ((SKILL_TYPE)skillTb.SkillType)
-        {
-            case SKILL_TYPE.CIRCLE:
-                gos = GetInCircleObjects(transform, skillTb.SkillRange);
-                break;
-            case SKILL_TYPE.BAR:
-                gos = GetInBarObjects(transform, skillTb.SkillRange, 5);
-                break;
-            case SKILL_TYPE.ANGLE:
-                break;
-        }
-        foreach (var go in gos)
-        {
-            for (int i = 0; i < skillTb.AttackCount; i++)
-            {
-                go.GetDamage(CalculateSkillDamage(skillInfoList[useSkillNum]));
-            }
-        }
-        PlaySkillEffect(skillTb.ActionFx);
+        Tables.Skill skillTb = Tables.Skill.Get(SkillInfoList[useSkillNum].skillKey);
+        PlaySkillEffect(skillTb.ActionFx[_type]);
     }
 
     public double GetEquipItemAbilityValue(STAT _stat)
@@ -689,8 +689,16 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         return value;
     }
 
-    public IEnumerator UpdatePath()
+    public void AttackAniEvent(IHittable _target)
     {
-        throw new NotImplementedException();
+        if (_target.IsDead)
+            return;
+        Vector3 targetPos = ((MonoBehaviour)_target).transform.localPosition;
+        if (GetTargetDistance(targetPos) <= AttackRange)
+        {
+            Rotate(targetPos - transform.localPosition);
+            _target.GetDamage(CalculateAttDam());
+        }
     }
+
 }

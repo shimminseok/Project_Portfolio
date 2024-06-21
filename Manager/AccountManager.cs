@@ -1,34 +1,44 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 
 
 public class AccountManager : Singleton<AccountManager>
 {
-    int curStageKey = 101001;
-    int bestStageKey = 101001;
     int playerLevel = 100;
+
+
+    StageInfo currentStageInfo = new StageInfo();
+    StageInfo bestStageInfo = new StageInfo();
 
 
 
     Dictionary<ITEM_TYPE, List<InvenItemInfo>> hasItemDictionary = new Dictionary<ITEM_TYPE, List<InvenItemInfo>>();
+    Dictionary<int, MaterialInfo> hasMaterialDictionary = new Dictionary<int, MaterialInfo>();
     double gold = 0;
     double dia = 0;
     public int PlayerLevel { get { return playerLevel; } set => playerLevel = value; }
-    public int CurStageKey
+    public StageInfo BestStageInfo
     {
-        get => curStageKey;
+        get => bestStageInfo;
         set
         {
-            curStageKey = value;
-            GameManager.Instance.ChangeGameState(GAME_STATE.LOADING);
-            UIManager.Instance.SetStageName(curStageKey);
-            MapManager.Instance.Init();
-            MonsterManager.instance.Init();
+            bestStageInfo = value;
         }
     }
+    public StageInfo CurrentStageInfo
+    {
+        get => currentStageInfo;
+
+
+        set
+        {
+            currentStageInfo = value;
+            GameManager.Instance.StageChange();
+        }
+    }
+
     public double Total_Atk
     {
         //Player의 모든 공격력 관련을 종합 계산
@@ -136,21 +146,41 @@ public class AccountManager : Singleton<AccountManager>
                 break;
         }
     }
+    public void AddMaterial(int _matKey, double _amount)
+    {
+        if (hasMaterialDictionary.TryGetValue(_matKey, out var material))
+        {
+            material.count += _amount;
+        }
+        else
+        {
+            MaterialInfo matinfo = new MaterialInfo(_matKey, _amount);
+            hasMaterialDictionary.Add(_matKey, matinfo);
+        }
+    }
 
 
 
     public InvenItemInfo GetHasInvenItem(Tables.Item _item)
     {
-        hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType, out List<InvenItemInfo> list);
-        InvenItemInfo itemInfo = new InvenItemInfo();
-        if (list != null && list.Count > 0)
+        InvenItemInfo invenItem = new InvenItemInfo();
+        if (hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType, out List<InvenItemInfo> list))
         {
-            itemInfo = list.Find(x => x.key == _item.key);
-            if (itemInfo == null)
-                itemInfo = new InvenItemInfo();
+            invenItem = list.Find(x => x.key == _item.key);
+            if (invenItem != null)
+            {
+                return invenItem;
+            }
+            else
+            {
+                invenItem.key = _item.key;
+            }
         }
-        itemInfo.key = _item.key;
-        return itemInfo;
+        else
+        {
+            invenItem.key = _item.key;
+        }
+        return invenItem;
     }
 
     public void SummonCountUp(SUMMON_TYPE _type)
@@ -190,16 +220,17 @@ public class AccountManager : Singleton<AccountManager>
     }
     public void GetEquipItem(ITEM_TYPE _type, InvenItemInfo _info)
     {
-        if (hasItemDictionary.ContainsKey(_type))
+        if (hasItemDictionary.TryGetValue(_type, out var list))
         {
-            InvenItemInfo invenItem = hasItemDictionary[_type].Find(x => x.key == _info.key);
-
+            InvenItemInfo invenItem = list.Find(x => x.key == _info.key);
             if (invenItem != null)
             {
                 invenItem.count += _info.count;
             }
             else
-                hasItemDictionary[_type].Add(_info);
+            {
+                list.Add(_info);
+            }
         }
         else
         {
@@ -248,19 +279,30 @@ public class AccountManager : Singleton<AccountManager>
     }
     private void OnApplicationQuit()
     {
-        //PlayerSaveData saveData = new PlayerSaveData();
-        //string data = JsonUtility.ToJson(saveData, true);
+        if (GameManager.instance.isTest)
+            return;
 
-        //PlayerPrefs.SetString("PlayerData", data);
+        PlayerSaveData saveData = new PlayerSaveData();
+        string data = JsonUtility.ToJson(saveData, true);
+
+        PlayerPrefs.SetString("PlayerData", data);
     }
 
     void LoadData()
     {
+        if(GameManager.instance.isTest)
+        {
+            PlayerPrefs.DeleteAll();
+        }
         string playerData = PlayerPrefs.GetString("PlayerData", string.Empty);
         if (!string.IsNullOrEmpty(playerData))
         {
             PlayerSaveData saveData = JsonUtility.FromJson<PlayerSaveData>(playerData);
             saveData.LoadData();
+        }
+        else
+        {
+            new PlayerSaveData();
         }
     }
 }

@@ -27,7 +27,7 @@ public class WorldMapSlot : ReuseCellData<WorldMapSlotCellData>
 
     void SetSlot()
     {
-        lockImg.gameObject.SetActive(AccountManager.Instance.CurStageKey < m_StageTb.key);
+        lockImg.gameObject.SetActive(AccountManager.Instance.BestStageInfo.key < m_StageTb.key);
         curStageNumTxt.text = string.Format("{0}-{1}",m_StageTb.Chapter,m_StageTb.Zone);
         curStageName.text = string.Format("{0} {1}", UIManager.Instance.GetText(m_StageTb.StageName),m_StageTb.Zone);
         recommendAtk.text = Utility.ToCurrencyString(m_StageTb.Stage_Recommend_Atk);

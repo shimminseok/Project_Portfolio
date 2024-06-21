@@ -13,6 +13,8 @@ public class UIWorldMap : UIPopUp
     [SerializeField] WorldMapReuseScrollRect worldMapSlotScroll;
     [SerializeField] WorldChapterReuseScrollRect worldMapChapterScroll;
     [SerializeField] WorldMapGenMonsterReuseScrollRect worldMapGenMonsterScroll;
+    [SerializeField] WorldMapIdleRewardScrollRect worldMapIdleRewardScroll;
+    [SerializeField] WorldMapFirstClearScrollRect worldMapFirstRewardScroll;
 
     [SerializeField] TextMeshProUGUI totalAtk_Txt;
     [SerializeField] TextMeshProUGUI totalDef_Txt;
@@ -56,12 +58,16 @@ public class UIWorldMap : UIPopUp
     public void ChangeSelectStageInfo(Stage _stageTb)
     {
         selectStageTb = _stageTb;
-        worldMapGenMonsterScroll.CreateSlot(selectStageTb);
         worldMapSlotScroll.TableData.ForEach(x => x.isSelected = x.m_StageTb.key == selectStageTb.key);
         foreach (var cell in worldMapSlotScroll.Cells)
         {
             cell.UpdateContent(worldMapSlotScroll.TableData[cell.Index]);
         }
+
+        worldMapGenMonsterScroll.CreateSlot(selectStageTb);
+        worldMapIdleRewardScroll.CreateSlot(selectStageTb);
+        worldMapFirstRewardScroll.CreateSlot(selectStageTb);
+
     }
 
     public void OnClickStageEnterBtn()

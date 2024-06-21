@@ -4,22 +4,24 @@ using UnityEngine;
 public class AnimationController : MonoBehaviour
 {
     [SerializeField] List<AnimationClip> m_Clips;
-
+    [SerializeField] List<GameObject> effectList;
 
     OBJ_ANIMATION_STATE currentState;
-    
-    OBJ_ANIMATION_STATE prevState;
+
     ObjectController m_Controller;
     Animator animator;
 
-    float m_animTimer;
-    public OBJ_ANIMATION_STATE GetAniState { get => currentState; }
+    public OBJ_ANIMATION_STATE CurrentState { get => currentState; }
+
+    public List<GameObject> EffectList { get { return effectList; } set { effectList = value; } }
     public Animator m_Animator => animator;
-    void Start()
+    void Awake()
     {
         m_Controller = GetComponentInParent<ObjectController>();
         animator = GetComponent<Animator>();
-
+    }
+    void Start()
+    {
         animator.runtimeAnimatorController = ChangeClip();
         EnterAnimationState(OBJ_ANIMATION_STATE.IDLE);
     }
@@ -36,139 +38,254 @@ public class AnimationController : MonoBehaviour
     }
     public void ChangeAnimation(OBJ_ANIMATION_STATE _state)
     {
-
-        currentState = _state;
-        if (prevState != currentState)
-        {
-            ExitAnimationState(prevState);
-            EnterAnimationState(_state);
-        }
-        m_animTimer = 0;
+        EnterAnimationState(_state);
     }
+
     void EnterAnimationState(OBJ_ANIMATION_STATE _state)
     {
+        float speed = 1;
+        string clipName = GetClipNameAndSpeed(_state, ref speed);
+
+        animator.speed = (GameManager.Instance.GameSpeed / 1.5f) * speed;
+        currentState = _state;
+        animator.CrossFade(clipName, 0.1f);
+
+
         switch (_state)
         {
-            case OBJ_ANIMATION_STATE.ATTACK:
-                {
-                    IAttackable attackable = m_Controller.GetComponent<IAttackable>();
-                    if(attackable != null)
-                    {
-                        animator.speed = (GameManager.Instance.GameSpeed / 1.5f)* attackable.AttackSpd;
-                    }
-                }
+            case OBJ_ANIMATION_STATE.IDLE:
+                clipName = "idle";
+                break;
+            case OBJ_ANIMATION_STATE.DIE:
+                clipName = "dead";
                 break;
             case OBJ_ANIMATION_STATE.MOVE:
                 {
-                    IMoveable moveable = m_Controller.GetComponent<IMoveable>();
-                    if (moveable != null)
+                    if (m_Controller.TryGetComponent<IMoveable>(out var moveable))
                     {
-                        animator.speed = (GameManager.Instance.GameSpeed / 1.5f) * moveable.MoveSpd;
+                        speed = moveable.MoveSpd;
                     }
+                    clipName = "move";
+                }
+                break;
+            case OBJ_ANIMATION_STATE.ATTACK:
+                {
+                    if (m_Controller.TryGetComponent<IAttackable>(out var attackable))
+                    {
+                        speed = attackable.AttackSpd;
+                    }
+                    clipName = "atk";
                 }
                 break;
             case OBJ_ANIMATION_STATE.WIN:
                 {
-                    animator.speed = (GameManager.Instance.GameSpeed / 1.5f);
                 }
+                clipName = "win";
                 break;
-            default:
-                animator.speed = (GameManager.Instance.GameSpeed / 1.5f);
+            case OBJ_ANIMATION_STATE.SKILL_1:
+                clipName = "skill01";
+                break;
+            case OBJ_ANIMATION_STATE.SKILL_2:
+                clipName = "skill02";
+                break;
+            case OBJ_ANIMATION_STATE.SKILL_3:
+                clipName = "skill03";
+                break; ;
+            case OBJ_ANIMATION_STATE.SKILL_4:
+                clipName = "skill04";
+                break;
+            case OBJ_ANIMATION_STATE.SKILL_5:
+                clipName = "skill05";
+                break;
+            case OBJ_ANIMATION_STATE.SKILL_6:
+                clipName = "skill06";
+                break;
+            case OBJ_ANIMATION_STATE.SKILL_7:
+                clipName = "skill07";
+                break;
+            case OBJ_ANIMATION_STATE.SKILL_8:
+                clipName = "skill08";
+                break;
+            case OBJ_ANIMATION_STATE.SKILL_9:
+                clipName = "skill09";
+                break;
+            case OBJ_ANIMATION_STATE.SKILL_10:
+                clipName = "skill10";
                 break;
         }
-        animator.SetInteger("State", (int)_state);
+
+        animator.speed = (GameManager.Instance.GameSpeed / 1.5f) * speed;
+        currentState = _state;
+        animator.CrossFade(clipName, 0.1f);
+        HandleStateEvents(_state);
     }
-    void ExitAnimationState(OBJ_ANIMATION_STATE _state)
+
+    string GetClipNameAndSpeed(OBJ_ANIMATION_STATE _state, ref float _speed)
     {
-        animator.SetInteger("State", (int)_state);
-        prevState = currentState;
+        switch (_state)
+        {
+            case OBJ_ANIMATION_STATE.IDLE:
+                return "idle";
+
+            case OBJ_ANIMATION_STATE.DIE:
+                return "dead";
+
+            case OBJ_ANIMATION_STATE.MOVE:
+                if (m_Controller.TryGetComponent<IMoveable>(out var moveable))
+                {
+                    _speed = moveable.MoveSpd;
+                }
+                return "move";
+
+            case OBJ_ANIMATION_STATE.ATTACK:
+                if (m_Controller.TryGetComponent<IAttackable>(out var attackable))
+                {
+                    _speed = attackable.AttackSpd;
+                }
+                return "atk";
+
+            case OBJ_ANIMATION_STATE.WIN:
+                return "win";
+
+            case OBJ_ANIMATION_STATE.SKILL_1:
+                return "skill01";
+
+            case OBJ_ANIMATION_STATE.SKILL_2:
+                return "skill02";
+
+            case OBJ_ANIMATION_STATE.SKILL_3:
+                return "skill03";
+
+            case OBJ_ANIMATION_STATE.SKILL_4:
+                return "skill04";
+
+            case OBJ_ANIMATION_STATE.SKILL_5:
+                return "skill05";
+
+            case OBJ_ANIMATION_STATE.SKILL_6:
+                return "skill06";
+
+            case OBJ_ANIMATION_STATE.SKILL_7:
+                return "skill07";
+
+            case OBJ_ANIMATION_STATE.SKILL_8:
+                return "skill08";
+
+            case OBJ_ANIMATION_STATE.SKILL_9:
+                return "skill09";
+
+            case OBJ_ANIMATION_STATE.SKILL_10:
+                return "skill10";
+
+            default:
+                return string.Empty;
+        }
+    }
+    void HandleStateEvents(OBJ_ANIMATION_STATE _state)
+    {
+        switch (_state)
+        {
+            case OBJ_ANIMATION_STATE.DIE:
+                if (m_Controller.TryGetComponent<IHittable>(out var hittable))
+                    StartCoroutine(hittable.SetDeadEvent());
+                break;
+            case OBJ_ANIMATION_STATE.IDLE:
+            case OBJ_ANIMATION_STATE.MOVE:
+            case OBJ_ANIMATION_STATE.ATTACK:
+            case OBJ_ANIMATION_STATE.WIN:
+            case OBJ_ANIMATION_STATE.SKILL_1:
+            case OBJ_ANIMATION_STATE.SKILL_2:
+            case OBJ_ANIMATION_STATE.SKILL_3:
+            case OBJ_ANIMATION_STATE.SKILL_4:
+            case OBJ_ANIMATION_STATE.SKILL_5:
+            case OBJ_ANIMATION_STATE.SKILL_6:
+            case OBJ_ANIMATION_STATE.SKILL_7:
+            case OBJ_ANIMATION_STATE.SKILL_8:
+            case OBJ_ANIMATION_STATE.SKILL_9:
+            case OBJ_ANIMATION_STATE.SKILL_10:
+                break;
+        }
     }
     public void AttackEvent()
     {
-
-        switch (m_Controller.objType)
+        if (m_Controller.TryGetComponent<IAttackable>(out var iAtk))
         {
-            case OBJ_TYPE.PLAYER:
-                PlayerController characterCon = m_Controller as PlayerController;
-                MonsterController targetMon = characterCon.Target as MonsterController;
-                if (characterCon.GetTargetDistance(targetMon.transform) <= characterCon.AttackRange)
-                    targetMon.GetDamage(characterCon.CalculateAttDam());
-                break;
-
-            case OBJ_TYPE.MONSTER:
-                MonsterController monsterCon = m_Controller as MonsterController;
-                switch (monsterCon.Target.objType)
-                {
-                    case OBJ_TYPE.PLAYER:
-                        PlayerController.Instance.GetDamage(monsterCon.CalculateAttDam());
-                        break;
-                    case OBJ_TYPE.COLLEAGUE:
-                        break;
-                }
-                break;
+            if (iAtk.Target != null)
+            {
+                if (iAtk.Target.TryGetComponent<IHittable>(out var ihit))
+                    iAtk.AttackAniEvent(ihit);
+            }
         }
-    }
-    public void EndAttackAni()
-    {
-        ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
-    }
-    public void EndSkillAni()
-    {
-        ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
-    }
-    public void MoveEvent()
-    {
-
-    }
-    public void SkillEvent()
-    {
-        IUseSkill skillEvent = m_Controller.GetComponent<IUseSkill>();
-        if(skillEvent != null)
-        {
-            skillEvent.SkillAniEvent();
-        }
-
-    }
-    public void DeadEvent()
-    {
-        switch (m_Controller.objType)
-        {
-            case OBJ_TYPE.PLAYER:
-                PlayerController characterCon = m_Controller as PlayerController;
-                break;
-
-            case OBJ_TYPE.MONSTER:
-                MonsterController monsterCon = m_Controller as MonsterController;
-                PoolManager.Instance.PushObj(gameObject.name, POOL_TYPE.MONSTER, gameObject);
-                PoolManager.Instance.PushObj(monsterCon.TagController.name, POOL_TYPE.TAG, monsterCon.TagController.gameObject);
-                break;
-        }
-
     }
     public bool IsPlayingAnimation(string _tag)
     {
-        return animator.GetCurrentAnimatorStateInfo(0).IsTag(_tag);
+        var curAni = animator.GetCurrentAnimatorStateInfo(0);
+        if (curAni.IsTag(_tag))
+        {
+            float time = curAni.normalizedTime;
+            if (time >= 1)
+                return false;
+            else
+                return true;
+        }
+        else
+            return false;
     }
-
-    public void effect()
+    public void EndSkillAni()
     {
+        if (currentState != OBJ_ANIMATION_STATE.DIE)
+            ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
+    }
+    public void MoveEvent()
+    {
+        if (m_Controller.TryGetComponent<IMoveable>(out var imov))
+        {
+            imov.SetMoveEvent();
+        }
+    }
+    public void effect(int _type)
+    {
+        //if (effectList.Count > _type)
+        //{
+        //    GameObject eft = PoolManager.Instance.GetObj(effectList[_type].name, POOL_TYPE.EFFECT);
+        //    eft.transform.SetParent(m_Controller.effectRoot);
+        //    eft.transform.localPosition = transform.localPosition;
+        //    eft.transform.eulerAngles = transform.eulerAngles;
+        //    EffectManager.instance.PlayEffect(eft);
+        //}
+    }
+    public void AttackEffect(int _type)
+    {
+        GameObject eft = PoolManager.Instance.GetObj(effectList[_type].name, POOL_TYPE.EFFECT);
+        eft.transform.SetParent(m_Controller.effectRoot);
+        eft.transform.localPosition = transform.localPosition;
+        eft.transform.eulerAngles = transform.eulerAngles;
+
+        if (m_Controller.TryGetComponent<IAttackable>(out var attackable))
+        {
+            EffectManager.instance.PlayEffect(eft, attackable.AttackSpd);
+        }
 
     }
-    public void PlaySound()
+    public void PlaySound(int _index)
     {
-
+        SoundManager.Instance.PlayEffectSound((SOUND_EFFECT)_index);
     }
     public void PlayerAttackSound()
     {
-        
+        if (currentState == OBJ_ANIMATION_STATE.ATTACK)
+            SoundManager.Instance.PlayEffectSound((SOUND_EFFECT)Random.Range(0, 4));
     }
     public void SkillTierAura()
     {
 
     }
-    public void SkillEffect()
+    public void SkillEffect(int _type)
     {
-
+        if (m_Controller.gameObject.TryGetComponent<IUseSkill>(out var iUseSkill))
+        {
+            iUseSkill.SkillAniEvent(_type);
+        }
     }
     public void SkillSound()
     {
@@ -176,6 +293,31 @@ public class AnimationController : MonoBehaviour
     }
     public void Skill()
     {
-        ChangeAnimation(OBJ_ANIMATION_STATE.IDLE);
+        if (m_Controller.TryGetComponent<IUseSkill>(out var iUseSkill))
+        {
+            Tables.Skill skillTb = Tables.Skill.Get(iUseSkill.SkillInfoList[iUseSkill.UseSkillNum].skillKey);
+            if (skillTb != null)
+            {
+                List<IHittable> gos = new List<IHittable>();
+                switch ((SKILL_TYPE)skillTb.SkillType)
+                {
+                    case SKILL_TYPE.CIRCLE:
+                        gos = iUseSkill.GetInCircleObjects(transform, skillTb.SkillRadius);
+                        break;
+                    case SKILL_TYPE.BAR:
+                        gos = iUseSkill.GetInBarObjects(transform, skillTb.SkillWidth, skillTb.SkillRange);
+                        break;
+                    case SKILL_TYPE.ANGLE:
+                        break;
+                }
+                foreach (var go in gos)
+                {
+                    go.GetDamage(iUseSkill.CalculateSkillDamage(iUseSkill.SkillInfoList[iUseSkill.UseSkillNum]));
+                }
+            }
+        }
     }
+
+
+
 }

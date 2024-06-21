@@ -108,6 +108,13 @@ public static class DataTableLoader
 					Debug.Log("Job is loaded");
 				}
 				break;
+			case "Material":
+				{
+					JObject json = JObject.Parse(txt.text);
+					Tables.Material.data = json.GetDeserializedObject("value", new Dictionary<int, Tables.Material>());
+					Debug.Log("Material is loaded");
+				}
+				break;
 			case "Monster":
 				{
 					JObject json = JObject.Parse(txt.text);

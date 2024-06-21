@@ -287,8 +287,8 @@ public class UISummon : UIPopUp
                 default:
                     break;
             }
-            Tables.Reward rewardTb = Reward.Get($"{rewardTbKey}{AccountManager.Instance.SummonRewardLevel[(int)selectSummonType]}");
-            GameManager.Instance.GetReward(rewardTb, out bool result);
+            rewardTbKey += AccountManager.Instance.SummonRewardLevel[(int)selectSummonType];
+            GameManager.Instance.GetReward(rewardTbKey, out bool result);
             if (result)
             {
                 AccountManager.Instance.SummonRewardLevel[(int)selectSummonType]++;

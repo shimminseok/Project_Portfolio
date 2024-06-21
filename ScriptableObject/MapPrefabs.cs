@@ -2,8 +2,6 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-
 [CreateAssetMenu(fileName = "MapPrefabs", menuName = "ScriptableObject/MapPrefabs")]
 public class MapPrefabs : ScriptableObject
 {
@@ -19,7 +17,6 @@ public class MapPrefabs : ScriptableObject
         JArray jPrefabs = json["map"] as JArray;
         GameObject Parent = new GameObject();
         Parent.transform.parent = PoolManager.Instance.transform;
-        //Parent.transform.localRotation = Quaternion.Euler(0, -45, 0);
         Parent.transform.localPosition = Parent.transform.localPosition - new Vector3(0, 0.01f, 0);
         Maps[index].mapList.Clear();
 
@@ -48,7 +45,7 @@ public class MapPrefabs : ScriptableObject
             bool monster = j.GetValue<bool>("monster", false);
 
             bool walkable = !j.GetValue<bool>("block", true);
-            Vector3 worldPos = /*Quaternion.Euler(0, 45f, 0) **/ new Vector3((-Maps[index].mapSize.x / 2f) + x, 0, (-Maps[index].mapSize.y / 2f) + y);
+            Vector3 worldPos = new Vector3((-Maps[index].mapSize.x / 2f) + x, 0, (-Maps[index].mapSize.y / 2f) + y);
 
             Node map = new Node(walkable, worldPos, x, y);
 

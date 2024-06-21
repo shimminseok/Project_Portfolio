@@ -19,7 +19,7 @@ public class MapManager : Singleton<MapManager>
 
         if (dungeon == null)
         {
-            Tables.Stage stageTb = Stage.Get(AccountManager.Instance.CurStageKey);
+            Tables.Stage stageTb = Stage.Get(AccountManager.Instance.CurrentStageInfo.key);
             mapPrefabName = stageTb.StagePrefabs;
         }
         if(!string.IsNullOrEmpty(mapPrefabName))
@@ -33,8 +33,6 @@ public class MapManager : Singleton<MapManager>
         {
             currentMap = _mapName;
             SetActiveMapList(false);
-
-            //Map map = new Map();
 
             Map map = new Map();
 

@@ -3,41 +3,39 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
+using UI;
 
-public class SkillListSlot : MonoBehaviour
+public class SkillListSlot : ReuseCellData<SkillListCellData>
 {
-    int number;
-    public EventTrigger eventTrigger;
-
-    public Image selectedSlot;
-    public Image skillIconImg;
-    public Text skillName;
-    public Text skillUnLockLevel;
+    [SerializeField] GameObject selectedSlot;
+    [SerializeField] Image skillIconImg;
+    [SerializeField] TextMeshProUGUI skillName;
+    [SerializeField] TextMeshProUGUI skillCoolTime;
 
     Tables.Skill m_skillTb;
-
-
-    public int Number { get => number; set => number = value; }
-    public Tables.Skill SkillTb { get => m_skillTb; }
-
-    void Start()
+    public override void UpdateContent(SkillListCellData _itemData)
     {
-        EventTrigger.TriggerEvent trigger = new EventTrigger.TriggerEvent();
-        trigger.AddListener((data) => OnClickSlot());
-        eventTrigger.triggers.Add(new EventTrigger.Entry { eventID = EventTriggerType.PointerClick ,callback = trigger});
+        m_data = _itemData;
+        SetSkillListSlotInfo(_itemData.m_skill);
+        selectedSlot.SetActive(_itemData.isSelected);
+
     }
+
     public void SetSkillListSlotInfo(Tables.Skill skillTb)
     {
         m_skillTb = skillTb;
-        skillIconImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_LISTICON,skillTb.SkillListIcon);
         skillName.text = UIManager.Instance.GetText(m_skillTb.SkillName);
-        skillUnLockLevel.text = string.Format("해금 레벨 : {0}", m_skillTb.UnLockLevel);
+        skillIconImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON,skillTb.SkillListIcon);
+        skillCoolTime.text = string.Format("{0}초", skillTb.CoolTime);
     }
 
 
     public void OnClickSlot()
     {
-        UISkill.Instance.SelectedSkill(number);
+        UISkill.Instance.SelectedSkill(Index);
         UISkill.Instance.GetClickedSkillInfo(m_skillTb);
     }
+
+
 }
