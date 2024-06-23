@@ -18,25 +18,9 @@ public class UIGrowth : UIPopUp
         if (instance == null)
             instance = this;
     }
-    void Start()
+    protected override void Start()
     {
-        ClosePopUp();
-        string defalutdata = string.Empty;
-
-        //for (int i = 0; i < Tables.StatReinforce.data.Count; i++)
-        //{
-
-
-        //    AccountManager.Instance.GrowthLevelList.Add(1);
-        //    defalutdata += 1;
-        //    if (i < Tables.StatReinforce.data.Count - 1)
-        //        defalutdata += ",";
-        //}
-        //string[] dataLoad = PlayerPrefs.GetString("GrowthData", defalutdata).Split(',');
-        //for (int i = 0; i < AccountManager.Instance.GrowthLevelList.Count; i++)
-        //{
-        //    AccountManager.Instance.GrowthLevelList[i] = int.Parse(dataLoad[i]);
-        //}
+        base.Start();
     }
 
     public override void ClosePopUp()

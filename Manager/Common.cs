@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Tables;
+using UnityEditorInternal.Profiling.Memory.Experimental;
 using UnityEngine;
 
 #region [Enum]
@@ -170,7 +173,21 @@ public enum QUEST_TYPE
 {
     DAYILY,
     WEEKLY,
-    ACHIEBEMENT
+    ACHIEBEMENT,
+    LOOP,
+}
+public enum QUEST_CARTEGORY
+{
+    KILL_MONSTER = 1,//
+    USE_GOLD,//
+    USE_DIA,//
+    UPGRADE_GROWTH,//
+    SUMMON,//
+    GET_EQUIPMENT,
+    QUEST_CLEAR,
+    CHAR_LEVEL_UP,
+    CLEAR_STAGE,//
+    MAX,
 }
 
 #endregion
@@ -319,33 +336,10 @@ public class WorldMapChapterCellData
 public class QuestSlotCellData
 {
     int index;
-    public Tables.Quest m_QuestTb;
     public bool isSelected;
-    public int questState;
+    public QuestInfo m_QuestInfo;
 
-    public ITEM_CATEGORY rewardItemCartegory;
-
-
-    public int questCount;
-    public int clearCount;
     public int Index { get => index; set { index = value; } }
-
-    public int GetQuestProcess()
-    {
-        int questState = -1;
-        int goalCount = m_QuestTb.Value;
-        while (questCount >= goalCount)
-        {
-            questCount -= goalCount;
-            clearCount++;
-            if (m_QuestTb.NextValue == 0)
-                break;
-
-            goalCount = m_QuestTb.NextValue;
-        }
-
-        return questState;
-    }
 }
 #endregion[]
 [Serializable]
@@ -354,149 +348,128 @@ public class InvenItemInfo
     public int key;
     public double count = 0;
     public int enhanceCount = 0;
-
     public bool isEquipped = false;
+    public bool isGet = false;
+    public bool IsEmpty => key == 0;
+
+    static readonly Dictionary<STAT, string> statTextMapping = new Dictionary<STAT, string>
+    {
+        { STAT.ATTACK, "AttackPoint" },
+        { STAT.HP, "HealthPoint" },
+        { STAT.HP_REGEN, "HealthPointRegen" },
+        { STAT.DEFENCE, "DefencePoint" },
+        { STAT.ATTACK_SPD, "AttackSpeed" },
+        { STAT.MOVE_SPD, "MoveSpeed" },
+        { STAT.DODGE, "Dodge" },
+        { STAT.HIT, "Hit" },
+        { STAT.CRI_DAM, "CriticalDamage" },
+        { STAT.CRI_RATE, "CriticalRate" }
+    };
 
     public List<string> GetAbilityText()
     {
-        List<string> str = new List<string>();
-        Tables.Item itemTb = Tables.Item.Get(key);
+        var abilityTexts = new List<string>();
+        var itemTb = Tables.Item.Get(key);
+
         if (itemTb != null)
         {
-            for (int i = 0; i < itemTb.Ability.Length; i++)
+            foreach (var ability in itemTb.Ability)
             {
-                switch ((STAT)itemTb.Ability[i])
+                if (statTextMapping.TryGetValue((STAT)ability, out string text))
                 {
-                    case STAT.ATTACK:
-                        str.Add(UIManager.Instance.GetText("AttackPoint"));
-                        break;
-                    case STAT.HP:
-                        str.Add(UIManager.Instance.GetText("HealthPoint"));
-                        break;
-                    case STAT.HP_REGEN:
-                        str.Add(UIManager.Instance.GetText("HealthPointRegen"));
-                        break;
-                    case STAT.DEFENCE:
-                        str.Add(UIManager.Instance.GetText("DefencePoint"));
-                        break;
-                    case STAT.ATTACK_SPD:
-                        str.Add(UIManager.Instance.GetText("AttackSpeed"));
-                        break;
-                    case STAT.MOVE_SPD:
-                        str.Add(UIManager.Instance.GetText("MoveSpeed"));
-                        break;
-                    case STAT.DODGE:
-                        str.Add(UIManager.Instance.GetText("Dodge"));
-                        break;
-                    case STAT.HIT:
-                        str.Add(UIManager.Instance.GetText("Hit"));
-                        break;
-                    case STAT.CRI_DAM:
-                        str.Add(UIManager.Instance.GetText("CriticalDamage"));
-                        break;
-                    case STAT.CRI_RATE:
-                        str.Add(UIManager.Instance.GetText("CriticalRate"));
-                        break;
+                    abilityTexts.Add(UIManager.Instance.GetText(text));
                 }
             }
-
         }
-        return str;
+
+        return abilityTexts;
     }
+
     public List<double> GetEquipEffectValues(int _enhanceCnt = 0)
     {
-        List<double> str = new List<double>();
-        Tables.Item itemTb = Tables.Item.Get(key);
-        if (itemTb != null)
-        {
-            Tables.EnhancementData enhanceData = Tables.EnhancementData.Get(itemTb.Enhancement);
-            if (enhanceData != null)
-            {
-                for (int i = 0; i < itemTb.Ability.Length; i++)
-                {
-                    switch ((STAT)itemTb.Ability[i])
-                    {
-                        case STAT.ATTACK:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.atk * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.HP:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.maxHp * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.HP_REGEN:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.hpgen * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.DEFENCE:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.def * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.ATTACK_SPD:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.attackspeed * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.DODGE:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.DodgePoint * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.HIT:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.HitPoint * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.CRI_DAM:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.CriticalDamagePoint * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.CRI_RATE:
-                            str.Add(itemTb.AbilityValue[i] + enhanceData.CriticalChancePoint * (enhanceCount + _enhanceCnt));
-                            break;
-                    }
-                }
-            }
-        }
-        return str;
-    }
-    public List<double> GetPassiveEffectValues(int _enhanceCnt = 0)
-    {
-        List<double> str = new List<double>();
-        Tables.Item itemTb = Tables.Item.Get(key);
-        if (itemTb != null)
-        {
-            Tables.EnhancementData enhanceData = Tables.EnhancementData.Get(itemTb.Enhancement);
-            if (enhanceData != null)
-            {
-                for (int i = 0; i < itemTb.PassiveEffect.Length; i++)
-                {
-                    switch ((STAT)itemTb.PassiveEffect[i])
-                    {
-                        case STAT.ATTACK:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.atk * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.HP:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.maxHp * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.HP_REGEN:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.hpgen * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.DEFENCE:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.def * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.ATTACK_SPD:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.attackspeed * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.DODGE:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.DodgePoint * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.HIT:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.HitPoint * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.CRI_DAM:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.CriticalDamagePoint * (enhanceCount + _enhanceCnt));
-                            break;
-                        case STAT.CRI_RATE:
-                            str.Add(itemTb.PassiveEffectValue[i] + enhanceData.CriticalChancePoint * (enhanceCount + _enhanceCnt));
-                            break;
-                    }
-                }
-            }
-        }
-        return str;
+        return GetEffectValues(itemTb => itemTb.AbilityValue, _enhanceCnt);
     }
 
-    public bool IsEmpty => key == 0;
+    public List<double> GetPassiveEffectValues(int _enhanceCnt = 0)
+    {
+        return GetEffectValues(itemTb => itemTb.PassiveEffectValue, _enhanceCnt);
+    }
+
+    List<double> GetEffectValues(Func<Tables.Item, double[]> valueSelector, int _enhanceCnt)
+    {
+        List<double> effectValues = new List<double>();
+        Tables.Item itemTb = Tables.Item.Get(key);
+        Tables.EnhancementData enhanceData = Tables.EnhancementData.Get((int)(itemTb?.Enhancement));
+
+        if (itemTb != null && enhanceData != null)
+        {
+            double[] values = valueSelector(itemTb);
+            int[] effects = itemTb.Ability;
+
+            for (int i = 0; i < effects.Length; i++)
+            {
+                double value = values[i];
+                value += GetEnhancementValue((STAT)effects[i], enhanceData, enhanceCount + _enhanceCnt);
+                effectValues.Add(value);
+            }
+        }
+        return effectValues;
+    }
+
+    double GetEnhancementValue(STAT stat, Tables.EnhancementData enhanceData, int enhanceCount)
+    {
+        return stat switch
+        {
+            STAT.ATTACK => enhanceData.atk * enhanceCount,
+            STAT.HP => enhanceData.maxHp * enhanceCount,
+            STAT.HP_REGEN => enhanceData.hpgen * enhanceCount,
+            STAT.DEFENCE => enhanceData.def * enhanceCount,
+            STAT.ATTACK_SPD => enhanceData.attackspeed * enhanceCount,
+            STAT.DODGE => enhanceData.DodgePoint * enhanceCount,
+            STAT.HIT => enhanceData.HitPoint * enhanceCount,
+            STAT.CRI_DAM => enhanceData.CriticalDamagePoint * enhanceCount,
+            STAT.CRI_RATE => enhanceData.CriticalChancePoint * enhanceCount,
+            _ => 0
+        };
+    }
+
+    public InvenItemInfo GetNextGradeItem()
+    {
+        var currentItem = Tables.Item.Get(key);
+        bool foundCurrentItem = false;
+
+        foreach (var item in Tables.Item.data.Values)
+        {
+            if (item.Job == currentItem.Job && item.ItemType == currentItem.ItemType)
+            {
+                if (foundCurrentItem)
+                {
+                    return new InvenItemInfo { key = item.key, count = 1 };
+                }
+
+                if (item.key == key)
+                {
+                    foundCurrentItem = true;
+                }
+            }
+        }
+
+        return new InvenItemInfo { key = key, count = 1 };
+    }
+
+    public void SynthesisItem()
+    {
+        var currentItem = Tables.Item.Get(key);
+        var requiredCount = 5;
+        int synthesCount = 0;
+        while (count >= requiredCount)
+        {
+            count -= requiredCount;
+            var nextItem = GetNextGradeItem();
+            AccountManager.Instance.GetEquipItem((ITEM_TYPE)currentItem.ItemType, nextItem);
+        }
+        UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.GET_EQUIPMENT, synthesCount);
+    }
 }
 public class MaterialInfo
 {
@@ -558,6 +531,68 @@ public class GrowthInfo
     public int level;
 }
 [System.Serializable]
+public class QuestInfo
+{
+    public int key;
+    public double questCount = 0;
+    public int clearCount = 0;
+    public int questState = -1;
+
+    Quest m_QuestTb;
+
+    public QuestInfo(int _key)
+    {
+        key = _key;
+        m_QuestTb = Tables.Quest.Get(key);
+    }
+
+    public void IncrementQuestCount(double _count)
+    {
+        questCount += _count;
+    }
+    public void GetQuestProcess()
+    {
+        if (questState != -1)
+            return;
+
+        int goalCount = m_QuestTb.Value;
+
+        if (questState != 1 && questCount >= m_QuestTb.Value)
+        {
+            questState = 0;
+        }
+    }
+
+
+    public void GetReward()
+    {
+        while (questState == 0)
+        {
+            GameManager.Instance.GetReward(m_QuestTb.QuestReward, out bool result);
+            if (result)
+            {
+                if (!m_QuestTb.Loop)
+                {
+                    questState = 1;
+                    break;
+                }
+                if (questCount < m_QuestTb.Value)
+                {
+                    questState = -1;
+                    break;
+                }
+                questCount -= m_QuestTb.Value;
+                clearCount++;
+            }
+        }
+        GetQuestProcess();
+    }
+    public void ShortcutsPopup()
+    {
+
+    }
+}
+[System.Serializable]
 public class Map
 {
     public Node start;
@@ -608,6 +643,8 @@ public class PlayerSaveData
 
     public SkillInfo[] equipSkillInfo = PlayerController.Instance.SkillInfoList;
 
+    public string quest = DictionaryJsonUtility.ToJson(AccountManager.Instance.QuestInfoDictionary);
+
 
     public void LoadData()
     {
@@ -623,10 +660,12 @@ public class PlayerSaveData
 
         PlayerController.Instance.GrowthLevelDic = DictionaryJsonUtility.FromJson<STAT, int>(growhLevel);
         AccountManager.Instance.HasItemDictionary = DictionaryJsonUtility.FromJson<ITEM_TYPE, List<InvenItemInfo>>(inventory);
-        summonCount = AccountManager.Instance.SummonCount;
-        summonRewardLevel = AccountManager.Instance.SummonRewardLevel;
+        AccountManager.Instance.SummonCount = summonCount;
+        AccountManager.Instance.SummonRewardLevel = summonRewardLevel;
 
-        equipSkillInfo = PlayerController.Instance.SkillInfoList;
+        PlayerController.Instance.SkillInfoList = equipSkillInfo;
+
+        //AccountManager.Instance.QuestInfoDictionary = DictionaryJsonUtility.FromJson<QUEST_CARTEGORY, List<QuestInfo>>(quest);
     }
 
 }

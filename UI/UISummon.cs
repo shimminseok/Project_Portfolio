@@ -69,7 +69,6 @@ public class UISummon : UIPopUp
 
     void Summon(int _count)
     {
-
         if (isPlayingSummonResultCo)
         {
             SkipSummonResult();
@@ -100,7 +99,7 @@ public class UISummon : UIPopUp
 
             summonResultCo = StartCoroutine(SummonResult(summonResultItemQueue));
         }
-        
+        UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.SUMMON, _count);
     }
 
     List<Tables.Item> GetSummonItemList()
@@ -253,7 +252,9 @@ public class UISummon : UIPopUp
                 break;
         }
         Tables.Reward rewardTb = Reward.Get($"{rewardTbKey}{AccountManager.Instance.SummonRewardLevel[(int)selectSummonType]}");
-        InvenItemInfo info = new InvenItemInfo() { key = rewardTb.ItemKey[0], count = (uint)rewardTb.ItemQty[0] };
+
+
+        InvenItemInfo info = new InvenItemInfo() { key = rewardTb.GoodsKey[0], count = (uint)rewardTb.GoodsQty[0] };
         summonLevelRewardItemSlot.SetItemSlotInfo(SLOT_TYPE.REWARD, info);
         if (AccountManager.Instance.SummonRewardLevel[(int)selectSummonType] <= AccountManager.Instance.GetSummonLevel(selectSummonType))
         {

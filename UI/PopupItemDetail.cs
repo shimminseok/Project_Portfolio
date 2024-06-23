@@ -5,8 +5,9 @@ using UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PopupItemDetail : UIPopUp
+public class PopupItemDetail : MonoBehaviour
 {
+    [SerializeField] GameObject backGround;
     [SerializeField] InvenItemSlot itemSlot;
     [SerializeField] List<TextMeshProUGUI> passiveEffect_Name;
     [SerializeField] List<TextMeshProUGUI> passiveEffect_Value;
@@ -19,12 +20,16 @@ public class PopupItemDetail : UIPopUp
 
     [SerializeField] TextMeshProUGUI equipText;
 
-    public InvenItemInfo m_invenItem;
+    InvenItemInfo m_invenItem;
 
     float holddingTime = 0f;
     bool isHoldding = false;
 
-    int enhanceCount;
+    int enhanceCount = 0;
+
+    public bool IsOpenPopup => backGround.activeSelf;
+
+    public void SetInvenItem(InvenItemInfo _target) { m_invenItem = _target; }
 
     void Update()
     {
@@ -39,18 +44,22 @@ public class PopupItemDetail : UIPopUp
         }
 
     }
-    public override void OpenPopUp()
+    public void OpenPopUp()
     {
-        base.OpenPopUp();
+        backGround.SetActive(true);
         SetItemDetailInfo(m_invenItem);
     }
-    public override void ClosePopUp()
+    public void ClosePopUp()
     {
-        base.ClosePopUp();
+        backGround.SetActive(false);
+        ReleaseEnhanceBtn();
     }
 
     public void SetItemDetailInfo(InvenItemInfo _item)
     {
+        if (_item == null)
+            return;
+
         Tables.Item itemTb = Tables.Item.Get(_item.key);
         if (itemTb != null)
         {
@@ -64,14 +73,10 @@ public class PopupItemDetail : UIPopUp
             for (int i = 0; i < equippedEffect_Name.Count; i++)
             {
                 equippedEffect_Name[i].text = _item.GetAbilityText()[i];
-                string str = string.Format("{0} -> {1}", Utility.ToCurrencyString(_item.GetEquipEffectValues()[i]), Utility.ToCurrencyString(_item.GetEquipEffectValues(1)[i]));
+                string str = string.Format("{0} -> {1}", Utility.ToCurrencyString(_item.GetEquipEffectValues(_item.enhanceCount)[i]), Utility.ToCurrencyString(_item.GetEquipEffectValues(_item.enhanceCount + 1)[i]));
                 equippedEffect_Value[i].text = str;
             }
-
-
-
             enhanceCostText.text = Utility.ToCurrencyString(10000);
-
             equipText.text = _item.isEquipped ? "¿Â¬¯¡ﬂ" : "¿Â¬¯«œ±‚";
 
             UIInventory.instance.UpdateInvenSlot();
@@ -115,6 +120,10 @@ public class PopupItemDetail : UIPopUp
         isHoldding = false;
         enhanceCount = 0;
         SetItemDetailInfo(m_invenItem);
-
+    }
+    public void OnClickCraftingItem()
+    {
+        m_invenItem.SynthesisItem();
+        SetItemDetailInfo(m_invenItem);
     }
 }

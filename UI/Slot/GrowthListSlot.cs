@@ -37,7 +37,6 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
     }
     public void OnClickGrowthLevelUp()
     {
-
         IAffectedGrowth Igrowth = null;
         switch ((STAT_TARGET_TYPE)m_StatReinforceTb.Target)
         {
@@ -76,6 +75,7 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
     }
     public void ReleaseGrowthLevelUp()
     {
+        UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.UPGRADE_GROWTH, count);
         count = 0;
         isHodding = false;
         hoddingTime = 0f;
@@ -111,7 +111,5 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
             int upgradePrice = (levelList[(STAT)m_StatReinforceTb.key] * (levelList[(STAT)m_StatReinforceTb.key] / 3000 + 1));
             growthCostText.text = string.Format("{0}", Utility.ToCurrencyString(m_StatReinforceTb.Price * upgradePrice));
         }
-
-        
     }
 }

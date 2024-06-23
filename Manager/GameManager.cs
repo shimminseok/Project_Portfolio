@@ -112,5 +112,4 @@ public class GameManager : Singleton<GameManager>
     {
         AccountManager.Instance.CurrentStageInfo = new StageInfo(_stageKey);
     }
-
 }

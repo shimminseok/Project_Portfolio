@@ -17,30 +17,34 @@ public class UIInventory : UIPopUp
     [SerializeField] PopupItemDetail itemDetailPopup;
     
 
-    int currentItemTab;
+    int currentItemTab = 0;
+
+
 
     void Awake()
     {
         if(instance == null)
             instance = this;
     }
-    private void Start()
+    protected override void Start()
     {
-        ClosePopUp();
+        base.Start();
     }
 
     public override void OpenPopUp()
     {
         base.OpenPopUp();
-        OnClickItemTabToggle(itemTypeTabToggle[0].transform);
+        OnClickItemTabToggle(itemTypeTabToggle[currentItemTab].transform);
 
     }
     public override void ClosePopUp()
     {
-
         base.ClosePopUp();
-
-
+        if (itemDetailPopup.IsOpenPopup)
+        {
+            itemDetailPopup.ClosePopUp();
+            UIManager.Instance.OnClickOpenPopUp(this);
+        }
     }
 
 
@@ -53,28 +57,31 @@ public class UIInventory : UIPopUp
         {
             itemTypeTabText[i].color = currentItemTab == i ? Color.white : Color.gray;
         }
-        if(UIManager.Instance.openedPopupList.Contains(itemDetailPopup))
+        if(itemDetailPopup.IsOpenPopup)
         {
-            UIManager.Instance.OnClickClosePopUp(itemDetailPopup);
             itemDetailPopup.ClosePopUp();
+
         }
 
         scrollRect.StopMovement();
     }
     public void UpdateInvenSlot()
     {
-        foreach (var cells in invenitemScollRect.Cells)
-        {
-            cells.UpdateContent(cells.m_data);
-        }
+        invenitemScollRect.UpdateCell();
     }
 
 
     public void OpenDetailItemInfoPopUp(InvenItemInfo _itemInfo)
     {
-        itemDetailPopup.m_invenItem = _itemInfo;
-        UIManager.Instance.OnClickOpenPopUp(itemDetailPopup);
-
+        itemDetailPopup.SetInvenItem(_itemInfo);
+        itemDetailPopup.OpenPopUp();
     }
-
+    public void OnClickAllSynthesisItem()
+    {
+        for (int i = 0; i < AccountManager.Instance.HasItemDictionary[(ITEM_TYPE)currentItemTab].Count; i++)
+        {
+            AccountManager.Instance.HasItemDictionary[(ITEM_TYPE)currentItemTab][i].SynthesisItem();
+        }
+        UpdateInvenSlot();
+    }
 }

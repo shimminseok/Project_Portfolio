@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Tables;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 
 public class PlayerController : ObjectController, IMoveable, IAttackable, IHittable, IControlable, IUseSkill, IEquipableItem, IAffectedGrowth
@@ -225,7 +224,20 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     public Dictionary<STAT, int> GrowthLevelDic
     {
-        get => growthLevelDic;
+        get
+        {
+            if (growthLevelDic.Count == 0)
+            {
+                foreach (var item in StatReinforce.data.Values.Where(x => x.Target == (int)STAT_TARGET_TYPE.PLAYER || x.Target == (int)STAT_TARGET_TYPE.ALL))
+                {
+                    if (!growthLevelDic.TryGetValue((STAT)item.key, out int value))
+                    {
+                        growthLevelDic.Add((STAT)item.key, 0);
+                    }
+                }
+            }
+            return growthLevelDic;
+        }
         set => growthLevelDic = value;
     }
     public bool IsRangeAttacker { get; set; }
@@ -234,10 +246,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         if (Instance == null)
             Instance = this;
-        foreach (var item in StatReinforce.data.Values.Where(x => x.Target == (int)STAT_TARGET_TYPE.PLAYER || x.Target == (int)STAT_TARGET_TYPE.ALL))
-        {
-            growthLevelDic.Add((STAT)item.key, 0);
-        }
+
     }
     void Start()
     {
@@ -684,7 +693,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         Tables.StatReinforce st = StatReinforce.Get((int)_stat);
         if (st != null)
         {
-            value = growthLevelDic[_stat] * st.StatValue;
+            value = GrowthLevelDic[_stat] * st.StatValue;
         }
         return value;
     }

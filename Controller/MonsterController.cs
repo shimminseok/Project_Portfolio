@@ -295,7 +295,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
                     GameManager.Instance.GetReward(MonsterManager.instance.CurrentStageTb.StageIdleReward, out bool result);
                     if (result)
                     {
-
+                        UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.KILL_MONSTER,1);
                     }
                 }
                 break;
@@ -303,6 +303,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
             case MONSTER_TYPE.BOSS:
                 //스테이지 클리어
                 GameManager.Instance.ChangeGameState(GAME_STATE.WIN);
+                UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.CLEAR_STAGE,1);
                 break;
         }
         AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD, gold);

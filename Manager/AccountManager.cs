@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using Tables;
+using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -16,6 +18,7 @@ public class AccountManager : Singleton<AccountManager>
 
     Dictionary<ITEM_TYPE, List<InvenItemInfo>> hasItemDictionary = new Dictionary<ITEM_TYPE, List<InvenItemInfo>>();
     Dictionary<int, MaterialInfo> hasMaterialDictionary = new Dictionary<int, MaterialInfo>();
+    Dictionary<QUEST_CARTEGORY, List<QuestInfo>> questInfoDictionary = new Dictionary<QUEST_CARTEGORY, List<QuestInfo>>();
     double gold = 0;
     double dia = 0;
     public int PlayerLevel { get { return playerLevel; } set => playerLevel = value; }
@@ -81,12 +84,41 @@ public class AccountManager : Singleton<AccountManager>
         get { return hasItemDictionary; }
         set { hasItemDictionary = value; }
     }
+    public Dictionary<QUEST_CARTEGORY, List<QuestInfo>> QuestInfoDictionary
+    {
+        get
+        {
+            if (questInfoDictionary.Count == 0)
+            {
+                foreach (var quest in Quest.data.Values)
+                {
+                    QuestInfo info = new QuestInfo(quest.key);
+                    if (!questInfoDictionary.TryGetValue((QUEST_CARTEGORY)quest.QuestGroupType, out var list))
+                    {
+                        list = new List<QuestInfo>();
+                        questInfoDictionary.Add((QUEST_CARTEGORY)quest.QuestGroupType, list);
+                    }
+                    list.Add(info);
+                }
+            }
+            return questInfoDictionary;
+        }
+        set => questInfoDictionary = value;
+    }
 
     int[] summonCount = Enumerable.Repeat(0, 4).ToArray();
     int[] summonRewardLevel = Enumerable.Repeat(1, 4).ToArray();
 
-    public int[] SummonCount => summonCount;
-    public int[] SummonRewardLevel => summonRewardLevel;
+    public int[] SummonCount
+    {
+        get => summonCount;
+        set => summonCount = value;
+    }
+    public int[] SummonRewardLevel
+    {
+        get=> summonRewardLevel;
+        set => summonRewardLevel = value;
+    }
     public double Gold
     {
         get { return gold; }
@@ -121,6 +153,8 @@ public class AccountManager : Singleton<AccountManager>
                     return;
                 }
                 Dia -= _amount; // 다이아 사용
+                UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.USE_DIA, _amount);
+
                 break;
             case GOOD_TYPE.GOLD:
                 if (gold < _amount)
@@ -128,6 +162,7 @@ public class AccountManager : Singleton<AccountManager>
                     _isEnough = false;
                     return;
                 }
+                UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.USE_GOLD, _amount);
                 Gold -= _amount; // 골드 사용
                 break;
         }
@@ -163,24 +198,15 @@ public class AccountManager : Singleton<AccountManager>
 
     public InvenItemInfo GetHasInvenItem(Tables.Item _item)
     {
-        InvenItemInfo invenItem = new InvenItemInfo();
         if (hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType, out List<InvenItemInfo> list))
         {
-            invenItem = list.Find(x => x.key == _item.key);
+            InvenItemInfo invenItem = list.Find(x => x.key == _item.key);
             if (invenItem != null)
             {
                 return invenItem;
             }
-            else
-            {
-                invenItem.key = _item.key;
-            }
         }
-        else
-        {
-            invenItem.key = _item.key;
-        }
-        return invenItem;
+        return new InvenItemInfo { key = _item.key };
     }
 
     public void SummonCountUp(SUMMON_TYPE _type)
@@ -220,21 +246,21 @@ public class AccountManager : Singleton<AccountManager>
     }
     public void GetEquipItem(ITEM_TYPE _type, InvenItemInfo _info)
     {
-        if (hasItemDictionary.TryGetValue(_type, out var list))
+        if (!hasItemDictionary.TryGetValue(_type, out var list))
         {
-            InvenItemInfo invenItem = list.Find(x => x.key == _info.key);
-            if (invenItem != null)
-            {
-                invenItem.count += _info.count;
-            }
-            else
-            {
-                list.Add(_info);
-            }
+            list = new List<InvenItemInfo>();
+            hasItemDictionary[_type] = list;
+        }
+        var invenItem = list.Find(x => x.key == _info.key);
+        if (invenItem != null)
+        {
+            invenItem.count += _info.count;
         }
         else
         {
-            hasItemDictionary.Add(_type, new List<InvenItemInfo> { _info });
+            //최초 습득시
+            _info.isGet = true;
+            list.Add(_info);
         }
     }
     double CalculateTotalAbility(STAT _st)

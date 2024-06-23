@@ -1,4 +1,3 @@
-using NPOI.SS.UserModel;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -66,9 +65,9 @@ namespace UI
                         }
 
                     }
-                        cellStart = CachedScrollRect.vertical
-                            ? cellEnd + new Vector2(0f, spacingHeight)
-                            : cellEnd + new Vector2(spacingWidth, 0f);
+                    cellStart = CachedScrollRect.vertical
+                        ? cellEnd + new Vector2(0f, spacingHeight)
+                        : cellEnd + new Vector2(spacingWidth, 0f);
                 }
                 SetFillVisibleRectWithCells();
             }
@@ -217,7 +216,8 @@ namespace UI
         {
             foreach (var cell in cells)
             {
-                cell.UpdateContent(tableData[cell.Index]);
+                if (cell.Index >= 0 && cell.Index < tableData.Count)
+                    cell.UpdateContent(tableData[cell.Index]);
             }
         }
         void UpdateVisibleRect()

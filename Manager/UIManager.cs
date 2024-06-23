@@ -159,6 +159,10 @@ public class UIManager : Singleton<UIManager>
     #region[Button Event]
     public void OnClickOpenPopUp(UIPopUp _popup)
     {
+        foreach (var item in openedPopupList)
+        {
+            item.ClosePopUp();
+        }
         if (!openedPopupList.Contains(_popup))
         {
             openedPopupList.Push(_popup);

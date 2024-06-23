@@ -385,18 +385,16 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			QuestGroupType {get; private set;}
 		/// <summary> 임무 타입  </summary>
 		[Newtonsoft.Json.JsonProperty] public int			QuestType {get; private set;}
+		/// <summary> 반복 </summary>
+		[Newtonsoft.Json.JsonProperty] public bool		Loop {get; private set;}
 		/// <summary> 달성 요구치 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			Value {get; private set;}
-		/// <summary> 달성 시 증가 요구치 </summary>
-		[Newtonsoft.Json.JsonProperty] public int			NextValue {get; private set;}
-		/// <summary> 달성 요구 종료치  </summary>
-		[Newtonsoft.Json.JsonProperty] public int			Value_End {get; private set;}
 		/// <summary> 임무 이름 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		QuestName {get; private set;}
 		/// <summary> 임무 설명 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		QuestDescription {get; private set;}
 		/// <summary> 완료시 지급 보상 </summary>
-		[Newtonsoft.Json.JsonProperty] public string		 QuestReward {get; private set;}
+		[Newtonsoft.Json.JsonProperty] public string		QuestReward {get; private set;}
 
 		// 메인 저장소
 		public static Dictionary<int, Quest> data = new Dictionary<int, Quest>();
