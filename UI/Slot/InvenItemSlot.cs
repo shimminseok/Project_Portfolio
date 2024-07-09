@@ -10,12 +10,14 @@ public class InvenItemSlot : ReuseCellData<InvenSlotCellData>
     [SerializeField] Text itemName;
     [SerializeField] Text itemCount;
 
-    InvenItemInfo m_ItemInfo;
+    InvenItem m_ItemInfo;
     public void SetSlotInfo(Tables.Item _item)
     {
-        m_ItemInfo = AccountManager.Instance.GetHasInvenItem(_item);
+        m_ItemInfo = AccountManager.Instance.FindOrCreateInvenItem(_item);
         itemName.text = UIManager.Instance.GetText(_item.ItemName);
-        itemSlot.SetItemSlotInfo(SLOT_TYPE.INVENITEM, m_ItemInfo);
+
+
+        itemSlot.UpdateSlotByType(m_ItemInfo);
         itemCount.text = $"{m_ItemInfo.count}/5";
         itemCountFillAmount.fillAmount = (float)m_ItemInfo.count / 5f;
     }
@@ -23,7 +25,7 @@ public class InvenItemSlot : ReuseCellData<InvenSlotCellData>
 
     public void OnClickItemSlot()
     {
-        UIInventory.instance.OpenDetailItemInfoPopUp(AccountManager.Instance.GetHasInvenItem(m_data.m_ItemTb));
+        UIInventory.instance.OpenDetailItemInfoPopUp(AccountManager.Instance.FindOrCreateInvenItem(m_data.m_ItemTb));
     }
 
     public override void UpdateContent(InvenSlotCellData _itemData)

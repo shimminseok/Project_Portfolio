@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Tables;
-using UnityEditorInternal.Profiling.Memory.Experimental;
 using UnityEngine;
 
 #region [Enum]
@@ -97,9 +95,12 @@ public enum EFFECT_TYPE
 }
 public enum ITEM_CATEGORY
 {
-    GOODS = 1,
+    NONE,
+    GOODS,
     ITEM,
     MATERIAL,
+    SKILL,
+    MONSTER,
 }
 public enum STAT
 {
@@ -125,9 +126,16 @@ public enum SUMMON_TYPE
     WEAPONE,
     ARMOR,
     ACC,
+    SKILL
 }
 public enum SLOT_TYPE
 {
+    EQUIPMENT,
+    MATERIAL,
+    SKILL,
+    MONSTER,
+
+
     INVENITEM,
     SUMMON_RESULT,
     REWARD
@@ -157,8 +165,6 @@ public enum SOUND_EFFECT
     NO_9,           // ÆòÅ¸Slash 1
     NO_10,         // ÆòÅ¸Slash 2
     NO_11,          //ÆË¾÷ ¿ÀÇÂ
-
-
 }
 public enum GAME_STATE
 {
@@ -246,12 +252,12 @@ public interface IControlable
 
 public interface IUseSkill
 {
-    SkillInfo[] SkillInfoList { get; }
+    SkillItem[] SkillInfoList { get; }
     int UseSkillNum { get; }
     Dictionary<int, float> SkillCoolTime { get; set; }
 
     float UpdateSkillCoolTime(int _index, bool _isFill);
-    double CalculateSkillDamage(SkillInfo _skillInfo);
+    double CalculateSkillDamage(SkillItem _skillInfo);
     bool IsTargetAngle(GameObject _target, float _angle);
     List<IHittable> GetInCircleObjects(Transform _start, float _radius);
     List<IHittable> GetInBarObjects(Transform _start, float _width, float _range);
@@ -262,8 +268,8 @@ public interface IUseSkill
 }
 public interface IEquipableItem
 {
-    public InvenItemInfo[] EquipmentItem { get; }
-    void EquipItem(InvenItemInfo _item);
+    public InvenItem[] EquipmentItem { get; }
+    void EquipItem(InvenItem _item);
     void DequipItem(int _index);
     double GetEquipItemAbilityValue(STAT _stat);
 }
@@ -341,14 +347,88 @@ public class QuestSlotCellData
 
     public int Index { get => index; set { index = value; } }
 }
-#endregion[]
-[Serializable]
-public class InvenItemInfo
+public class ItemSlotCell
 {
     public int key;
     public double count = 0;
     public int enhanceCount = 0;
+    public int itemGrade = 1;
     public bool isEquipped = false;
+
+    public ITEM_CATEGORY itemCategory = ITEM_CATEGORY.NONE;
+
+    void Categorize()
+    {
+        if (key < 100)
+        {
+            itemCategory = ITEM_CATEGORY.GOODS;
+        }
+        else if (key < 10000)
+        {
+            itemCategory = ITEM_CATEGORY.MATERIAL;
+        }
+        else if (key < 100000)
+        {
+            itemCategory = ITEM_CATEGORY.ITEM;
+        }
+        else if (key < 1000000)
+        {
+            itemCategory = ITEM_CATEGORY.SKILL;
+        }
+        else if(key < 10000000)
+        {
+            itemCategory = ITEM_CATEGORY.MONSTER;
+        }
+    }
+
+    public Sprite GetSprite()
+    {
+        Categorize();
+        string icon = GetIconName();
+        SPRITE_TYPE spriteType = GetSpriteType();
+
+        return UIManager.Instance.GetSprite(spriteType, icon);
+    }
+
+    private string GetIconName()
+    {
+        return itemCategory switch
+        {
+            ITEM_CATEGORY.GOODS => Tables.Goods.Get(key)?.GoodsIcon,
+            ITEM_CATEGORY.MATERIAL => Tables.Material.Get(key)?.MaterialIcon,
+            ITEM_CATEGORY.ITEM => Tables.Item.Get(key)?.ItemIcon,
+            ITEM_CATEGORY.MONSTER => Tables.Monster.Get(key)?.Monster_Img,
+            ITEM_CATEGORY.SKILL => Tables.Skill.Get(key)?.SkillIcon,
+            _ => null,
+        };
+    }
+
+    private SPRITE_TYPE GetSpriteType()
+    {
+        return itemCategory switch
+        {
+            ITEM_CATEGORY.GOODS => SPRITE_TYPE.ITEM_ICON,
+            ITEM_CATEGORY.MATERIAL => SPRITE_TYPE.ITEM_ICON,
+            ITEM_CATEGORY.ITEM => SPRITE_TYPE.ITEM_ICON,
+            ITEM_CATEGORY.MONSTER => SPRITE_TYPE.MONSTER,
+            ITEM_CATEGORY.SKILL => SPRITE_TYPE.SKILL_ICON,
+            _ => SPRITE_TYPE.ITEM_ICON,
+        };
+    }
+}
+
+public class AbilitySlotCell
+{
+    int index;
+    public Tables.Ability abilityTb;
+    public int Index { get => index; set { index = value; } }
+}
+#endregion
+
+[Serializable]
+public class InvenItem : ItemSlotCell
+{
+
     public bool isGet = false;
     public bool IsEmpty => key == 0;
 
@@ -366,6 +446,10 @@ public class InvenItemInfo
         { STAT.CRI_RATE, "CriticalRate" }
     };
 
+    public InvenItem()
+    {
+        itemCategory = ITEM_CATEGORY.ITEM; 
+    }
     public List<string> GetAbilityText()
     {
         var abilityTexts = new List<string>();
@@ -433,7 +517,7 @@ public class InvenItemInfo
         };
     }
 
-    public InvenItemInfo GetNextGradeItem()
+    public InvenItem GetNextGradeItem()
     {
         var currentItem = Tables.Item.Get(key);
         bool foundCurrentItem = false;
@@ -444,7 +528,7 @@ public class InvenItemInfo
             {
                 if (foundCurrentItem)
                 {
-                    return new InvenItemInfo { key = item.key, count = 1 };
+                    return new InvenItem { key = item.key, count = 1 };
                 }
 
                 if (item.key == key)
@@ -454,34 +538,73 @@ public class InvenItemInfo
             }
         }
 
-        return new InvenItemInfo { key = key, count = 1 };
+        return new InvenItem { key = key, count = 1 };
     }
 
     public void SynthesisItem()
     {
+        const int requiredCount = 5;
         var currentItem = Tables.Item.Get(key);
-        var requiredCount = 5;
-        int synthesCount = 0;
+
+        if (count < requiredCount) return;
+
+        var nextItem = GetNextGradeItem();
+        int synthesisCount = 0;
+
         while (count >= requiredCount)
         {
             count -= requiredCount;
-            var nextItem = GetNextGradeItem();
-            AccountManager.Instance.GetEquipItem((ITEM_TYPE)currentItem.ItemType, nextItem);
+            nextItem.count++;
+            synthesisCount++;
         }
-        UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.GET_EQUIPMENT, synthesCount);
+
+        AccountManager.Instance.GetEquipItem((ITEM_TYPE)currentItem.ItemType, nextItem);
+        var itemCell = new ItemSlotCell { key = nextItem.key, count = nextItem.count };
+        UISystem.instance.AddItem(itemCell);
+        UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.GET_EQUIPMENT, synthesisCount);
     }
 }
-public class MaterialInfo
+public class MaterialItem : ItemSlotCell
 {
-    public int key;
-    public double count;
-
-    public MaterialInfo(int _key, double _count)
+    public MaterialItem(int _key, double _count)
     {
         key = _key;
         count = _count;
+        itemCategory = ITEM_CATEGORY.MATERIAL;
     }
 }
+public class SkillItem : ItemSlotCell
+{
+    public int skillLevel;
+    public bool isGet = false;
+
+    public bool IsEmpty { get => key == 0; }
+
+
+    public SkillItem()
+    {
+        key = 0;
+        itemCategory = ITEM_CATEGORY.SKILL;
+    }
+    public void EquipSkill(int _key, int _level)
+    {
+        key = _key;
+        skillLevel = _level;
+    }
+    public void UnEquipSkill()
+    {
+        key = 0;
+        skillLevel = 0;
+    }
+}
+public class MonsterItem : ItemSlotCell
+{
+    public MonsterItem()
+    {
+        itemCategory = ITEM_CATEGORY.MONSTER;
+    }
+}
+
 [System.Serializable]
 public class StageInfo
 {
@@ -491,7 +614,6 @@ public class StageInfo
     public StageInfo(int _key)
     {
         key = _key;
-        isChallengeableBoss = AccountManager.Instance.BestStageInfo.key > AccountManager.Instance.CurrentStageInfo.key;
     }
     public StageInfo()
     {
@@ -507,24 +629,6 @@ public class DictionaryWrapper<TKey, TValue>
     public TValue value;
 }
 [System.Serializable]
-public class SkillInfo
-{
-    public int skillKey;
-    public int skillLevel;
-
-    public bool IsEmpty { get => skillKey == 0; }
-
-    public void EquipSkill(int _key, int _level)
-    {
-        skillKey = _key;
-        skillLevel = _level;
-    }
-    public void UnEquipSkill()
-    {
-        skillKey = 0;
-        skillLevel = 0;
-    }
-}
 public class GrowthInfo
 {
     public int key;
@@ -555,7 +659,6 @@ public class QuestInfo
         if (questState != -1)
             return;
 
-        int goalCount = m_QuestTb.Value;
 
         if (questState != 1 && questCount >= m_QuestTb.Value)
         {
@@ -592,6 +695,7 @@ public class QuestInfo
 
     }
 }
+
 [System.Serializable]
 public class Map
 {
@@ -641,7 +745,7 @@ public class PlayerSaveData
     public int[] summonCount = AccountManager.Instance.SummonCount;
     public int[] summonRewardLevel = AccountManager.Instance.SummonRewardLevel;
 
-    public SkillInfo[] equipSkillInfo = PlayerController.Instance.SkillInfoList;
+    public SkillItem[] equipSkillInfo = PlayerController.Instance.SkillInfoList;
 
     public string quest = DictionaryJsonUtility.ToJson(AccountManager.Instance.QuestInfoDictionary);
 
@@ -659,7 +763,7 @@ public class PlayerSaveData
 
 
         PlayerController.Instance.GrowthLevelDic = DictionaryJsonUtility.FromJson<STAT, int>(growhLevel);
-        AccountManager.Instance.HasItemDictionary = DictionaryJsonUtility.FromJson<ITEM_TYPE, List<InvenItemInfo>>(inventory);
+        AccountManager.Instance.HasItemDictionary = DictionaryJsonUtility.FromJson<ITEM_TYPE, List<InvenItem>>(inventory);
         AccountManager.Instance.SummonCount = summonCount;
         AccountManager.Instance.SummonRewardLevel = summonRewardLevel;
 

@@ -16,8 +16,8 @@ public class AccountManager : Singleton<AccountManager>
 
 
 
-    Dictionary<ITEM_TYPE, List<InvenItemInfo>> hasItemDictionary = new Dictionary<ITEM_TYPE, List<InvenItemInfo>>();
-    Dictionary<int, MaterialInfo> hasMaterialDictionary = new Dictionary<int, MaterialInfo>();
+    Dictionary<ITEM_TYPE, List<InvenItem>> hasItemDictionary = new Dictionary<ITEM_TYPE, List<InvenItem>>();
+    Dictionary<int, MaterialItem> hasMaterialDictionary = new Dictionary<int, MaterialItem>();
     Dictionary<QUEST_CARTEGORY, List<QuestInfo>> questInfoDictionary = new Dictionary<QUEST_CARTEGORY, List<QuestInfo>>();
     double gold = 0;
     double dia = 0;
@@ -79,7 +79,7 @@ public class AccountManager : Singleton<AccountManager>
         }
     }
 
-    public Dictionary<ITEM_TYPE, List<InvenItemInfo>> HasItemDictionary
+    public Dictionary<ITEM_TYPE, List<InvenItem>> HasItemDictionary
     {
         get { return hasItemDictionary; }
         set { hasItemDictionary = value; }
@@ -189,24 +189,24 @@ public class AccountManager : Singleton<AccountManager>
         }
         else
         {
-            MaterialInfo matinfo = new MaterialInfo(_matKey, _amount);
+            MaterialItem matinfo = new MaterialItem(_matKey, _amount);
             hasMaterialDictionary.Add(_matKey, matinfo);
         }
     }
 
 
 
-    public InvenItemInfo GetHasInvenItem(Tables.Item _item)
+    public InvenItem FindOrCreateInvenItem(Tables.Item _item)
     {
-        if (hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType, out List<InvenItemInfo> list))
+        if (hasItemDictionary.TryGetValue((ITEM_TYPE)_item.ItemType, out List<InvenItem> list))
         {
-            InvenItemInfo invenItem = list.Find(x => x.key == _item.key);
+            InvenItem invenItem = list.Find(x => x.key == _item.key);
             if (invenItem != null)
             {
                 return invenItem;
             }
         }
-        return new InvenItemInfo { key = _item.key };
+        return new InvenItem { key = _item.key };
     }
 
     public void SummonCountUp(SUMMON_TYPE _type)
@@ -244,11 +244,11 @@ public class AccountManager : Singleton<AccountManager>
         }
         return level;
     }
-    public void GetEquipItem(ITEM_TYPE _type, InvenItemInfo _info)
+    public void GetEquipItem(ITEM_TYPE _type, InvenItem _info)
     {
         if (!hasItemDictionary.TryGetValue(_type, out var list))
         {
-            list = new List<InvenItemInfo>();
+            list = new List<InvenItem>();
             hasItemDictionary[_type] = list;
         }
         var invenItem = list.Find(x => x.key == _info.key);

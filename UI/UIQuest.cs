@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Tables;
 using UnityEngine;
 using UnityEngine.UI;
@@ -68,5 +69,12 @@ public class UIQuest : UIPopUp
             AccountManager.Instance.QuestInfoDictionary[(QUEST_CARTEGORY)questTb.QuestGroupType].Find(x => x.key == _key)?.IncrementQuestCount(_value);
         }
     }
-
+    /// <summary>
+    /// 메인화면에서의 Noti이미지 활성/비활성을 위한 함수
+    /// </summary>
+    /// <returns></returns>
+    public bool ActiveNotiState()
+    {
+        return questCompletedNotiObj.Any(x => x.activeSelf);
+    }
 }

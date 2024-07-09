@@ -6,6 +6,7 @@ public class UICharactorInfo : UIPopUp
 {
     public static UICharactorInfo instance;
     [SerializeField] List<ItemSlot> equippedItemSlot =new List<ItemSlot>();
+    [SerializeField] CharInfo_AbilityScrollRect abilityScrollRect;
 
 
 
@@ -14,9 +15,9 @@ public class UICharactorInfo : UIPopUp
         if(instance == null)
             instance = this;
     }
-    private void Start()
+    protected override void Start()
     {
-        ChildSetActive(false);
+        base.Start();
     }
 
     public override void OpenPopUp()
@@ -25,10 +26,9 @@ public class UICharactorInfo : UIPopUp
 
         for (int i = 0; i < equippedItemSlot.Count; i++)
         {
-            SetEquippengItemSlot(i);
+            SetEquippingItemSlot(i);
         }
-
-
+        abilityScrollRect.CreateAbilitySlot();
     }
     public override void ClosePopUp()
     {
@@ -37,8 +37,9 @@ public class UICharactorInfo : UIPopUp
     }
 
 
-    public void SetEquippengItemSlot(int _index)
+    public void SetEquippingItemSlot(int _index)
     {
-        equippedItemSlot[_index].SetItemSlotInfo(SLOT_TYPE.INVENITEM,PlayerController.Instance.EquipmentItem[_index]);
+        equippedItemSlot[_index].UpdateSlotByType(PlayerController.Instance.EquipmentItem[_index],false);
+        equippedItemSlot[_index].IsEquipping(false);
     }
 }

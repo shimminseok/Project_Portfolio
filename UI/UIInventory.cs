@@ -71,7 +71,7 @@ public class UIInventory : UIPopUp
     }
 
 
-    public void OpenDetailItemInfoPopUp(InvenItemInfo _itemInfo)
+    public void OpenDetailItemInfoPopUp(InvenItem _itemInfo)
     {
         itemDetailPopup.SetInvenItem(_itemInfo);
         itemDetailPopup.OpenPopUp();
@@ -83,5 +83,6 @@ public class UIInventory : UIPopUp
             AccountManager.Instance.HasItemDictionary[(ITEM_TYPE)currentItemTab][i].SynthesisItem();
         }
         UpdateInvenSlot();
+        UISystem.instance.OpenRewardBox("아이템 합성");
     }
 }

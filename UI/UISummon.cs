@@ -30,16 +30,16 @@ public class UISummon : UIPopUp
 
     Coroutine summonResultCo;
     bool isPlayingSummonResultCo;
-    Queue<InvenItemInfo> summonResultItemQueue = new Queue<InvenItemInfo>();
+    Queue<ItemSlotCell> summonResultItemQueue = new Queue<ItemSlotCell>();
     void Awake()
     {
         if (instance == null)
             instance = this;
     }
-    void Start()
+    protected override void Start()
     {
+        base.Start();
         selectSummonType = SUMMON_TYPE.WEAPONE;
-        ChildSetActive(false);
     }
     public override void OpenPopUp()
     {
@@ -84,9 +84,9 @@ public class UISummon : UIPopUp
             {
                 List<Tables.Item> itemList = GetSummonItemList();
                 AccountManager.Instance.SummonCountUp(selectSummonType);
-                InvenItemInfo summonedItem = SummonRandomItem(itemList);
+                ItemSlotCell summonedItem = SummonRandomItem(itemList);
 
-                InvenItemInfo resultItem = summonResultItemQueue.FirstOrDefault(x => x.key == summonedItem.key);
+                ItemSlotCell resultItem = summonResultItemQueue.FirstOrDefault(x => x.key == summonedItem.key);
                 if (resultItem == null)
                 {
                     summonResultItemQueue.Enqueue(summonedItem);
@@ -128,7 +128,7 @@ public class UISummon : UIPopUp
         return new List<Tables.Item>();
     }
 
-    InvenItemInfo SummonRandomItem(List<Tables.Item> itemList)
+    ItemSlotCell SummonRandomItem(List<Tables.Item> itemList)
     {
         while (true)
         {
@@ -141,14 +141,27 @@ public class UISummon : UIPopUp
             }
             if (Random.Range(0f, 100f) < defineTb.value)
             {
+
+
                 var selectedItem = itemList[randomIndex];
-                InvenItemInfo itemInfo = new InvenItemInfo() { key = selectedItem.key, count = 1 };
-                AccountManager.Instance.GetEquipItem((ITEM_TYPE)selectedItem.ItemType, itemInfo);
-                return itemInfo;
+                switch (selectSummonType)
+                {
+                    case SUMMON_TYPE.WEAPONE:
+                    case SUMMON_TYPE.ARMOR:
+                    case SUMMON_TYPE.ACC:
+                        InvenItem itemInfo = new InvenItem() { key = selectedItem.key, count = 1 };
+                        AccountManager.Instance.GetEquipItem((ITEM_TYPE)selectedItem.ItemType, itemInfo);
+                        break;
+                    case SUMMON_TYPE.SKILL:
+                        break;
+                }
+                ItemSlotCell item = new ItemSlotCell() { key = selectedItem.key, count = 1 };
+
+                return item;
             }
         }
     }
-    IEnumerator SummonResult(Queue<InvenItemInfo> resultItemList)
+    IEnumerator SummonResult(Queue<ItemSlotCell> resultItemList)
     {
         resultItemPopup.SetActive(true);
         StartCoroutine(TweenManager.Instance.TweenAlpha(screenTouchText, 1, 0.2f, 0.5f, TweenType.PINGPONG));
@@ -156,27 +169,42 @@ public class UISummon : UIPopUp
         yield return new WaitForSeconds(0.2f);
         while (resultItemList.Count > 0)
         {
-            GameObject go = Instantiate(resultSlotBase.gameObject, resultSlotRoot);
-            ItemSlot tmp = go.GetComponent<ItemSlot>();
-            if (tmp != null)
-            {
-                tmp.SetItemSlotInfo(SLOT_TYPE.SUMMON_RESULT, resultItemList.Dequeue());
-            }
+            ItemSlotCell slotcell = resultItemList.Dequeue();
+            object itemInfo = CreateItemInfo(slotcell);
+            InstantiateAndSetupItemSlot(itemInfo);
             yield return new WaitForSeconds(delayTime);
         }
         isPlayingSummonResultCo = false;
+    }
+    object CreateItemInfo(ItemSlotCell slotcell)
+    {
+        switch (selectSummonType)
+        {
+            case SUMMON_TYPE.WEAPONE:
+            case SUMMON_TYPE.ARMOR:
+            case SUMMON_TYPE.ACC:
+                return new InvenItem { key = slotcell.key, count = slotcell.count ,isGet = true};
+            case SUMMON_TYPE.SKILL:
+                return new SkillItem { key = slotcell.key, count = slotcell.count, isGet = true};
+            default:
+                return null;
+        }
+    }
+
+    void InstantiateAndSetupItemSlot(object itemInfo)
+    {
+        var itemSlot = Instantiate(resultSlotBase.gameObject, resultSlotRoot).GetComponent<ItemSlot>();
+        if (itemSlot != null)
+        {
+            itemSlot.UpdateSlotByType(itemInfo);
+        }
     }
     void SkipSummonResult()
     {
         StopCoroutine(summonResultCo);
         while (summonResultItemQueue.Count > 0)
         {
-            GameObject go = Instantiate(resultSlotBase.gameObject, resultSlotRoot);
-            ItemSlot tmp = go.GetComponent<ItemSlot>();
-            if (tmp != null)
-            {
-                tmp.SetItemSlotInfo(SLOT_TYPE.SUMMON_RESULT, summonResultItemQueue.Dequeue());
-            }
+            Instantiate(resultSlotBase.gameObject, resultSlotRoot).GetComponent<ItemSlot>()?.UpdateSlot(summonResultItemQueue.Dequeue());
         }
         isPlayingSummonResultCo = false;
     }
@@ -254,8 +282,8 @@ public class UISummon : UIPopUp
         Tables.Reward rewardTb = Reward.Get($"{rewardTbKey}{AccountManager.Instance.SummonRewardLevel[(int)selectSummonType]}");
 
 
-        InvenItemInfo info = new InvenItemInfo() { key = rewardTb.GoodsKey[0], count = (uint)rewardTb.GoodsQty[0] };
-        summonLevelRewardItemSlot.SetItemSlotInfo(SLOT_TYPE.REWARD, info);
+        ItemSlotCell info = new ItemSlotCell() { key = rewardTb.GoodsKey[0], count = (uint)rewardTb.GoodsQty[0] };
+        summonLevelRewardItemSlot.UpdateSlot(info);
         if (AccountManager.Instance.SummonRewardLevel[(int)selectSummonType] <= AccountManager.Instance.GetSummonLevel(selectSummonType))
         {
             summonLevelRewardItemSlot.ActiveNotiImg(true);

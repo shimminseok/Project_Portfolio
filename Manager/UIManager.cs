@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Tables;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class UIManager : Singleton<UIManager>
@@ -20,13 +19,12 @@ public class UIManager : Singleton<UIManager>
     [Header("SystemMessage")]
     [SerializeField] Image loadingBox;
     [SerializeField] Image systemMessageObj;
-    [SerializeField] Text systemMessageTxt;
 
     [Header("TopAnchor")]
     [SerializeField] TextMeshProUGUI waveProcessText;
     [SerializeField] TextMeshProUGUI currentStageName;
-    [SerializeField] Image bossChellangeBtn;
     [SerializeField] Image processFillImg;
+    [SerializeField] GameObject BossChallengeBtn;
 
     [Header("RightTopAnchor")]
     [SerializeField] List<Text> goodsTextList;
@@ -39,24 +37,22 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] List<Image> skillCoolTimeImg;
     [SerializeField] List<Text> skillCoolTimeText;
 
+    [Header("MainMenuNoti")]
+    [SerializeField] GameObject questNoti;
+
 
     public Stack<UIPopUp> openedPopupList = new Stack<UIPopUp>();
 
     public FULL_POPUP_TYPE popupType = FULL_POPUP_TYPE.NONE;
     public int SkillSlotCount { get => skillIconImg.Count; }
-    void Start()
-    {
-
-    }
 
     void Update()
     {
-
         if (Input.GetKeyDown(KeyCode.Escape) && openedPopupList.Count > 0)
         {
             OnClickClosePopUp(openedPopupList.Peek());
         }
-        if(Input.GetKeyDown(KeyCode.F10))
+        if (Input.GetKeyDown(KeyCode.F10))
         {
             Debug.LogWarning("Reset Account");
             PlayerPrefs.DeleteAll();
@@ -69,7 +65,7 @@ public class UIManager : Singleton<UIManager>
 
     public void UpdateGoodText(GOOD_TYPE _type, double _amount)
     {
-        if(popupType != FULL_POPUP_TYPE.NONE)
+        if (popupType != FULL_POPUP_TYPE.NONE)
         {
             fullPopUp.UpdateFullPopUPGoodsBox(_type, _amount);
         }
@@ -77,26 +73,16 @@ public class UIManager : Singleton<UIManager>
             goodsTextList[(int)(_type - 1)].text = Utility.ToCurrencyString(_amount);
     }
 
-    public void UpdateHPBarUI(double _max, double _cur)
+    public void EquipSkill(int _num, SkillItem _skill)
     {
-        //float pevAmount = hpBarImg.fillAmount;
-        //TweenManager.Instance.TweenFill(hpBarImg, pevAmount, (float)(_cur / _max));
-    }
-
-    public void EquipSkill(int _num, int _skillkey)
-    {
-        Tables.Skill skillTb = Tables.Skill.Get(_skillkey);
-        skillIconImg[_num].enabled = skillTb != null;
-        if (skillTb != null)
-        {
-            skillIconImg[_num].sprite = GetSprite(SPRITE_TYPE.SKILL_ICON, skillTb.SkillIcon);
-        }
+        skillIconImg[_num].enabled = _skill.key != 0;
+        skillIconImg[_num].sprite = _skill.GetSprite();
     }
     public string GetText(string _key)
     {
         string text = string.Empty;
         Tables.TextKey textTb = Tables.TextKey.Get(_key);
-        if(textTb != null)
+        if (textTb != null)
             text = Tables.TextKey.Get(_key).Description;
 
         return text;
@@ -105,14 +91,7 @@ public class UIManager : Singleton<UIManager>
     {
         return spriteScripObjList[(int)_type].GetSprite(_name);
     }
-    public void SetSystemMessage(string _message, float _time, float _delay = 0, UnityAction _action = null)
-    {
-        systemMessageTxt.text = _message;
-        StartCoroutine(TweenManager.Instance.FadeIn(systemMessageObj.gameObject, 1, 0, 0, () =>
-        {
-            StartCoroutine(TweenManager.Instance.FadeOut(systemMessageObj.gameObject, 0, _time, _delay, _action));
-        }));
-    }
+
     public void LoadingUISet()
     {
         loadingBox.raycastTarget = true;
@@ -129,10 +108,10 @@ public class UIManager : Singleton<UIManager>
     public void SetStageName(int stageKey)
     {
         Stage stageTb = Stage.Get(stageKey);
-        if(stageTb != null)
+        if (stageTb != null)
         {
             currentStageName.text = string.Format("{0}-{1} {2}", stageTb.Chapter, stageTb.Zone, GetText(stageTb.StageName));
-        }            
+        }
     }
     public string ReturnCurrentStageName()
     {
@@ -141,19 +120,23 @@ public class UIManager : Singleton<UIManager>
     public void SetWaveProsessUI()
     {
         float fillAmount = 0f;
-        if(AccountManager.Instance.CurrentStageInfo.isChallengeableBoss)
+
+        bool isChallengeableBoss = AccountManager.Instance.CurrentStageInfo.isChallengeableBoss;
+        BossChallengeBtn.SetActive(isChallengeableBoss);
+        if (isChallengeableBoss)
         {
-            fillAmount = 1;
-            bossChellangeBtn.gameObject.SetActive(true);
+            fillAmount = 1f;
             waveProcessText.text = "보스 도전";
         }
         else
         {
-            fillAmount = (float)MonsterManager.instance.StageStep / MonsterManager.instance.GenMonsterStep;
-            waveProcessText.text = string.Format("웨이브 : {0} / {1}", MonsterManager.instance.StageStep, MonsterManager.instance.GenMonsterStep);
-            bossChellangeBtn.gameObject.SetActive(false);
+            int stageStep = MonsterManager.instance.StageStep;
+            int genMonsterStep = MonsterManager.instance.GenMonsterStep;
 
+            fillAmount = (float)stageStep / genMonsterStep;
+            waveProcessText.text = $"웨이브 : {stageStep} / {genMonsterStep}";
         }
+
         processFillImg.fillAmount = fillAmount;
     }
     #region[Button Event]
@@ -168,7 +151,7 @@ public class UIManager : Singleton<UIManager>
             openedPopupList.Push(_popup);
         }
         _popup.OpenPopUp();
-        if(popupType != FULL_POPUP_TYPE.NONE)
+        if (popupType != FULL_POPUP_TYPE.NONE)
         {
             fullPopUp.ChildSetActive(true);
             fullPopUp.SettingUI();
@@ -189,14 +172,11 @@ public class UIManager : Singleton<UIManager>
             closePopup.ClosePopUp();
         else
             _popup.ClosePopUp();
-
-
-
     }
     public void OnClickBossChallenge()
     {
-        bossChellangeBtn.raycastTarget = false;
         MonsterManager.instance.ChallengeBoss();
+        BossChallengeBtn.SetActive(false);
     }
     public void OnClickAuto()
     {
@@ -212,7 +192,7 @@ public class UIManager : Singleton<UIManager>
     {
         if (PlayerController.Instance.SkillInfoList[_num] != null)
         {
-            int skillKey = PlayerController.Instance.SkillInfoList[_num].skillKey;
+            int skillKey = PlayerController.Instance.SkillInfoList[_num].key;
             skillCoolTimeImg[_num].fillAmount = PlayerController.Instance.UpdateSkillCoolTime(skillKey, true);
             float skillCoolTime = PlayerController.Instance.UpdateSkillCoolTime(skillKey, false);
             if (skillCoolTimeText[_num].enabled)

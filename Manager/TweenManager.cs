@@ -17,6 +17,8 @@ public class TweenManager : Singleton<TweenManager>
     public IEnumerator FadeOut(GameObject _go, float _alpha, float _time, float _delay = 0, UnityAction _action = null)
     {
         CanvasGroup render = _go.GetComponent<CanvasGroup>();
+        if (render == null)
+            render = _go.AddComponent<CanvasGroup>(); 
         yield return new WaitForSeconds(_delay);
         float startAlpha = render.alpha;
         float time = 0;
@@ -32,6 +34,9 @@ public class TweenManager : Singleton<TweenManager>
     public IEnumerator FadeIn(GameObject _go, float _alpha, float _time, float _delay = 0, UnityAction _action = null)
     {
         CanvasGroup render = _go.GetComponent<CanvasGroup>();
+        if(render == null)
+            render = _go.AddComponent<CanvasGroup>();
+
         yield return new WaitForSeconds(_delay);
         float startAlpha = render.alpha;
         float time = 0;

@@ -56,7 +56,10 @@ public class QuestSlot : ReuseCellData<QuestSlotCellData>
             return ITEM_CATEGORY.GOODS;
         if (rewardTb.MaterialKey.Length > 0)
             return ITEM_CATEGORY.MATERIAL;
-        return ITEM_CATEGORY.ITEM;
+        if(rewardTb.ItemKey.Length > 0)
+            return ITEM_CATEGORY.ITEM;
+
+        return ITEM_CATEGORY.NONE;
     }
 
     private void SetRewardDetails(Reward rewardTb, ITEM_CATEGORY itemCategory, ref double rewardQty)
@@ -117,8 +120,13 @@ public class QuestSlot : ReuseCellData<QuestSlotCellData>
 
     void CompleatedQuest()
     {
-        //일일 미션 혹은 주간 미션이면
-        //일일퀘스트완료 및 주간 퀘스트 완료를 증가시켜줘야함.
+        foreach (var quest in AccountManager.Instance.QuestInfoDictionary[QUEST_CARTEGORY.QUEST_CLEAR])
+        {
+            if (Quest.Get(quest.key) is Tables.Quest questTb && questTb.QuestType == m_QuestTb.QuestType)
+            {
+                UIQuest.instance.IncreaseQuestCount(questTb.key, 1);
+            }
+        }
         m_data.m_QuestInfo.GetReward();
     }
     void ShortCutsPopup()

@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public class PopupItemDetail : MonoBehaviour
 {
     [SerializeField] GameObject backGround;
+    [SerializeField] GameObject enhance_equippedBtn;
     [SerializeField] InvenItemSlot itemSlot;
     [SerializeField] List<TextMeshProUGUI> passiveEffect_Name;
     [SerializeField] List<TextMeshProUGUI> passiveEffect_Value;
@@ -20,7 +21,7 @@ public class PopupItemDetail : MonoBehaviour
 
     [SerializeField] TextMeshProUGUI equipText;
 
-    InvenItemInfo m_invenItem;
+    InvenItem m_invenItem;
 
     float holddingTime = 0f;
     bool isHoldding = false;
@@ -29,7 +30,7 @@ public class PopupItemDetail : MonoBehaviour
 
     public bool IsOpenPopup => backGround.activeSelf;
 
-    public void SetInvenItem(InvenItemInfo _target) { m_invenItem = _target; }
+    public void SetInvenItem(InvenItem _target) { m_invenItem = _target; }
 
     void Update()
     {
@@ -55,10 +56,12 @@ public class PopupItemDetail : MonoBehaviour
         ReleaseEnhanceBtn();
     }
 
-    public void SetItemDetailInfo(InvenItemInfo _item)
+    public void SetItemDetailInfo(InvenItem _item)
     {
         if (_item == null)
             return;
+
+
 
         Tables.Item itemTb = Tables.Item.Get(_item.key);
         if (itemTb != null)
@@ -79,6 +82,7 @@ public class PopupItemDetail : MonoBehaviour
             enhanceCostText.text = Utility.ToCurrencyString(10000);
             equipText.text = _item.isEquipped ? "¿Â¬¯¡ﬂ" : "¿Â¬¯«œ±‚";
 
+            enhance_equippedBtn.SetActive(m_invenItem.isGet);
             UIInventory.instance.UpdateInvenSlot();
         }
     }

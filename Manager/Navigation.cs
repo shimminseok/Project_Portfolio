@@ -47,11 +47,10 @@ public class Navigation : MonoBehaviour
             for (int j = 0; j < m_GroundSize.y; j++)
             {
                 if (m_Map[i, j].walkable)
-                    Gizmos.color = Color.green - new Color(0, 0, 0, 0.5f);
+                    Gizmos.color = new Color(0, 0, 0, 0);
                 else
                     Gizmos.color = Color.red - new Color(0, 0, 0, 0.5f);
 
-                Vector3 pos = Quaternion.Euler(0, 45, 0) * m_Map[i, j].worldPos;
                 Gizmos.DrawCube(new Vector3(m_Map[i, j].worldPos.x, 0, m_Map[i, j].worldPos.z), Vector3.one);
             }
         }

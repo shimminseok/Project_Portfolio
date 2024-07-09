@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class QuestReuseScrollRect : ReuseScrollview<QuestSlotCellData>
 {
-    // Start is called before the first frame update
     protected override void Start()
     {
         base.Start();
@@ -25,9 +24,9 @@ public class QuestReuseScrollRect : ReuseScrollview<QuestSlotCellData>
         var filteredQuests = Tables.Quest.data.Values
             .Where(quest => quest.QuestType == (int)_type);
 
+        int index = 0;
         foreach (var tb in filteredQuests)
         {
-            int index = 0;
             if (questInfoDictionary.TryGetValue(tb.key, out var questInfo))
             {
                 QuestSlotCellData cell = new QuestSlotCellData();
@@ -41,7 +40,6 @@ public class QuestReuseScrollRect : ReuseScrollview<QuestSlotCellData>
                 Debug.Log($"Quest Mapping Fail for key: {tb.key}");
             }
         }
-
         InitTableView();
     }
 }

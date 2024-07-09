@@ -94,10 +94,10 @@ public class UISkill : UIPopUp
     }
     void SetSkillSettingIconList(int _num)
     {
-        if (PlayerController.Instance.SkillInfoList[_num] != null && PlayerController.Instance.SkillInfoList[_num].skillKey != 0)
+        if (PlayerController.Instance.SkillInfoList[_num] != null && PlayerController.Instance.SkillInfoList[_num].key != 0)
         {
             skillSettingIconList[_num].enabled = true;
-            skillSettingIconList[_num].sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON, Tables.Skill.Get(PlayerController.Instance.SkillInfoList[_num].skillKey).SkillListIcon);
+            skillSettingIconList[_num].sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON, Tables.Skill.Get(PlayerController.Instance.SkillInfoList[_num].key).SkillListIcon);
         }
         else
         {
@@ -108,16 +108,16 @@ public class UISkill : UIPopUp
     public void OnClickEquipSkill()
     {
         isOnClickEquipSkill = true;
-        UIManager.Instance.SetSystemMessage("장착할 스킬의 슬롯을 선택해주세요.", 1f, 0.5f);
+        UISystem.instance.SetSystemMessage("장착할 스킬의 슬롯을 선택해주세요.");
     }
     public void OnClickUnEquipSkill()
     {
         if (PlayerController.Instance.SkillInfoList[selectEquipSlotNumber] != null && !PlayerController.Instance.SkillInfoList[selectEquipSlotNumber].IsEmpty)
         {
             PlayerController.Instance.SkillInfoList[selectEquipSlotNumber].UnEquipSkill();
-            PlayerController.Instance.SkillCoolTime.Remove(PlayerController.Instance.SkillInfoList[selectEquipSlotNumber].skillKey);
+            PlayerController.Instance.SkillCoolTime.Remove(PlayerController.Instance.SkillInfoList[selectEquipSlotNumber].key);
             SetSkillSettingIconList(selectEquipSlotNumber);
-            UIManager.Instance.EquipSkill(selectEquipSlotNumber, 0);
+            UIManager.Instance.EquipSkill(selectEquipSlotNumber, PlayerController.Instance.SkillInfoList[selectEquipSlotNumber]);
         }
     }
     public void OnClickSkillSettingSkillIcon(int _num)
@@ -126,13 +126,13 @@ public class UISkill : UIPopUp
         skillSettingSelectedSlotNumTxt.text = string.Format("선택 슬롯 : {0}번", _num + 1);
         if (isOnClickEquipSkill)
         {
-            SkillInfo skillInfo = new SkillInfo();
+            SkillItem skillInfo = new SkillItem();
             int key = skillListReuseScrollRect.TableData[selectSkillNumber].m_skill.key;
             int level = 1;
             skillInfo.EquipSkill(key, level);
             PlayerController.Instance.SkillInfoList[_num] = skillInfo;
             PlayerController.Instance.SetSkillCoolDown(key);
-            UIManager.Instance.EquipSkill(_num, key);
+            UIManager.Instance.EquipSkill(_num, skillInfo);
             isOnClickEquipSkill = false;
             SetSkillSettingIconList(_num);
         }

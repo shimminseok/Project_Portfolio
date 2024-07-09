@@ -295,7 +295,7 @@ public class AnimationController : MonoBehaviour
     {
         if (m_Controller.TryGetComponent<IUseSkill>(out var iUseSkill))
         {
-            Tables.Skill skillTb = Tables.Skill.Get(iUseSkill.SkillInfoList[iUseSkill.UseSkillNum].skillKey);
+            Tables.Skill skillTb = Tables.Skill.Get(iUseSkill.SkillInfoList[iUseSkill.UseSkillNum].key);
             if (skillTb != null)
             {
                 List<IHittable> gos = new List<IHittable>();

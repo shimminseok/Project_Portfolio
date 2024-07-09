@@ -42,14 +42,14 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     Dictionary<STAT, int> growthLevelDic = new Dictionary<STAT, int>();
 
     //Skill
-    SkillInfo[] equipSkillArr = new SkillInfo[4];
-    SkillInfo equipSkillInfo;
+    SkillItem[] equipSkillArr = new SkillItem[4];
+    SkillItem equipSkillInfo;
     Dictionary<int, float> skillCoolTime = new Dictionary<int, float>();
     int useSkillNum;
     int equipSkillIndex;
     public int UseSkillSlotIndex => useSkillNum;
     //Equipment
-    InvenItemInfo[] equipItem = new InvenItemInfo[6] { new(), new(), new(), new(), new(), new() };
+    InvenItem[] equipItem = new InvenItem[6] { new(), new(), new(), new(), new(), new() };
 
 
 
@@ -104,6 +104,14 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         {
             float moveSpd = moveSpeed + (float)CalculateGrowthStat(STAT.MOVE_SPD) + (float)GetEquipItemAbilityValue(STAT.MOVE_SPD);
             return moveSpd;
+        }
+    }
+    public float CriRate
+    {
+        get
+        {
+            float probability = criRate + (float)CalculateGrowthStat(STAT.CRI_RATE) + (float)GetEquipItemAbilityValue(STAT.CRI_RATE);
+            return probability;
         }
     }
     public bool IsCri
@@ -188,7 +196,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         }
     }
     public ObjectController Target => targetObj;
-    public SkillInfo[] SkillInfoList
+    public SkillItem[] SkillInfoList
     {
         get
         {
@@ -217,7 +225,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public Vector3 TargetDir => Target.transform.localPosition - transform.localPosition;
 
-    public InvenItemInfo[] EquipmentItem
+    public InvenItem[] EquipmentItem
     {
         get => equipItem;
     }
@@ -262,7 +270,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         for (int i = 0; i < Path.Count; i++)
         {
-            Gizmos.color = Color.red;
+            Gizmos.color = Color.green;
 
             Gizmos.DrawCube(Path[i].worldPos, Vector3.one);
         }
@@ -387,9 +395,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         for (int i = 0; i < SkillInfoList.Length; i++)
         {
             if (SkillInfoList[i] != null)
-                UIManager.Instance.EquipSkill(i, SkillInfoList[i].skillKey);
+                UIManager.Instance.EquipSkill(i, SkillInfoList[i]);
             else
-                UIManager.Instance.EquipSkill(i, 0);
+                UIManager.Instance.EquipSkill(i, new SkillItem());
         }
 
         TagController.SetTag(this);
@@ -500,7 +508,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     public void UpdateHPUI()
     {
         TagController.UpdateHPUI(MaxHP, CurHP);
-        UIManager.Instance.UpdateHPBarUI(MaxHP, CurHP);
     }
 
     public IEnumerator SetDeadEvent()
@@ -562,12 +569,12 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         useSkillNum = _index;
         //스킬 사용
-        Tables.Skill skill = Tables.Skill.Get(SkillInfoList[_index].skillKey);
+        Tables.Skill skill = Tables.Skill.Get(SkillInfoList[_index].key);
         if (skill != null)
         {
             ChangeState((OBJ_ANIMATION_STATE)skill.SkillAnimation);
             Rotate(TargetDir);
-            SetSkillCoolDown(SkillInfoList[_index].skillKey);
+            SetSkillCoolDown(SkillInfoList[_index].key);
         }
 
     }
@@ -595,7 +602,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public bool IsUseableSkill(int _num)
     {
-        return !SkillInfoList[_num].IsEmpty && SkillCoolTime[SkillInfoList[_num].skillKey] <= 0 && GameManager.Instance.GameState == GAME_STATE.PLAYING;
+        return SkillInfoList[_num] != null && !SkillInfoList[_num].IsEmpty && SkillCoolTime[SkillInfoList[_num].key] <= 0 && GameManager.Instance.GameState == GAME_STATE.PLAYING;
     }
 
     public void GetDamage(double _damage)
@@ -615,10 +622,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         return System.Math.Truncate(IsCri ? (Damage * 2) + CriDam : Damage); ;
     }
-    public double CalculateSkillDamage(SkillInfo _skillInfo)
+    public double CalculateSkillDamage(SkillItem _skillInfo)
     {
         double finaldamage = 0;
-        Tables.Skill skillTb = Tables.Skill.Get(_skillInfo.skillKey);
+        Tables.Skill skillTb = Tables.Skill.Get(_skillInfo.key);
         double skillOffset = skillTb.DamageCoefficient + (_skillInfo.skillLevel * skillTb.AddDamageCoefficient);
         if (skillTb != null)
         {
@@ -639,7 +646,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
     public void SkillAniEvent(int _type)
     {
-        Tables.Skill skillTb = Tables.Skill.Get(SkillInfoList[useSkillNum].skillKey);
+        Tables.Skill skillTb = Tables.Skill.Get(SkillInfoList[useSkillNum].key);
         PlaySkillEffect(skillTb.ActionFx[_type]);
     }
 
@@ -668,7 +675,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         return returnValue;
     }
 
-    public void EquipItem(InvenItemInfo _item)
+    public void EquipItem(InvenItem _item)
     {
         Tables.Item itemTb = Item.Get(_item.key);
         if (!equipItem[itemTb.ItemType].IsEmpty)
@@ -677,14 +684,14 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         _item.isEquipped = true;
         equipItem[itemTb.ItemType] = _item;
-        UICharactorInfo.instance.SetEquippengItemSlot(itemTb.ItemType);
+        UICharactorInfo.instance.SetEquippingItemSlot(itemTb.ItemType);
     }
 
     public void DequipItem(int _index)
     {
         equipItem[_index].isEquipped = false;
-        equipItem[_index] = new InvenItemInfo();
-        UICharactorInfo.instance.SetEquippengItemSlot(_index);
+        equipItem[_index] = new InvenItem();
+        UICharactorInfo.instance.SetEquippingItemSlot(_index);
     }
 
     public double CalculateGrowthStat(STAT _stat)

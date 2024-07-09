@@ -76,8 +76,8 @@ public class UIStageClear : UIPopUp
         for (int i = 0; i < _keys.Length; i++)
         {
             rewardItemList[i].gameObject.SetActive(true);
-            InvenItemInfo rewardInfo = new InvenItemInfo() { key = _keys[i], count = _count[i] };
-            rewardItemList[i].SetItemSlotInfo(SLOT_TYPE.REWARD, rewardInfo);
+            ItemSlotCell rewardInfo = new ItemSlotCell() { key = _keys[i], count = _count[i] };
+            rewardItemList[i].UpdateSlot(rewardInfo);
             rewardItemList[i].ActiveNotiImg(false);
             rewardItemList[i].ActiveNotGetImg(false);
             _startIndex++;

@@ -83,7 +83,7 @@ public class GameManager : Singleton<GameManager>
             Tables.Item itemTb = Tables.Item.Get(rewardTb.ItemKey[i]);
             if (itemTb != null)
             {
-                InvenItemInfo iteminfo = new InvenItemInfo();
+                InvenItem iteminfo = new InvenItem();
                 iteminfo.key = rewardTb.ItemKey[i];
                 iteminfo.count = (uint)rewardTb.ItemQty[i];
                 AccountManager.Instance.GetEquipItem((ITEM_TYPE)itemTb.ItemType, iteminfo);
