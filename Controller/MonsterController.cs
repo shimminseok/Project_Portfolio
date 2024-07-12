@@ -273,7 +273,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
     }
     public IEnumerator SetDeadEvent()
     {
-        yield return new WaitUntil(() => aniCtrl.m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name == "dead");
+        yield return new WaitUntil(() => aniCtrl.m_Animator.GetCurrentAnimatorClipInfo(0).Length == 0 || aniCtrl.m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name == "dead");
         yield return new WaitUntil(() => !aniCtrl.IsPlayingAnimation("DEAD"));
         PushObj();
 
@@ -292,7 +292,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
         {
             case MONSTER_TYPE.COMMON:
                 {
-                    GameManager.Instance.GetReward(MonsterManager.instance.CurrentStageTb.StageIdleReward, out bool result);
+                    GameManager.Instance.GetReward(MonsterManager.instance.CurrentStageTb.StageIdleReward, out bool result,false);
                     if (result)
                     {
                         UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.KILL_MONSTER,1);

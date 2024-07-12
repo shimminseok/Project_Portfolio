@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Tables;
 using UnityEngine;
 
@@ -126,7 +127,9 @@ public enum SUMMON_TYPE
     WEAPONE,
     ARMOR,
     ACC,
-    SKILL
+    SKILL,
+
+    MAX,
 }
 public enum SLOT_TYPE
 {
@@ -149,7 +152,14 @@ public enum SOUND_BGM
 {
     NO_0,   // 기본 bgm
     NO_1,   // 소환 bgm
+    NO_2,   // Loading bgm
+}
 
+public enum SCENE_TYPE
+{
+    TITLE,
+    LOADING,
+    INGAME
 }
 public enum SOUND_EFFECT
 {
@@ -269,7 +279,7 @@ public interface IUseSkill
 public interface IEquipableItem
 {
     public InvenItem[] EquipmentItem { get; }
-    void EquipItem(InvenItem _item);
+    void EquipOrReplaceItem(InvenItem _item);
     void DequipItem(int _index);
     double GetEquipItemAbilityValue(STAT _stat);
 }
@@ -375,7 +385,7 @@ public class ItemSlotCell
         {
             itemCategory = ITEM_CATEGORY.SKILL;
         }
-        else if(key < 10000000)
+        else if (key < 10000000)
         {
             itemCategory = ITEM_CATEGORY.MONSTER;
         }
@@ -448,7 +458,7 @@ public class InvenItem : ItemSlotCell
 
     public InvenItem()
     {
-        itemCategory = ITEM_CATEGORY.ITEM; 
+        itemCategory = ITEM_CATEGORY.ITEM;
     }
     public List<string> GetAbilityText()
     {
@@ -558,7 +568,7 @@ public class InvenItem : ItemSlotCell
             synthesisCount++;
         }
 
-        AccountManager.Instance.GetEquipItem((ITEM_TYPE)currentItem.ItemType, nextItem);
+        AccountManager.Instance.AddorUpdateItem((ITEM_TYPE)currentItem.ItemType, nextItem);
         var itemCell = new ItemSlotCell { key = nextItem.key, count = nextItem.count };
         UISystem.instance.AddItem(itemCell);
         UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.GET_EQUIPMENT, synthesisCount);
@@ -671,7 +681,7 @@ public class QuestInfo
     {
         while (questState == 0)
         {
-            GameManager.Instance.GetReward(m_QuestTb.QuestReward, out bool result);
+            GameManager.Instance.GetReward(m_QuestTb.QuestReward, out bool result, true);
             if (result)
             {
                 if (!m_QuestTb.Loop)
@@ -732,23 +742,66 @@ public class Node
 [System.Serializable]
 public class PlayerSaveData
 {
-    public int level = AccountManager.Instance.PlayerLevel;
-    public double gold = AccountManager.Instance.Gold;
-    public double dia = AccountManager.Instance.Dia;
+    public string nickName;
+    public int level;
 
-    public StageInfo currentStage = AccountManager.Instance.CurrentStageInfo;
-    public StageInfo bestStageInfo = AccountManager.Instance.BestStageInfo;
+    public double gold;
+    public double dia;
 
-    public string growhLevel = DictionaryJsonUtility.ToJson(PlayerController.Instance.GrowthLevelDic);
-    public string inventory = DictionaryJsonUtility.ToJson(AccountManager.Instance.HasItemDictionary);
+    public StageInfo currentStage;
+    public StageInfo bestStageInfo;
 
-    public int[] summonCount = AccountManager.Instance.SummonCount;
-    public int[] summonRewardLevel = AccountManager.Instance.SummonRewardLevel;
+    public string characterGrowhLevel;
+    public string inventory;
+    public string skill;
+    public int[] summonCount;
+    public int[] summonRewardLevel;
 
-    public SkillItem[] equipSkillInfo = PlayerController.Instance.SkillInfoList;
+    public SkillItem[] equipSkillInfo;
 
-    public string quest = DictionaryJsonUtility.ToJson(AccountManager.Instance.QuestInfoDictionary);
+    public string quest;
+    public void InitData()
+    {
+        nickName = AccountManager.Instance.NickName;
+        level = 1;
+        gold = 0;
+        dia =0;
+        currentStage = new StageInfo();
+        bestStageInfo = new StageInfo();
 
+        Dictionary<STAT, int> initDic = StatReinforce.data.Values
+            .Where(x => x.Target == (int)STAT_TARGET_TYPE.PLAYER || x.Target == (int)STAT_TARGET_TYPE.ALL)
+            .GroupBy(x => (STAT)x.key)
+            .ToDictionary(g => g.Key, g => 0);
+
+        characterGrowhLevel = DictionaryJsonUtility.ToJson(initDic); ;
+        skill = DictionaryJsonUtility.ToJson(AccountManager.Instance.HasSkillDictionary);
+        inventory = DictionaryJsonUtility.ToJson(AccountManager.Instance.HasItemDictionary);
+        summonCount = AccountManager.Instance.SummonCount;
+        summonRewardLevel = AccountManager.Instance.SummonRewardLevel;
+        quest = DictionaryJsonUtility.ToJson(AccountManager.Instance.QuestInfoDictionary);
+
+
+        equipSkillInfo = new SkillItem[4];
+    }
+
+
+    public void SaveData()
+    {
+        nickName = AccountManager.Instance.NickName;
+        level = AccountManager.Instance.PlayerLevel;
+        gold = AccountManager.Instance.Gold;
+        dia = AccountManager.Instance.Dia;
+        currentStage = AccountManager.Instance.CurrentStageInfo;
+        bestStageInfo = AccountManager.Instance.BestStageInfo;
+        characterGrowhLevel = DictionaryJsonUtility.ToJson(PlayerController.Instance.GrowthLevelDic);
+        inventory = DictionaryJsonUtility.ToJson(AccountManager.Instance.HasItemDictionary);
+        skill = DictionaryJsonUtility.ToJson(AccountManager.Instance.HasSkillDictionary);
+        summonCount = AccountManager.Instance.SummonCount;
+        summonRewardLevel = AccountManager.Instance.SummonRewardLevel;
+        equipSkillInfo = PlayerController.Instance.SkillInfoList;
+        quest = DictionaryJsonUtility.ToJson(AccountManager.Instance.QuestInfoDictionary);
+    }
 
     public void LoadData()
     {
@@ -762,17 +815,17 @@ public class PlayerSaveData
 
 
 
-        PlayerController.Instance.GrowthLevelDic = DictionaryJsonUtility.FromJson<STAT, int>(growhLevel);
         AccountManager.Instance.HasItemDictionary = DictionaryJsonUtility.FromJson<ITEM_TYPE, List<InvenItem>>(inventory);
         AccountManager.Instance.SummonCount = summonCount;
         AccountManager.Instance.SummonRewardLevel = summonRewardLevel;
-
-        PlayerController.Instance.SkillInfoList = equipSkillInfo;
-
-        //AccountManager.Instance.QuestInfoDictionary = DictionaryJsonUtility.FromJson<QUEST_CARTEGORY, List<QuestInfo>>(quest);
+        AccountManager.Instance.HasSkillDictionary = DictionaryJsonUtility.FromJson<int, SkillItem>(skill);
+        AccountManager.Instance.QuestInfoDictionary = DictionaryJsonUtility.FromJson<QUEST_CARTEGORY,List<QuestInfo>>(quest);
     }
 
 }
+
+
+
 #endregion
 
 

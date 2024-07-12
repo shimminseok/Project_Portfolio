@@ -43,9 +43,10 @@ public class UISummon : UIPopUp
     }
     public override void OpenPopUp()
     {
+        UIManager.Instance.popupType = FULL_POPUP_TYPE.SUMMON;
+
         base.OpenPopUp();
         OnClickSummonTab(summonTypeToggles[0].gameObject);
-        UIManager.Instance.popupType = FULL_POPUP_TYPE.SUMMON;
     }
 
     public override void ClosePopUp()
@@ -75,17 +76,35 @@ public class UISummon : UIPopUp
         }
         else
         {
+            List<ItemSlotCell> summonedItems = new List<ItemSlotCell>();
+
             for (int i = 0; i < resultSlotRoot.childCount; i++)
             {
                 Destroy(resultSlotRoot.GetChild(i).gameObject);
             }
             summonResultItemQueue.Clear();
+
             for (int i = 0; i < _count; i++)
             {
-                List<Tables.Item> itemList = GetSummonItemList();
+                switch (selectSummonType)
+                {
+                    case SUMMON_TYPE.WEAPONE:
+                    case SUMMON_TYPE.ARMOR:
+                    case SUMMON_TYPE.ACC:
+                        List<Tables.Item> itemList = GetSummonItemList<Tables.Item>();
+                        ItemSlotCell summonedItem = SummonRandomItem(itemList);
+                        summonedItems.Add(summonedItem); break;
+                    case SUMMON_TYPE.SKILL:
+                        List<Tables.Skill> skillList = GetSummonItemList<Tables.Skill>();
+                        ItemSlotCell summonedSkill = SummonRandomItem(skillList);
+                        summonedItems.Add(summonedSkill);
+                        break;
+                }
                 AccountManager.Instance.SummonCountUp(selectSummonType);
-                ItemSlotCell summonedItem = SummonRandomItem(itemList);
+            }
 
+            foreach (var summonedItem in summonedItems)
+            {
                 ItemSlotCell resultItem = summonResultItemQueue.FirstOrDefault(x => x.key == summonedItem.key);
                 if (resultItem == null)
                 {
@@ -96,13 +115,11 @@ public class UISummon : UIPopUp
                     resultItem.count++;
                 }
             }
-
             summonResultCo = StartCoroutine(SummonResult(summonResultItemQueue));
         }
         UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.SUMMON, _count);
     }
-
-    List<Tables.Item> GetSummonItemList()
+    List<T> GetSummonItemList<T>() where T : class
     {
         int key = 10000 + (1000 * (int)selectSummonType) + AccountManager.Instance.GetSummonLevel(selectSummonType);
         Tables.Summon summonTb = Tables.Summon.Get(key);
@@ -114,53 +131,104 @@ public class UISummon : UIPopUp
             rate += summonTb.ItemRate[j];
             if (randomValue < rate)
             {
-                switch (selectSummonType)
-                {
-                    case SUMMON_TYPE.WEAPONE:
-                        return Tables.Item.data.Values.Where(x => x.ItemGrade == j + 1 && x.isSummon == 1 && x.ItemType == (int)ITEM_TYPE.WEAPONE).ToList();
-                    case SUMMON_TYPE.ARMOR:
-                        return Tables.Item.data.Values.Where(x => x.ItemGrade == j + 1 && x.isSummon == 1 && x.ItemType >= (int)ITEM_TYPE.ARMOR && x.ItemType <= (int)ITEM_TYPE.SHOES).ToList();
-                    case SUMMON_TYPE.ACC:
-                        return Tables.Item.data.Values.Where(x => x.ItemGrade == j + 1 && x.isSummon == 1 && x.ItemType >= (int)ITEM_TYPE.ACC_1 && x.ItemType <= (int)ITEM_TYPE.ACC_2).ToList();
-                }
+                return FilterItemsBySummonType<T>(j + 1);
             }
         }
-        return new List<Tables.Item>();
+        return new List<T>();
     }
 
-    ItemSlotCell SummonRandomItem(List<Tables.Item> itemList)
+    List<T> FilterItemsBySummonType<T>(int grade) where T : class
+    {
+        switch (selectSummonType)
+        {
+            case SUMMON_TYPE.WEAPONE:
+                if (typeof(T) == typeof(Tables.Item))
+                {
+                    return Tables.Item.data.Values
+                        .Where(x => x.ItemGrade == grade && x.isSummon == 1 && x.ItemType == (int)ITEM_TYPE.WEAPONE)
+                        .Cast<T>()
+                        .ToList();
+                }
+                break;
+
+            case SUMMON_TYPE.ARMOR:
+                if (typeof(T) == typeof(Tables.Item))
+                {
+                    return Tables.Item.data.Values
+                        .Where(x => x.ItemGrade == grade && x.isSummon == 1 && x.ItemType >= (int)ITEM_TYPE.ARMOR && x.ItemType <= (int)ITEM_TYPE.SHOES)
+                        .Cast<T>()
+                        .ToList();
+                }
+                break;
+
+            case SUMMON_TYPE.ACC:
+                if (typeof(T) == typeof(Tables.Item))
+                {
+                    return Tables.Item.data.Values
+                        .Where(x => x.ItemGrade == grade && x.isSummon == 1 && x.ItemType >= (int)ITEM_TYPE.ACC_1 && x.ItemType <= (int)ITEM_TYPE.ACC_2)
+                        .Cast<T>()
+                        .ToList();
+                }
+                break;
+
+            case SUMMON_TYPE.SKILL:
+                if (typeof(T) == typeof(Tables.Skill))
+                {
+                    return Tables.Skill.data.Values
+                        .Where(x => x.SkillGrade == grade)
+                        .Cast<T>()
+                        .ToList();
+                }
+                break;
+        }
+        return new List<T>();
+    }
+    ItemSlotCell SummonRandomItem<T>(List<T> list) where T : class
     {
         while (true)
         {
-            int randomIndex = Random.Range(0, itemList.Count);
-            string qualityKey = $"Summons_Quality_Grade_{itemList[randomIndex].Quality_Grade}";
-            Tables.Define defineTb = Tables.Define.Get(qualityKey);
-            if (defineTb == null)
+            int randomIndex = Random.Range(0, list.Count);
+            var selectedItem = list[randomIndex];
+
+            string qualityKey;
+            Tables.Define defineTb = null;
+
+            if (typeof(T) == typeof(Tables.Item))
             {
-                Debug.LogWarningFormat("DefineTb is Null Key : {0}", qualityKey);
+                var item = selectedItem as Tables.Item;
+                qualityKey = $"Summons_Quality_Grade_{item.Quality_Grade}";
+                defineTb = Tables.Define.Get(qualityKey);
             }
-            if (Random.Range(0f, 100f) < defineTb.value)
+
+            if (defineTb != null && Random.Range(0f, 100f) >= defineTb.value)
             {
-
-
-                var selectedItem = itemList[randomIndex];
-                switch (selectSummonType)
-                {
-                    case SUMMON_TYPE.WEAPONE:
-                    case SUMMON_TYPE.ARMOR:
-                    case SUMMON_TYPE.ACC:
-                        InvenItem itemInfo = new InvenItem() { key = selectedItem.key, count = 1 };
-                        AccountManager.Instance.GetEquipItem((ITEM_TYPE)selectedItem.ItemType, itemInfo);
-                        break;
-                    case SUMMON_TYPE.SKILL:
-                        break;
-                }
-                ItemSlotCell item = new ItemSlotCell() { key = selectedItem.key, count = 1 };
-
-                return item;
+                continue;
             }
+            switch (selectSummonType)
+            {
+                case SUMMON_TYPE.WEAPONE:
+                case SUMMON_TYPE.ARMOR:
+                case SUMMON_TYPE.ACC:
+                    if (selectedItem is Tables.Item item)
+                    {
+                        InvenItem itemInfo = new InvenItem { key = item.key, count = 1 };
+                        AccountManager.Instance.AddorUpdateItem((ITEM_TYPE)item.ItemType, itemInfo);
+                    }
+                    break;
+                case SUMMON_TYPE.SKILL:
+                    if (selectedItem is Tables.Skill skill)
+                    {
+                        SkillItem skillItem = new SkillItem { key = skill.key, count = 1 };
+                        AccountManager.Instance.AddorUpdateSkill(skillItem);
+                    }
+                    break;
+            }
+            return new ItemSlotCell { key = GameManager.Instance.GetKey(selectedItem), count = 1 };
         }
     }
+
+
+
     IEnumerator SummonResult(Queue<ItemSlotCell> resultItemList)
     {
         resultItemPopup.SetActive(true);
@@ -183,9 +251,9 @@ public class UISummon : UIPopUp
             case SUMMON_TYPE.WEAPONE:
             case SUMMON_TYPE.ARMOR:
             case SUMMON_TYPE.ACC:
-                return new InvenItem { key = slotcell.key, count = slotcell.count ,isGet = true};
+                return new InvenItem { key = slotcell.key, count = slotcell.count, isGet = true };
             case SUMMON_TYPE.SKILL:
-                return new SkillItem { key = slotcell.key, count = slotcell.count, isGet = true};
+                return new SkillItem { key = slotcell.key, count = slotcell.count, isGet = true };
             default:
                 return null;
         }
@@ -226,23 +294,29 @@ public class UISummon : UIPopUp
     }
     void UpdateSummonLevel()
     {
-        string tbKey = string.Empty;
         double count = AccountManager.Instance.SummonCount[(int)selectSummonType];
         uint demandCnt = 0;
         int level = 1;
-        while (count >= 0)
+        string tbKey = string.Empty;
+        while (true)
         {
             switch (selectSummonType)
             {
                 case SUMMON_TYPE.WEAPONE:
-                    tbKey = string.Format("ItemGachaLvCost_{0}", level);
+                    tbKey = $"ItemGachaLvCost_{level}";
                     break;
                 case SUMMON_TYPE.ARMOR:
-                    tbKey = string.Format("DefensiveGachaLvCost_{0}", level);
+                    tbKey = $"DefensiveGachaLvCost_{level}";
                     break;
                 case SUMMON_TYPE.ACC:
-                    tbKey = string.Format("AccessoryGachaLvCost_{0}", level);
+                    tbKey = $"AccessoryGachaLvCost_{level}";
                     break;
+                case SUMMON_TYPE.SKILL:
+                    tbKey = $"SkillGachaLvCost_{level}";
+                    break;
+                default:
+                    Debug.Log($"SummonType Not Define");
+                    return;
             }
             Tables.InGamePrice ingameTb = Tables.InGamePrice.Get(tbKey);
 
@@ -257,73 +331,55 @@ public class UISummon : UIPopUp
                 break;
             }
         }
-        summonLevelText.text = $"Lv. {AccountManager.Instance.GetSummonLevel(selectSummonType)}";
+        summonLevelText.text = $"Lv. {level}";
         summonLevelFillImg.fillAmount = (float)count / demandCnt;
-        summonExpText.text = string.Format("{0} / {1}", count, demandCnt);
+        summonExpText.text = $"{count} / {demandCnt}";
         CheckSummonLevelUpReward();
     }
     void CheckSummonLevelUpReward()
     {
-        string rewardTbKey = "";
-        switch (selectSummonType)
+        string rewardTbKey = GetRewardTableKey(selectSummonType);
+        if (string.IsNullOrEmpty(rewardTbKey))
         {
-            case SUMMON_TYPE.WEAPONE:
-                rewardTbKey = "GachaLv_Equip_";
-                break;
-            case SUMMON_TYPE.ARMOR:
-                rewardTbKey = "GachaLv_Defensive_";
-                break;
-            case SUMMON_TYPE.ACC:
-                rewardTbKey = "GachaLv_Accessory_";
-                break;
-            default:
-                break;
+            return;
         }
+
         Tables.Reward rewardTb = Reward.Get($"{rewardTbKey}{AccountManager.Instance.SummonRewardLevel[(int)selectSummonType]}");
-
-
-        ItemSlotCell info = new ItemSlotCell() { key = rewardTb.GoodsKey[0], count = (uint)rewardTb.GoodsQty[0] };
+        ItemSlotCell info = new ItemSlotCell { key = rewardTb.GoodsKey[0], count = (uint)rewardTb.GoodsQty[0] };
         summonLevelRewardItemSlot.UpdateSlot(info);
-        if (AccountManager.Instance.SummonRewardLevel[(int)selectSummonType] <= AccountManager.Instance.GetSummonLevel(selectSummonType))
-        {
-            summonLevelRewardItemSlot.ActiveNotiImg(true);
-            summonLevelRewardItemSlot.ActiveNotGetImg(false);
 
-        }
-        else
-        {
-            summonLevelRewardItemSlot.ActiveNotiImg(false);
-            summonLevelRewardItemSlot.ActiveNotGetImg(true);
-        }
-
+        bool isEligibleForReward = AccountManager.Instance.SummonRewardLevel[(int)selectSummonType] <= AccountManager.Instance.GetSummonLevel(selectSummonType);
+        summonLevelRewardItemSlot.ActiveNotiImg(isEligibleForReward);
+        summonLevelRewardItemSlot.ActiveNotGetImg(!isEligibleForReward);
     }
     public void OnClickSummonLevelReward()
     {
         if (AccountManager.Instance.SummonRewardLevel[(int)selectSummonType] <= AccountManager.Instance.GetSummonLevel(selectSummonType))
         {
-            string rewardTbKey = "";
-            switch (selectSummonType)
+            string rewardTbKey = GetRewardTableKey(selectSummonType);
+            if (string.IsNullOrEmpty(rewardTbKey))
             {
-                case SUMMON_TYPE.WEAPONE:
-                    rewardTbKey = "GachaLv_Equip_";
-                    break;
-                case SUMMON_TYPE.ARMOR:
-                    rewardTbKey = "GachaLv_Defensive_";
-                    break;
-                case SUMMON_TYPE.ACC:
-                    rewardTbKey = "GachaLv_Accessory_";
-                    break;
-                default:
-                    break;
+                return;
             }
+
             rewardTbKey += AccountManager.Instance.SummonRewardLevel[(int)selectSummonType];
-            GameManager.Instance.GetReward(rewardTbKey, out bool result);
+            GameManager.Instance.GetReward(rewardTbKey, out bool result, true);
             if (result)
             {
                 AccountManager.Instance.SummonRewardLevel[(int)selectSummonType]++;
                 CheckSummonLevelUpReward();
             }
         }
-
+    }
+    string GetRewardTableKey(SUMMON_TYPE summonType)
+    {
+        return summonType switch
+        {
+            SUMMON_TYPE.WEAPONE => "GachaLv_Equip_",
+            SUMMON_TYPE.ARMOR => "GachaLv_Defensive_",
+            SUMMON_TYPE.ACC => "GachaLv_Accessory_",
+            SUMMON_TYPE.SKILL => "GachaLv_skill_",
+            _ => string.Empty,
+        };
     }
 }

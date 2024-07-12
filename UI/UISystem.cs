@@ -37,18 +37,22 @@ public class UISystem : MonoBehaviour
     }
     public void OpenRewardBox(string _desc)
     {
+        if (rewardCnt == 0)
+            return;
+
+        StopAllCoroutines();
         rewardBoxObj.SetActive(true);
         getRewardTxt.text = _desc;
         for (int i = 0; i < rewardSlots.Count; i++)
         {
             rewardSlots[i].gameObject.SetActive(i < rewardCnt);
         }
+        rewardCnt = 0;
 
         StartCoroutine(TweenManager.Instance.FadeIn(rewardBoxObj, 1, 0, 0, () =>
         {
             StartCoroutine(TweenManager.Instance.FadeOut(rewardBoxObj, 0, 3f, 0.5f, () =>
             {
-                rewardCnt = 0;
             }));
         }));
     }

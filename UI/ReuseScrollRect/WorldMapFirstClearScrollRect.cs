@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UI;
 using Tables;
-using UnityEditor.SceneManagement;
 
 public class WorldMapFirstClearScrollRect : ReuseScrollview<WorldMapFirstClearRewardItemCellData>
 {

@@ -28,9 +28,4 @@ public class InventoryReuseScrollRect : ReuseScrollview<InvenSlotCellData>
     {
         ResetCell();
     }
-
-    public void UpdateCell()
-    {
-        UpdateAllCells();
-    }
 }

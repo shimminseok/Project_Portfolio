@@ -18,7 +18,8 @@ public class SkillListReuseScrollRect : ReuseScrollview<SkillListCellData>
     {
         tableData = new List<SkillListCellData>();
         int index = 0;
-        foreach (var skill in Tables.Skill.data.Values)
+        var skillDic = Tables.Skill.data.Values.ToList().OrderBy(x => x.SkillGrade);
+        foreach (var skill in skillDic)
         {
             SkillListCellData cell = new SkillListCellData();
             cell.Index = index++;

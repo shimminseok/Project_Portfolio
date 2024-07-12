@@ -1,9 +1,12 @@
 using UnityEngine;
+
+#if UNITY_EDITOR
 using UnityEditor;
 
 public class ConvertToMecanim : MonoBehaviour
 {
-    [MenuItem("Assets/Convert Legacy Animation to Mecanim")]
+
+    [MenuItem("Tools/Convert Legacy Animation to Mecanim")]
     static void ConvertLegacyAnimationClip()
     {
         foreach (Object obj in Selection.objects)
@@ -32,3 +35,4 @@ public class ConvertToMecanim : MonoBehaviour
         }
     }
 }
+#endif

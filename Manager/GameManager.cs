@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -14,9 +15,11 @@ public class GameManager : Singleton<GameManager>
 
     public GAME_STATE GameState { get { return gameState; } }
 
+
     void Start()
     {
         ChangeGameState(GAME_STATE.LOADING);
+        SoundManager.Instance.PlayBGMSound((int)SOUND_BGM.NO_0);
     }
 
     public void ChangeGameState(GAME_STATE _state)
@@ -53,7 +56,7 @@ public class GameManager : Singleton<GameManager>
     {
         gameSpeed = _speed;
     }
-    public void GetReward(string _rewardKey, out bool _result)
+    public void GetReward(string _rewardKey, out bool _result, bool _isOpen)
     {
         Tables.Reward rewardTb = Tables.Reward.Get(_rewardKey);
         if (rewardTb == null)
@@ -62,34 +65,16 @@ public class GameManager : Singleton<GameManager>
             _result = false;
             return;
         }
-        for (int i = 0; i < rewardTb.GoodsKey.Length; i++)
-        {
-            Tables.Goods goodsTb = Tables.Goods.Get(rewardTb.GoodsKey[i]);
-            if (goodsTb != null)
-            {
-                AccountManager.Instance.AddGoods((GOOD_TYPE)rewardTb.GoodsKey[i], rewardTb.GoodsQty[i]);
-            }
-        }
-        for (int i = 0; i < rewardTb.MaterialKey.Length; i++)
-        {
-            Tables.Material materialTb = Tables.Material.Get(rewardTb.MaterialKey[i]);
-            if (materialTb != null)
-            {
-                AccountManager.Instance.AddMaterial(rewardTb.MaterialKey[i], rewardTb.MaterialQty[i]);
-            }
-        }
-        for (int i = 0; i < rewardTb.ItemKey.Length; i++)
-        {
-            Tables.Item itemTb = Tables.Item.Get(rewardTb.ItemKey[i]);
-            if (itemTb != null)
-            {
-                InvenItem iteminfo = new InvenItem();
-                iteminfo.key = rewardTb.ItemKey[i];
-                iteminfo.count = (uint)rewardTb.ItemQty[i];
-                AccountManager.Instance.GetEquipItem((ITEM_TYPE)itemTb.ItemType, iteminfo);
-            }
-        }
+
+        ProcessRewardItems(rewardTb.GoodsKey, rewardTb.GoodsQty, _isOpen, ProcessGoods);
+        ProcessRewardItems(rewardTb.MaterialKey, rewardTb.MaterialQty, _isOpen, ProcessMaterial);
+        ProcessRewardItems(rewardTb.ItemKey, rewardTb.ItemQty, _isOpen, ProcessItem);
+
         _result = true;
+
+        if (_isOpen)
+            UISystem.instance.OpenRewardBox("º¸»ó");
+
     }
 
     public int GetNextStage()
@@ -108,8 +93,105 @@ public class GameManager : Singleton<GameManager>
         }
         return AccountManager.Instance.CurrentStageInfo.key;
     }
+    void ProcessRewardItems<T>(T[] _keys, double[] _quantities, bool _isOpen, Action<T, double, bool> _processAction)
+    {
+        for (int i = 0; i < _keys.Length; i++)
+        {
+            _processAction(_keys[i], _quantities[i], _isOpen);
+        }
+    }
+    void ProcessGoods(int _key, double _quantity, bool _isOpen)
+    {
+        Tables.Goods goodsTb = Tables.Goods.Get(_key);
+        if (goodsTb != null)
+        {
+            AccountManager.Instance.AddGoods((GOOD_TYPE)_key, _quantity);
+            if (_isOpen)
+                AddToUISystem(_key, _quantity);
+        }
+    }
+    void ProcessMaterial(int _key, double _quantity, bool _isOpen)
+    {
+        Tables.Material materialTb = Tables.Material.Get(_key);
+        if (materialTb != null)
+        {
+            AccountManager.Instance.GetMaterial(_key, _quantity);
+            if (_isOpen)
+                AddToUISystem(_key, _quantity);
+        }
+    }
+
+    void ProcessItem(int _key, double _quantity, bool _isOpen)
+    {
+        Tables.Item itemTb = Tables.Item.Get(_key);
+        if (itemTb != null)
+        {
+            InvenItem iteminfo = new InvenItem
+            {
+                key = _key,
+                count = _quantity
+            };
+            AccountManager.Instance.AddorUpdateItem((ITEM_TYPE)itemTb.ItemType, iteminfo);
+            if (_isOpen)
+                AddToUISystem(_key, _quantity);
+        }
+    }
+    private void AddToUISystem(int key, double quantity)
+    {
+        ItemSlotCell rewardItem = new ItemSlotCell
+        {
+            key = key,
+            count = quantity
+        };
+        UISystem.instance.AddItem(rewardItem);
+    }
     public void EnterStage(int _stageKey)
     {
         AccountManager.Instance.CurrentStageInfo = new StageInfo(_stageKey);
+        StageChange();
+    }
+
+    public int GetKey<T>(T item) where T : class
+    {
+        switch (item)
+        {
+            case Tables.Item tableItem:
+                return tableItem.key;
+            case Tables.Skill tableSkill:
+                return tableSkill.key;
+            case Tables.Material tableMat:
+                return tableMat.key;
+            case Tables.Goods tableGoods:
+                return tableGoods.key;
+            default:
+                return -1;
+        }
+    }
+    public T GetTables<T>(int key) where T : class
+    {
+        object result = null;
+        switch (key)
+        {
+            case > 0 and < 100: // Goods
+                result = Tables.Goods.Get(key);
+                break;
+            case >= 100 and < 1000:
+                break;
+            case >= 1000 and < 10000: //Material
+                result = Tables.Material.Get(key);
+                break;
+            case >= 10000 and < 100000: //Item
+                result = Tables.Item.Get(key);
+                break;
+            case >= 100000 and < 1000000: // Skill
+                result = Tables.Skill.Get(key);
+                break;
+            case >= 1000000 and < 10000000: // Monster
+                result = Tables.Monster.Get(key);
+                break;
+            default:
+                break;
+        }
+        return result as T;
     }
 }

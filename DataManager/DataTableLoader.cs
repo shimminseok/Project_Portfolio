@@ -29,6 +29,7 @@ public static class DataTableLoader
 #endif
 		foreach (TextAsset e in txts)
 			FromJsonConvert(e);
+
 		Loaded = true;
 	}
 	[Serializable]

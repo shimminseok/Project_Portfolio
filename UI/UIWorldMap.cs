@@ -28,9 +28,9 @@ public class UIWorldMap : UIPopUp
         if (instance == null)
             instance = this;
     }
-    void Start()
+    protected override void  Start()
     {
-        ChildSetActive(false);
+        base.Start();
     }
 
     public override void OpenPopUp()

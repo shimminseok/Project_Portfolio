@@ -37,41 +37,29 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
     }
     public void OnClickGrowthLevelUp()
     {
-        IAffectedGrowth Igrowth = null;
-        switch ((STAT_TARGET_TYPE)m_StatReinforceTb.Target)
+        IAffectedGrowth iGrowth = GetAffectedGrowth((STAT_TARGET_TYPE)m_StatReinforceTb.Target);
+        if (iGrowth == null) 
+            return;
+
+        Dictionary<STAT, int> levelList = iGrowth.GrowthLevelDic;
+        double upgradePrice = CalculateUpgradePrice(levelList);
+
+        AccountManager.Instance.UseGoods((GOOD_TYPE)m_StatReinforceTb.PriceType, upgradePrice, out bool isEnough);
+        if (!isEnough)
         {
-            case STAT_TARGET_TYPE.PLAYER:
-                Igrowth = PlayerController.Instance.GetComponent<IAffectedGrowth>();
-                break;
-            case STAT_TARGET_TYPE.COLLEAGUE:
-                break;
-            case STAT_TARGET_TYPE.ALL:
-                break;
+            ReleaseGrowthLevelUp();
+            return;
         }
-        if(Igrowth != null)
-        {
-            Dictionary<STAT, int> levelList = Igrowth.GrowthLevelDic;
+        isHodding = true;
+        count++;
+        levelList[(STAT)(Index + 1)] += UIGrowth.instance.SelectMultipleNum * count;
+        levelUpEffect.gameObject.SetActive(true);
 
-            int upgradeMultiple = (levelList[(STAT)m_StatReinforceTb.key]) * (levelList[(STAT)m_StatReinforceTb.key] / 3000 + 1);
-            uint cost = (uint)(m_StatReinforceTb.Price * upgradeMultiple);
-            AccountManager.Instance.UseGoods((GOOD_TYPE)m_StatReinforceTb.PriceType, cost, out bool isEnougt);
-            if (!isEnougt)
-            {
-                ReleaseGrowthLevelUp();
-                return;
-            }
+        if (effectCo != null)
+            StopCoroutine(effectCo);
 
-            isHodding = true;
-            count++;
-            levelList[(STAT)(Index + 1)] += UIGrowth.instance.SelectMultipleNum * count;
-            levelUpEffect.gameObject.SetActive(true);
-            if (effectCo != null)
-                StopCoroutine(effectCo);
-
-            effectCo = StartCoroutine(TweenManager.Instance.TweenAlpha(levelUpEffect.gameObject, 0.8f, 0f, 0.3f));
-            UpdateData();
-        }
-       
+        effectCo = StartCoroutine(TweenManager.Instance.TweenAlpha(levelUpEffect.gameObject, 0.8f, 0f, 0.3f));
+        UpdateData();
     }
     public void ReleaseGrowthLevelUp()
     {
@@ -91,25 +79,45 @@ public class GrowthListSlot : ReuseCellData<GrowthSlotCellData>
 
     public void UpdateData()
     {
-        IAffectedGrowth Igrowth = null;
-        switch ((STAT_TARGET_TYPE)m_StatReinforceTb.Target)
+
+        IAffectedGrowth iGrowth = GetAffectedGrowth((STAT_TARGET_TYPE) m_StatReinforceTb.Target);
+        if (iGrowth == null) 
+            return;
+
+        Dictionary<STAT, int> levelList = iGrowth.GrowthLevelDic;
+        int currentLevel = levelList[(STAT)m_StatReinforceTb.key];
+        int nextLevel = currentLevel + UIGrowth.instance.SelectMultipleNum;
+
+        growthImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.GROWTH_ICON, m_StatReinforceTb.Icon);
+        growthSlotName.text = $"{UIManager.Instance.GetText(m_StatReinforceTb.NameText)}  Lv.{currentLevel}";
+        growthLevel.text = $"Lv.{currentLevel} ¢º Lv.{nextLevel}";
+
+        double upgradePrice = CalculateUpgradePrice(levelList);
+        growthCostText.color = IsEnoughCost(upgradePrice) ? Color.white : Color.red;
+        growthCostText.text = Utility.ToCurrencyString(upgradePrice);
+    }
+
+    IAffectedGrowth GetAffectedGrowth(STAT_TARGET_TYPE targetType)
+    {
+        return targetType switch
         {
-            case STAT_TARGET_TYPE.PLAYER:
-                Igrowth = PlayerController.Instance.GetComponent<IAffectedGrowth>();
-                break;
-            case STAT_TARGET_TYPE.COLLEAGUE:
-                break;
-            case STAT_TARGET_TYPE.ALL:
-                break;
-        }
-        if(Igrowth != null)
-        {
-            Dictionary<STAT,int> levelList = Igrowth.GrowthLevelDic;
-            growthImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.GROWTH_ICON, m_StatReinforceTb.Icon);
-            growthSlotName.text = string.Format("{0}  Lv.{1}", UIManager.Instance.GetText(m_StatReinforceTb.NameText), levelList[(STAT)m_StatReinforceTb.key]);
-            growthLevel.text = string.Format("Lv.{0} ¢º Lv.{1}", levelList[(STAT)m_StatReinforceTb.key], levelList[(STAT)m_StatReinforceTb.key] + UIGrowth.instance.SelectMultipleNum);
-            int upgradePrice = (levelList[(STAT)m_StatReinforceTb.key] * (levelList[(STAT)m_StatReinforceTb.key] / 3000 + 1));
-            growthCostText.text = string.Format("{0}", Utility.ToCurrencyString(m_StatReinforceTb.Price * upgradePrice));
-        }
+            STAT_TARGET_TYPE.PLAYER => PlayerController.Instance.GetComponent<IAffectedGrowth>(),
+            STAT_TARGET_TYPE.COLLEAGUE => null,
+            STAT_TARGET_TYPE.ALL => null,
+            _ => null
+        };
+    }
+
+    double CalculateUpgradePrice(Dictionary<STAT, int> levelList)
+    {
+        int currentLevel = levelList[(STAT)m_StatReinforceTb.key];
+        int nextLevel = currentLevel + UIGrowth.instance.SelectMultipleNum;
+        int levelDivisionFactor = nextLevel / 3000 + 1;
+        return m_StatReinforceTb.Price * nextLevel * levelDivisionFactor;
+    }
+
+    private bool IsEnoughCost(double cost)
+    {
+        return AccountManager.Instance.Gold >= cost;
     }
 }

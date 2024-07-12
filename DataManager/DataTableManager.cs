@@ -453,6 +453,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public string		SkillName {get; private set;}
 		/// <summary> 스킬 설명 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		SkillDescription {get; private set;}
+		/// <summary> 스킬 등급 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			SkillGrade {get; private set;}
 		/// <summary> 스킬 타입 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			SkillType {get; private set;}
 		/// <summary> 스킬  </summary>

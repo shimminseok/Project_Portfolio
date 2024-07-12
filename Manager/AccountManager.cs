@@ -8,7 +8,11 @@ using UnityEngine;
 
 public class AccountManager : Singleton<AccountManager>
 {
-    int playerLevel = 100;
+    PlayerSaveData m_SaveData;
+
+
+    string nickName;
+    int playerLevel = 1;
 
 
     StageInfo currentStageInfo = new StageInfo();
@@ -18,10 +22,19 @@ public class AccountManager : Singleton<AccountManager>
 
     Dictionary<ITEM_TYPE, List<InvenItem>> hasItemDictionary = new Dictionary<ITEM_TYPE, List<InvenItem>>();
     Dictionary<int, MaterialItem> hasMaterialDictionary = new Dictionary<int, MaterialItem>();
+    Dictionary<int, SkillItem> hasSkillDictionary = new Dictionary<int, SkillItem>();
     Dictionary<QUEST_CARTEGORY, List<QuestInfo>> questInfoDictionary = new Dictionary<QUEST_CARTEGORY, List<QuestInfo>>();
     double gold = 0;
     double dia = 0;
     public int PlayerLevel { get { return playerLevel; } set => playerLevel = value; }
+    public string NickName { get { return nickName; } set => nickName = value; }
+
+
+    public bool isLoaded;
+    public PlayerSaveData SaveData
+    {
+        get => m_SaveData;
+    }
     public StageInfo BestStageInfo
     {
         get => bestStageInfo;
@@ -38,7 +51,6 @@ public class AccountManager : Singleton<AccountManager>
         set
         {
             currentStageInfo = value;
-            GameManager.Instance.StageChange();
         }
     }
 
@@ -84,6 +96,11 @@ public class AccountManager : Singleton<AccountManager>
         get { return hasItemDictionary; }
         set { hasItemDictionary = value; }
     }
+    public Dictionary<int, SkillItem> HasSkillDictionary
+    {
+        get { return hasSkillDictionary; }
+        set { hasSkillDictionary = value; }
+    }
     public Dictionary<QUEST_CARTEGORY, List<QuestInfo>> QuestInfoDictionary
     {
         get
@@ -106,8 +123,8 @@ public class AccountManager : Singleton<AccountManager>
         set => questInfoDictionary = value;
     }
 
-    int[] summonCount = Enumerable.Repeat(0, 4).ToArray();
-    int[] summonRewardLevel = Enumerable.Repeat(1, 4).ToArray();
+    int[] summonCount = Enumerable.Repeat(0, (int)SUMMON_TYPE.MAX).ToArray();
+    int[] summonRewardLevel = Enumerable.Repeat(1, (int)SUMMON_TYPE.MAX).ToArray();
 
     public int[] SummonCount
     {
@@ -125,7 +142,7 @@ public class AccountManager : Singleton<AccountManager>
         set
         {
             gold = value;
-            UIManager.instance.UpdateGoodText(GOOD_TYPE.GOLD, gold);
+            UIManager.Instance?.UpdateGoodText(GOOD_TYPE.GOLD, gold);
         }
     }
     public double Dia
@@ -134,42 +151,43 @@ public class AccountManager : Singleton<AccountManager>
         set
         {
             dia = value;
-            UIManager.instance.UpdateGoodText(GOOD_TYPE.DIA, dia);
+            UIManager.Instance?.UpdateGoodText(GOOD_TYPE.DIA, dia);
         }
     }
     void Start()
     {
-        LoadData();
+        //LoadData();
     }
-
-    public void UseGoods(GOOD_TYPE _type, ulong _amount, out bool _isEnough)
+    public void UseGoods(GOOD_TYPE _type, double _amount, out bool _isEnough)
     {
-        switch (_type)
+        double currentAmount = GetGoodAmount(_type);
+        if (currentAmount < _amount)
         {
-            case GOOD_TYPE.DIA:
-                if (dia < _amount)
-                {
-                    _isEnough = false;
-                    return;
-                }
-                Dia -= _amount; // 다이아 사용
-                UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.USE_DIA, _amount);
-
-                break;
-            case GOOD_TYPE.GOLD:
-                if (gold < _amount)
-                {
-                    _isEnough = false;
-                    return;
-                }
-                UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.USE_GOLD, _amount);
-                Gold -= _amount; // 골드 사용
-                break;
+            _isEnough = false;
+            return;
         }
-        _isEnough = true;
 
+        UpdateGoodAmount(_type, -_amount);
+        UIQuest.instance.IncreaseQuestCount(GetQuestCategory(_type), _amount);
+
+        _isEnough = true;
     }
+
     public void AddGoods(GOOD_TYPE _type, double _amount)
+    {
+        UpdateGoodAmount(_type, _amount);
+    }
+
+    double GetGoodAmount(GOOD_TYPE _type)
+    {
+        return _type switch
+        {
+            GOOD_TYPE.DIA => Dia,
+            GOOD_TYPE.GOLD => Gold,
+            _ => 0
+        };
+    }
+    void UpdateGoodAmount(GOOD_TYPE _type, double _amount)
     {
         switch (_type)
         {
@@ -181,7 +199,16 @@ public class AccountManager : Singleton<AccountManager>
                 break;
         }
     }
-    public void AddMaterial(int _matKey, double _amount)
+    QUEST_CARTEGORY GetQuestCategory(GOOD_TYPE _type)
+    {
+        return _type switch
+        {
+            GOOD_TYPE.DIA => QUEST_CARTEGORY.USE_DIA,
+            GOOD_TYPE.GOLD => QUEST_CARTEGORY.USE_GOLD,
+            _ => throw new System.ArgumentException("Invalid GOOD_TYPE")
+        };
+    }
+    public void GetMaterial(int _matKey, double _amount)
     {
         if (hasMaterialDictionary.TryGetValue(_matKey, out var material))
         {
@@ -224,14 +251,20 @@ public class AccountManager : Singleton<AccountManager>
             switch (_type)
             {
                 case SUMMON_TYPE.WEAPONE:
-                    tbKey = string.Format("ItemGachaLvCost_{0}", level);
+                    tbKey = $"ItemGachaLvCost_{level}";
                     break;
                 case SUMMON_TYPE.ARMOR:
-                    tbKey = string.Format("DefensiveGachaLvCost_{0}", level);
+                    tbKey = $"DefensiveGachaLvCost_{level}";
                     break;
                 case SUMMON_TYPE.ACC:
-                    tbKey = string.Format("AccessoryGachaLvCost_{0}", level);
+                    tbKey = $"AccessoryGachaLvCost_{level}";
                     break;
+                case SUMMON_TYPE.SKILL:
+                    tbKey = $"SkillGachaLvCost_{level}";
+                    break;
+                default:
+                    Debug.LogWarning("SummonType Not Define");
+                    return 0;
             }
             Tables.InGamePrice ingameTb = Tables.InGamePrice.Get(tbKey);
             if (ingameTb != null)
@@ -244,7 +277,7 @@ public class AccountManager : Singleton<AccountManager>
         }
         return level;
     }
-    public void GetEquipItem(ITEM_TYPE _type, InvenItem _info)
+    public void AddorUpdateItem(ITEM_TYPE _type, InvenItem _info)
     {
         if (!hasItemDictionary.TryGetValue(_type, out var list))
         {
@@ -258,9 +291,24 @@ public class AccountManager : Singleton<AccountManager>
         }
         else
         {
-            //최초 습득시
             _info.isGet = true;
             list.Add(_info);
+        }
+    }
+    public bool IsGetSkill(int _key)
+    {
+        return !hasSkillDictionary.ContainsKey(_key);
+    }
+    public void AddorUpdateSkill(SkillItem _skill)
+    {
+        if (!hasSkillDictionary.TryGetValue(_skill.key, out var skill))
+        {
+            skill = new SkillItem() { isGet = true};
+            hasSkillDictionary[_skill.key] = skill;
+        }
+        else
+        { 
+            skill.count += _skill.count;
         }
     }
     double CalculateTotalAbility(STAT _st)
@@ -309,26 +357,25 @@ public class AccountManager : Singleton<AccountManager>
             return;
 
         PlayerSaveData saveData = new PlayerSaveData();
+        saveData.SaveData();
         string data = JsonUtility.ToJson(saveData, true);
 
         PlayerPrefs.SetString("PlayerData", data);
     }
 
-    void LoadData()
+    public void LoadData()
     {
-        if(GameManager.instance.isTest)
-        {
-            PlayerPrefs.DeleteAll();
-        }
         string playerData = PlayerPrefs.GetString("PlayerData", string.Empty);
         if (!string.IsNullOrEmpty(playerData))
         {
-            PlayerSaveData saveData = JsonUtility.FromJson<PlayerSaveData>(playerData);
-            saveData.LoadData();
+            m_SaveData = JsonUtility.FromJson<PlayerSaveData>(playerData);
+            m_SaveData.LoadData();
         }
         else
         {
-            new PlayerSaveData();
+            m_SaveData = new PlayerSaveData();
+            m_SaveData.InitData();
         }
+        isLoaded = true;
     }
 }

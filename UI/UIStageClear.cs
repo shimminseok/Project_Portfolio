@@ -52,7 +52,7 @@ public class UIStageClear : UIPopUp
     }
     public void SetRewardItem()
     {
-        GameManager.Instance.GetReward(MonsterManager.instance.CurrentStageTb.StageClearReward, out bool result);
+        GameManager.Instance.GetReward(MonsterManager.instance.CurrentStageTb.StageClearReward, out bool result, false);
         Tables.Reward rewardTb = Tables.Reward.Get(MonsterManager.instance.CurrentStageTb.StageClearReward);
         if (result)
         {

@@ -67,7 +67,7 @@ public class UIInventory : UIPopUp
     }
     public void UpdateInvenSlot()
     {
-        invenitemScollRect.UpdateCell();
+        invenitemScollRect.UpdateAllCells();
     }
 
 

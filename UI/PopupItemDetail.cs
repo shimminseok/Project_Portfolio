@@ -80,7 +80,7 @@ public class PopupItemDetail : MonoBehaviour
                 equippedEffect_Value[i].text = str;
             }
             enhanceCostText.text = Utility.ToCurrencyString(10000);
-            equipText.text = _item.isEquipped ? "ÀåÂøÁß" : "ÀåÂøÇÏ±â";
+            equipText.text = _item.isEquipped ? "ÀåÂøÇØÁ¦" : "ÀåÂøÇÏ±â";
 
             enhance_equippedBtn.SetActive(m_invenItem.isGet);
             UIInventory.instance.UpdateInvenSlot();
@@ -89,13 +89,12 @@ public class PopupItemDetail : MonoBehaviour
 
     public void OnClickEquipBtn()
     {
-        PlayerController.Instance.EquipItem(m_invenItem);
+        PlayerController.Instance.EquipOrReplaceItem(m_invenItem);
         SetItemDetailInfo(m_invenItem);
 
     }
     public void OnClickEnhanceBtn()
     {
-
         Tables.Item itemTb = Tables.Item.Get(m_invenItem.key);
         if (itemTb != null)
         {

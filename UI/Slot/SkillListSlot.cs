@@ -9,6 +9,8 @@ using UI;
 public class SkillListSlot : ReuseCellData<SkillListCellData>
 {
     [SerializeField] GameObject selectedSlot;
+    [SerializeField] GameObject getSkillBG;
+    [SerializeField] Image skillIconFrame;
     [SerializeField] Image skillIconImg;
     [SerializeField] TextMeshProUGUI skillName;
     [SerializeField] TextMeshProUGUI skillCoolTime;
@@ -27,7 +29,9 @@ public class SkillListSlot : ReuseCellData<SkillListCellData>
         m_skillTb = skillTb;
         skillName.text = UIManager.Instance.GetText(m_skillTb.SkillName);
         skillIconImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON,skillTb.SkillListIcon);
-        skillCoolTime.text = string.Format("{0}√ ", skillTb.CoolTime);
+        skillCoolTime.text = $"{skillTb.CoolTime}√ ";
+        getSkillBG.SetActive(AccountManager.Instance.IsGetSkill(m_skillTb.key));
+        skillIconFrame.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON, $"skilluse_a_bg00{skillTb.SkillGrade}");
     }
 
 

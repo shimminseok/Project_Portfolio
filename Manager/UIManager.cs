@@ -46,6 +46,11 @@ public class UIManager : Singleton<UIManager>
     public FULL_POPUP_TYPE popupType = FULL_POPUP_TYPE.NONE;
     public int SkillSlotCount { get => skillIconImg.Count; }
 
+
+    void Start()
+    {
+        InitUI();
+    }
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape) && openedPopupList.Count > 0)
@@ -63,13 +68,19 @@ public class UIManager : Singleton<UIManager>
         }
     }
 
+    void InitUI()
+    {
+        UpdateGoodText(GOOD_TYPE.GOLD, AccountManager.Instance.Gold);
+        UpdateGoodText(GOOD_TYPE.DIA, AccountManager.Instance.Dia);
+        SetStageName(AccountManager.Instance.CurrentStageInfo.key);
+    }
+
     public void UpdateGoodText(GOOD_TYPE _type, double _amount)
     {
         if (popupType != FULL_POPUP_TYPE.NONE)
-        {
             fullPopUp.UpdateFullPopUPGoodsBox(_type, _amount);
-        }
-        else
+
+
             goodsTextList[(int)(_type - 1)].text = Utility.ToCurrencyString(_amount);
     }
 
@@ -155,8 +166,11 @@ public class UIManager : Singleton<UIManager>
         {
             fullPopUp.ChildSetActive(true);
             fullPopUp.SettingUI();
+            SoundManager.Instance.MuteEffectSount(true);
         }
     }
+
+
     public void CloseAllPopUp()
     {
         while (openedPopupList.Count > 0)
@@ -190,18 +204,25 @@ public class UIManager : Singleton<UIManager>
     }
     void UpdateSkillCoolTime(int _num)
     {
-        if (PlayerController.Instance.SkillInfoList[_num] != null)
+        var skillInfo = PlayerController.Instance.SkillInfoList[_num];
+        bool hasSkill = skillInfo != null;
+        skillCoolTimeImg[_num].gameObject.SetActive(hasSkill);
+
+        if (hasSkill)
         {
-            int skillKey = PlayerController.Instance.SkillInfoList[_num].key;
+            int skillKey = skillInfo.key;
             skillCoolTimeImg[_num].fillAmount = PlayerController.Instance.UpdateSkillCoolTime(skillKey, true);
             float skillCoolTime = PlayerController.Instance.UpdateSkillCoolTime(skillKey, false);
+
             if (skillCoolTimeText[_num].enabled)
             {
                 skillCoolTimeText[_num].text = string.Format("{0:0.#}", skillCoolTime);
             }
+
             skillCoolTimeText[_num].enabled = skillCoolTime > 0;
         }
     }
+
     public void CheatAddGold()
     {
         AccountManager.Instance.AddGoods(GOOD_TYPE.GOLD, 100000000);

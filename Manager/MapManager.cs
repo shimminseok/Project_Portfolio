@@ -13,6 +13,11 @@ public class MapManager : Singleton<MapManager>
 
     Dictionary<int, int> loadedMapDic = new Dictionary<int, int>();
 
+    private void Start()
+    {
+        Init();
+    }
+
     public void Init(Tables.Dungeon dungeon = null)
     {
         string mapPrefabName = string.Empty;
@@ -27,6 +32,8 @@ public class MapManager : Singleton<MapManager>
             SetMapByName(mapPrefabName);
         }
     }
+
+
     public void SetMapByName(string _mapName)
     {
         if (!string.IsNullOrEmpty(_mapName) && currentMap != _mapName)

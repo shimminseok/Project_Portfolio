@@ -234,16 +234,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         get
         {
-            if (growthLevelDic.Count == 0)
-            {
-                foreach (var item in StatReinforce.data.Values.Where(x => x.Target == (int)STAT_TARGET_TYPE.PLAYER || x.Target == (int)STAT_TARGET_TYPE.ALL))
-                {
-                    if (!growthLevelDic.TryGetValue((STAT)item.key, out int value))
-                    {
-                        growthLevelDic.Add((STAT)item.key, 0);
-                    }
-                }
-            }
             return growthLevelDic;
         }
         set => growthLevelDic = value;
@@ -260,7 +250,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         InitData((int)job);
         ObjectGetComponent();
-
     }
 
     private void OnDrawGizmos()
@@ -380,6 +369,8 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         characterTb = Tables.Character.Get(job);
         m_TagController = PoolManager.Instance.GetObj("HP_Guage", POOL_TYPE.TAG).GetComponent<TagController>();
         objType = OBJ_TYPE.PLAYER;
+        growthLevelDic = DictionaryJsonUtility.FromJson<STAT, int>(AccountManager.Instance.SaveData.characterGrowhLevel); 
+        SkillInfoList = AccountManager.Instance.SaveData.equipSkillInfo;
 
         damage = characterTb.Attack;
         attackSpd = characterTb.AttackSpeed;
@@ -391,6 +382,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         defense = characterTb.DefencePoint;
         moveSpeed = characterTb.MoveSpeed;
         criRate = characterTb.CriticalRate;
+
 
         for (int i = 0; i < SkillInfoList.Length; i++)
         {
@@ -478,8 +470,10 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         if (aniCtrl.CurrentState != OBJ_ANIMATION_STATE.ATTACK)
         {
+            transform.LookAt(Target.transform);
             ChangeState(OBJ_ANIMATION_STATE.ATTACK);
         }
+
     }
     void Idle()
     {
@@ -675,16 +669,22 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         return returnValue;
     }
 
-    public void EquipItem(InvenItem _item)
+    public void EquipOrReplaceItem(InvenItem _item)
     {
         Tables.Item itemTb = Item.Get(_item.key);
-        if (!equipItem[itemTb.ItemType].IsEmpty)
-            DequipItem(itemTb.ItemType);
+        int itemType = itemTb.ItemType;
 
-
-        _item.isEquipped = true;
-        equipItem[itemTb.ItemType] = _item;
-        UICharactorInfo.instance.SetEquippingItemSlot(itemTb.ItemType);
+        // 이미 장착된 아이템이 있거나 동일한 아이템을 장착하려는 경우
+        if (!equipItem[itemType].IsEmpty || _item.key == equipItem[itemType].key)
+        {
+            DequipItem(itemType);
+        }
+        else
+        {
+            _item.isEquipped = true;
+            equipItem[itemType] = _item;
+        }
+        UICharactorInfo.instance.SetEquippingItemSlot(itemType);
     }
 
     public void DequipItem(int _index)

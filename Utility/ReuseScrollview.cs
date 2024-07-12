@@ -212,7 +212,7 @@ namespace UI
                 _cell.gameObject.SetActive(false);
             }
         }
-        protected void UpdateAllCells()
+        public void UpdateAllCells()
         {
             foreach (var cell in cells)
             {

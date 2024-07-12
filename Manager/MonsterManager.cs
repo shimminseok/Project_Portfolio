@@ -38,6 +38,11 @@ public class MonsterManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        Init();
+    }
+
     public void Init()
     {
         stageStep = 0;

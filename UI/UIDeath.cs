@@ -26,18 +26,20 @@ public class UIDeath : UIPopUp
         stageNameTxt.text = UIManager.Instance.ReturnCurrentStageName();
 
         //5몇초후에 스테이지 리셋
-        Invoke("EnterStage", 5);
+        StartCoroutine("EnterStage");
 
     }
     public override void ClosePopUp()
     {
+        StopCoroutine("EnterStage");
         base.ClosePopUp();
-        CancelInvoke("EnterStage");
-        EnterStage();
     }
-    void EnterStage()
+    public IEnumerator EnterStage()
     {
-        AccountManager.Instance.CurrentStageInfo.key = AccountManager.Instance.CurrentStageInfo.key;
+        yield return new WaitForSeconds(5);
+        UIManager.Instance.OnClickClosePopUp(this);
+        GameManager.Instance.EnterStage(AccountManager.Instance.CurrentStageInfo.key);
+
     }
 
     public void OnClickShortcutBtn(UIPopUp _popup)

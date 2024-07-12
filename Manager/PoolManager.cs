@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class PoolManager : Singleton<PoolManager>
+public class PoolManager: Singleton<PoolManager>
 {
 
     [HideInInspector] bool IsCreatedMaps = false;

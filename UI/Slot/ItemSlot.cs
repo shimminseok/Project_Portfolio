@@ -80,6 +80,10 @@ public class ItemSlot : MonoBehaviour
         qualityImg.gameObject.SetActive(false);
         hasCountTxt.text = string.Empty;
         enhanceCountTxt.text = _item.enhanceCount > 0 ? $"Lv.{_item.enhanceCount}" : string.Empty;
+        itemGradeBG.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, $"item_bg_00{Tables.Skill.Get(_item.key)?.SkillGrade}");
+        IsEquipping(false);
+        ActiveNotiImg(false);
+        ActiveNotGetImg(false);
     }
     void UpdateSlot(MonsterItem _item)
     {
@@ -90,7 +94,7 @@ public class ItemSlot : MonoBehaviour
     }
     void EmptySlot()
     {
-
+        itemGradeBG.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, "item_bg_001");
         itemIconImg.gameObject.SetActive(false);
         qualityImg.gameObject.SetActive(false);
         equippingTxt.gameObject.SetActive(false);
