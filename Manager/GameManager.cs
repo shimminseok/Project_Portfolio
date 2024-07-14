@@ -1,3 +1,4 @@
+using NPOI.SS.Formula.Functions;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -8,7 +9,7 @@ public class GameManager : Singleton<GameManager>
     public bool isTest;
 
     float gameSpeed = 2.9f;
-    public bool isAuto = true;
+    public bool isAuto = false;
     GAME_STATE gameState;
 
     public float GameSpeed { get { return gameSpeed; } }
@@ -166,32 +167,5 @@ public class GameManager : Singleton<GameManager>
             default:
                 return -1;
         }
-    }
-    public T GetTables<T>(int key) where T : class
-    {
-        object result = null;
-        switch (key)
-        {
-            case > 0 and < 100: // Goods
-                result = Tables.Goods.Get(key);
-                break;
-            case >= 100 and < 1000:
-                break;
-            case >= 1000 and < 10000: //Material
-                result = Tables.Material.Get(key);
-                break;
-            case >= 10000 and < 100000: //Item
-                result = Tables.Item.Get(key);
-                break;
-            case >= 100000 and < 1000000: // Skill
-                result = Tables.Skill.Get(key);
-                break;
-            case >= 1000000 and < 10000000: // Monster
-                result = Tables.Monster.Get(key);
-                break;
-            default:
-                break;
-        }
-        return result as T;
     }
 }

@@ -28,6 +28,9 @@ public class UIManager : Singleton<UIManager>
 
     [Header("RightTopAnchor")]
     [SerializeField] List<Text> goodsTextList;
+    [SerializeField] QuestObjerverSlot questObjerverSlot;
+
+
     [Header("BottomAnchor")]
     [SerializeField] Image hpBarImg;
 
@@ -46,6 +49,7 @@ public class UIManager : Singleton<UIManager>
     public FULL_POPUP_TYPE popupType = FULL_POPUP_TYPE.NONE;
     public int SkillSlotCount { get => skillIconImg.Count; }
 
+    public QuestObjerverSlot ObjerverSlot => questObjerverSlot;
 
     void Start()
     {
@@ -73,6 +77,7 @@ public class UIManager : Singleton<UIManager>
         UpdateGoodText(GOOD_TYPE.GOLD, AccountManager.Instance.Gold);
         UpdateGoodText(GOOD_TYPE.DIA, AccountManager.Instance.Dia);
         SetStageName(AccountManager.Instance.CurrentStageInfo.key);
+        OnClickAuto();
     }
 
     public void UpdateGoodText(GOOD_TYPE _type, double _amount)
@@ -81,7 +86,7 @@ public class UIManager : Singleton<UIManager>
             fullPopUp.UpdateFullPopUPGoodsBox(_type, _amount);
 
 
-            goodsTextList[(int)(_type - 1)].text = Utility.ToCurrencyString(_amount);
+        goodsTextList[(int)(_type - 1)].text = Utility.ToCurrencyString(_amount);
     }
 
     public void EquipSkill(int _num, SkillItem _skill)

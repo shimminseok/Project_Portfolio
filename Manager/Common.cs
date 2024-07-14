@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Tables;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 #region [Enum]
 public enum CHARACTER_JOB
@@ -161,6 +162,15 @@ public enum SCENE_TYPE
     LOADING,
     INGAME
 }
+public enum TABLE_TYPE
+{
+    NONE,
+    GOODS,
+    ITEM,
+    MATERIAL,
+    MONSTER,
+    SKILL
+}
 public enum SOUND_EFFECT
 {
     NO_0,           // 공격 단타 1
@@ -187,9 +197,9 @@ public enum GAME_STATE
 }
 public enum QUEST_TYPE
 {
-    DAYILY,
+    DAILY,
     WEEKLY,
-    ACHIEBEMENT,
+    ACHIEVEMENT,
     LOOP,
 }
 public enum QUEST_CARTEGORY
@@ -413,6 +423,7 @@ public class ItemSlotCell
         };
     }
 
+
     private SPRITE_TYPE GetSpriteType()
     {
         return itemCategory switch
@@ -425,6 +436,7 @@ public class ItemSlotCell
             _ => SPRITE_TYPE.ITEM_ICON,
         };
     }
+
 }
 
 public class AbilitySlotCell
@@ -441,6 +453,22 @@ public class InvenItem : ItemSlotCell
 
     public bool isGet = false;
     public bool IsEmpty => key == 0;
+
+    Tables.Item table;
+    public Tables.Item m_Table
+    {
+        get
+        {
+            if (table == null)
+                table = Tables.Item.Get(key);
+
+            return table;
+        }
+        set
+        {
+            table = value;
+        }
+    }
 
     static readonly Dictionary<STAT, string> statTextMapping = new Dictionary<STAT, string>
     {
@@ -459,15 +487,14 @@ public class InvenItem : ItemSlotCell
     public InvenItem()
     {
         itemCategory = ITEM_CATEGORY.ITEM;
+        itemGrade = m_Table != null ? m_Table.ItemGrade : 1;
     }
     public List<string> GetAbilityText()
     {
         var abilityTexts = new List<string>();
-        var itemTb = Tables.Item.Get(key);
-
-        if (itemTb != null)
+        if (m_Table != null)
         {
-            foreach (var ability in itemTb.Ability)
+            foreach (var ability in m_Table.Ability)
             {
                 if (statTextMapping.TryGetValue((STAT)ability, out string text))
                 {
@@ -492,13 +519,12 @@ public class InvenItem : ItemSlotCell
     List<double> GetEffectValues(Func<Tables.Item, double[]> valueSelector, int _enhanceCnt)
     {
         List<double> effectValues = new List<double>();
-        Tables.Item itemTb = Tables.Item.Get(key);
-        Tables.EnhancementData enhanceData = Tables.EnhancementData.Get((int)(itemTb?.Enhancement));
+        Tables.EnhancementData enhanceData = Tables.EnhancementData.Get((int)(m_Table?.Enhancement));
 
-        if (itemTb != null && enhanceData != null)
+        if (m_Table != null && enhanceData != null)
         {
-            double[] values = valueSelector(itemTb);
-            int[] effects = itemTb.Ability;
+            double[] values = valueSelector(m_Table);
+            int[] effects = m_Table.Ability;
 
             for (int i = 0; i < effects.Length; i++)
             {
@@ -529,7 +555,7 @@ public class InvenItem : ItemSlotCell
 
     public InvenItem GetNextGradeItem()
     {
-        var currentItem = Tables.Item.Get(key);
+        var currentItem = m_Table;
         bool foundCurrentItem = false;
 
         foreach (var item in Tables.Item.data.Values)
@@ -554,7 +580,7 @@ public class InvenItem : ItemSlotCell
     public void SynthesisItem()
     {
         const int requiredCount = 5;
-        var currentItem = Tables.Item.Get(key);
+        var currentItem = m_Table;
 
         if (count < requiredCount) return;
 
@@ -576,6 +602,22 @@ public class InvenItem : ItemSlotCell
 }
 public class MaterialItem : ItemSlotCell
 {
+
+    Tables.Material table;
+    public Tables.Material m_Table
+    {
+        get
+        {
+            if (table == null)
+                table = Tables.Material.Get(key);
+
+            return table;
+        }
+        set
+        {
+            table = value;
+        }
+    }
     public MaterialItem(int _key, double _count)
     {
         key = _key;
@@ -590,7 +632,21 @@ public class SkillItem : ItemSlotCell
 
     public bool IsEmpty { get => key == 0; }
 
+    Tables.Skill table;
+    public Tables.Skill m_Table
+    {
+        get
+        {
+            if (table == null)
+                table = Tables.Skill.Get(key);
 
+            return table;
+        }
+        set
+        {
+            table = value;
+        }
+    }
     public SkillItem()
     {
         key = 0;
@@ -609,6 +665,21 @@ public class SkillItem : ItemSlotCell
 }
 public class MonsterItem : ItemSlotCell
 {
+    Tables.Monster table;
+    public Tables.Monster m_Table
+    {
+        get
+        {
+            if (table == null)
+                table = Tables.Monster.Get(key);
+
+            return table;
+        }
+        set
+        {
+            table = value;
+        }
+    }
     public MonsterItem()
     {
         itemCategory = ITEM_CATEGORY.MONSTER;
@@ -650,9 +721,11 @@ public class QuestInfo
     public int key;
     public double questCount = 0;
     public int clearCount = 0;
-    public int questState = -1;
 
-    Quest m_QuestTb;
+    public Quest m_QuestTb;
+
+    public bool isCompleted = false;
+    public bool isDone = false;
 
     public QuestInfo(int _key)
     {
@@ -662,37 +735,38 @@ public class QuestInfo
 
     public void IncrementQuestCount(double _count)
     {
+        //퀘스트의 카운트가 증가할때
         questCount += _count;
     }
     public void GetQuestProcess()
     {
-        if (questState != -1)
+        if (isDone || isCompleted)
             return;
 
 
-        if (questState != 1 && questCount >= m_QuestTb.Value)
+        if (!isDone && questCount >= m_QuestTb.Value)
         {
-            questState = 0;
+            isCompleted = true;
+            UIManager.Instance.ObjerverSlot.DisplayQuestInfo(this);
         }
     }
 
 
     public void GetReward()
     {
-        while (questState == 0)
+        while (questCount >= m_QuestTb.Value)
         {
             GameManager.Instance.GetReward(m_QuestTb.QuestReward, out bool result, true);
             if (result)
             {
                 if (!m_QuestTb.Loop)
                 {
-                    questState = 1;
+                    isDone = true;
                     break;
                 }
                 if (questCount < m_QuestTb.Value)
                 {
-                    questState = -1;
-                    break;
+                    isCompleted = false;
                 }
                 questCount -= m_QuestTb.Value;
                 clearCount++;

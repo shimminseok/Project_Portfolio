@@ -185,6 +185,8 @@ namespace Tables
 		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
 		/// <summary> 재화 목록 표시 유무 0 : 미표시 1 : 표시 </summary>
 		[Newtonsoft.Json.JsonProperty] public bool		DisplayType {get; private set;}
+		/// <summary> 아이템 등급 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Grade {get; private set;}
 		/// <summary> 재화 이름 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		GoodsName {get; private set;}
 		/// <summary> 재화 아이콘 </summary>
@@ -303,6 +305,8 @@ namespace Tables
 	{
 		/// <summary> 재료 키 </summary>
 		[Newtonsoft.Json.JsonProperty] public int			key {get; private set;}
+		/// <summary> 아이템 등급 </summary>
+		[Newtonsoft.Json.JsonProperty] public int			Grade {get; private set;}
 		/// <summary> 재료 아이템 이름 </summary>
 		[Newtonsoft.Json.JsonProperty] public string		MaterialName {get; private set;}
 		/// <summary> 재료 아이템 아이콘 </summary>

@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 public class QuestSlot : ReuseCellData<QuestSlotCellData>
 {
+    [SerializeField] ItemSlot rewardItem;
     [SerializeField] Image rewardItemIcon;
     [SerializeField] TextMeshProUGUI itemQtyTxt;
     [SerializeField] TextMeshProUGUI questName;
@@ -30,15 +31,11 @@ public class QuestSlot : ReuseCellData<QuestSlotCellData>
     string afterReceivingRewardTxt = "¿Ï·á";
     public override void UpdateContent(QuestSlotCellData _itemData)
     {
+        m_data = _itemData;
         m_QuestTb = Tables.Quest.Get(_itemData.m_QuestInfo.key);
 
-        Reward rewardTb = Reward.Get(m_QuestTb.QuestReward);
-        double rewardQty = 0;
+        SetRewardItemSlot(Reward.Get(m_QuestTb.QuestReward));
 
-        ITEM_CATEGORY itemCategory = DetermineItemCategory(rewardTb);
-        SetRewardDetails(rewardTb, itemCategory, ref rewardQty);
-
-        itemQtyTxt.text = $"x{Utility.ToCurrencyString(rewardQty)}";
 
         progressFillImg.fillAmount = (float)(_itemData.m_QuestInfo.questCount / m_QuestTb.Value);
         progressTxt.text = $"{_itemData.m_QuestInfo.questCount}/{m_QuestTb.Value}";
@@ -47,72 +44,41 @@ public class QuestSlot : ReuseCellData<QuestSlotCellData>
         questDesc.text = UIManager.Instance.GetText(m_QuestTb.QuestDescription);
 
         _itemData.m_QuestInfo.GetQuestProcess();
-        SetReceivingButtonState(_itemData.m_QuestInfo.questState);
+        SetReceivingButtonState();
+    }
+    public void SetRewardItemSlot(Reward _rewardTb )
+    {
+        UIQuest.instance.SetRewardDetails(rewardItem,_rewardTb);
     }
 
-    private ITEM_CATEGORY DetermineItemCategory(Reward rewardTb)
-    {
-        if (rewardTb.GoodsKey.Length > 0)
-            return ITEM_CATEGORY.GOODS;
-        if (rewardTb.MaterialKey.Length > 0)
-            return ITEM_CATEGORY.MATERIAL;
-        if(rewardTb.ItemKey.Length > 0)
-            return ITEM_CATEGORY.ITEM;
 
-        return ITEM_CATEGORY.NONE;
-    }
 
-    private void SetRewardDetails(Reward rewardTb, ITEM_CATEGORY itemCategory, ref double rewardQty)
+
+    void SetReceivingButtonState()
     {
-        switch (itemCategory)
+        if(m_data.m_QuestInfo.isDone)
         {
-            case ITEM_CATEGORY.GOODS:
-                SetIconSprite(Tables.Goods.Get(rewardTb.GoodsKey[0])?.GoodsIcon);
-                rewardQty = rewardTb.GoodsQty[0];
-                break;
-            case ITEM_CATEGORY.MATERIAL:
-                SetIconSprite(Tables.Material.Get(rewardTb.MaterialKey[0])?.MaterialIcon);
-                rewardQty = rewardTb.MaterialQty[0];
-                break;
-            case ITEM_CATEGORY.ITEM:
-                SetIconSprite(Tables.Item.Get(rewardTb.ItemKey[0])?.ItemIcon);
-                rewardQty = rewardTb.ItemQty[0];
-                break;
+            recivingBtn.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.BTN_ICON, afterReceivingRewardImg);
+            recivingTxt.text = afterReceivingRewardTxt;
         }
-    }
-
-    private void SetReceivingButtonState(int questState)
-    {
-        switch (questState)
+        else if (m_data.m_QuestInfo.isCompleted)
         {
-            case 1:
-                recivingBtn.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.BTN_ICON, afterReceivingRewardImg);
-                recivingTxt.text = afterReceivingRewardTxt;
-                break;
-            case 0:
-                recivingBtn.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.BTN_ICON, beforeReceivingRewardImg);
-                recivingTxt.text = beforeReceivingRewardTxt;
-                break;
-            default:
-                recivingBtn.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.BTN_ICON, shortcutsImg);
-                recivingTxt.text = shortcutsTxt;
-                break;
+            recivingBtn.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.BTN_ICON, beforeReceivingRewardImg);
+            recivingTxt.text = beforeReceivingRewardTxt;
         }
-    }
-    void SetIconSprite(string iconName)
-    {
-        if (!string.IsNullOrEmpty(iconName))
+        else
         {
-            rewardItemIcon.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_ICON, iconName);
+            recivingBtn.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.BTN_ICON, shortcutsImg);
+            recivingTxt.text = shortcutsTxt;
         }
     }
 
     public void OnClickReciveBtn()
     {
-        if (m_data.m_QuestInfo.questState == 1)
+        if (m_data.m_QuestInfo.isDone)
             return;
 
-        else if (m_data.m_QuestInfo.questState == 0)
+        else if (m_data.m_QuestInfo.isCompleted)
             CompleatedQuest();
         else
             ShortCutsPopup();
