@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Tables;
+using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
-using static UnityEditor.Progress;
 
 #region [Enum]
 public enum CHARACTER_JOB
@@ -727,6 +727,8 @@ public class QuestInfo
     public bool isCompleted = false;
     public bool isDone = false;
 
+    double goalCnt;
+    public float ClearPercent => (float)(questCount / m_QuestTb.Value) >= 1 ? 1 : (float)(questCount / m_QuestTb.Value);
     public QuestInfo(int _key)
     {
         key = _key;
@@ -737,6 +739,12 @@ public class QuestInfo
     {
         //퀘스트의 카운트가 증가할때
         questCount += _count;
+        GetQuestProcess();
+        UIManager.Instance.ObjerverSlot.SortingQuest();
+        if (UIManager.Instance.ObjerverSlot.CurrentQuestInfo.key == key)
+        {
+            UIManager.Instance.ObjerverSlot.UpdateDisplayQuest(this);
+        }
     }
     public void GetQuestProcess()
     {
@@ -747,7 +755,7 @@ public class QuestInfo
         if (!isDone && questCount >= m_QuestTb.Value)
         {
             isCompleted = true;
-            UIManager.Instance.ObjerverSlot.DisplayQuestInfo(this);
+            UIQuest.instance.ActiveQuestTabNoti(m_QuestTb.QuestType);
         }
     }
 
@@ -756,6 +764,14 @@ public class QuestInfo
     {
         while (questCount >= m_QuestTb.Value)
         {
+            foreach (var quest in AccountManager.Instance.QuestInfoDictionary[QUEST_CARTEGORY.QUEST_CLEAR])
+            {
+                if (Quest.Get(quest.key) is Tables.Quest questTb && questTb.QuestType == m_QuestTb.QuestType)
+                {
+                    UIQuest.instance.IncreaseQuestCount(questTb.key, 1);
+                }
+            }
+
             GameManager.Instance.GetReward(m_QuestTb.QuestReward, out bool result, true);
             if (result)
             {
@@ -764,7 +780,7 @@ public class QuestInfo
                     isDone = true;
                     break;
                 }
-                if (questCount < m_QuestTb.Value)
+                if (questCount < m_QuestTb.Value || m_QuestTb.Loop)
                 {
                     isCompleted = false;
                 }
@@ -773,10 +789,7 @@ public class QuestInfo
             }
         }
         GetQuestProcess();
-    }
-    public void ShortcutsPopup()
-    {
-
+        UIManager.Instance.ObjerverSlot.SortingQuest();
     }
 }
 
@@ -839,7 +852,7 @@ public class PlayerSaveData
         nickName = AccountManager.Instance.NickName;
         level = 1;
         gold = 0;
-        dia =0;
+        dia = 0;
         currentStage = new StageInfo();
         bestStageInfo = new StageInfo();
 
@@ -893,7 +906,7 @@ public class PlayerSaveData
         AccountManager.Instance.SummonCount = summonCount;
         AccountManager.Instance.SummonRewardLevel = summonRewardLevel;
         AccountManager.Instance.HasSkillDictionary = DictionaryJsonUtility.FromJson<int, SkillItem>(skill);
-        AccountManager.Instance.QuestInfoDictionary = DictionaryJsonUtility.FromJson<QUEST_CARTEGORY,List<QuestInfo>>(quest);
+        AccountManager.Instance.QuestInfoDictionary = DictionaryJsonUtility.FromJson<QUEST_CARTEGORY, List<QuestInfo>>(quest);
     }
 
 }

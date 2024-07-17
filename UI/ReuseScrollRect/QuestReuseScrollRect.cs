@@ -24,6 +24,8 @@ public class QuestReuseScrollRect : ReuseScrollview<QuestSlotCellData>
         var filteredQuests = Tables.Quest.data.Values
             .Where(quest => quest.QuestType == (int)_type);
 
+        List<QuestInfo> byTypeList = new List<QuestInfo>(); 
+
         int index = 0;
         foreach (var tb in filteredQuests)
         {
@@ -33,12 +35,17 @@ public class QuestReuseScrollRect : ReuseScrollview<QuestSlotCellData>
                 cell.Index = index++;
                 cell.m_QuestInfo = questInfo;
                 cell.m_QuestInfo.GetQuestProcess();
+                byTypeList.Add(questInfo);
                 tableData.Add(cell);
             }
             else
             {
                 Debug.Log($"Quest Mapping Fail for key: {tb.key}");
             }
+        }
+        if(!UIQuest.instance.questInfoDictionaryByType.ContainsKey(_type))
+        {
+            UIQuest.instance.questInfoDictionaryByType.Add(_type, byTypeList);
         }
         InitTableView();
     }

@@ -11,7 +11,12 @@ public class UIQuest : UIPopUp
     [SerializeField] QuestReuseScrollRect questScrollRect;
     [SerializeField] List<GameObject> questCompletedNotiObj;
     [SerializeField] List<Toggle> questTypeTabList;
+
+
     int selectedQuestType = (int)QUEST_TYPE.LOOP;
+
+
+    public Dictionary<QUEST_TYPE, List<QuestInfo>> questInfoDictionaryByType;
     void Awake()
     {
         if (instance == null)
@@ -78,7 +83,10 @@ public class UIQuest : UIPopUp
     {
         return questCompletedNotiObj.Any(x => x.activeSelf);
     }
-
+    public void ActiveQuestTabNoti(int _questType)
+    {
+        questCompletedNotiObj[_questType].SetActive(questInfoDictionaryByType[(QUEST_TYPE)_questType].Any(x => x.isCompleted && !x.isDone));
+    }
     ItemSlotCell SetRewardDetails(Reward rewardTb, ITEM_CATEGORY itemCategory)
     {
         ItemSlotCell cell = new ItemSlotCell();

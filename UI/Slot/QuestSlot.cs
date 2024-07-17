@@ -36,21 +36,24 @@ public class QuestSlot : ReuseCellData<QuestSlotCellData>
 
         SetRewardItemSlot(Reward.Get(m_QuestTb.QuestReward));
 
+        UpdateQuestSlot();
 
-        progressFillImg.fillAmount = (float)(_itemData.m_QuestInfo.questCount / m_QuestTb.Value);
-        progressTxt.text = $"{_itemData.m_QuestInfo.questCount}/{m_QuestTb.Value}";
-
-        questName.text = UIManager.Instance.GetText(m_QuestTb.QuestName);
-        questDesc.text = UIManager.Instance.GetText(m_QuestTb.QuestDescription);
-
-        _itemData.m_QuestInfo.GetQuestProcess();
         SetReceivingButtonState();
     }
     public void SetRewardItemSlot(Reward _rewardTb )
     {
         UIQuest.instance.SetRewardDetails(rewardItem,_rewardTb);
     }
+    void UpdateQuestSlot()
+    {
+        progressFillImg.fillAmount = (float)(m_data.m_QuestInfo.questCount / m_QuestTb.Value);
+        progressTxt.text = $"{m_data.m_QuestInfo.questCount}/{m_QuestTb.Value}";
 
+        questName.text = UIManager.Instance.GetText(m_QuestTb.QuestName);
+        questDesc.text = UIManager.Instance.GetText(m_QuestTb.QuestDescription);
+
+        m_data.m_QuestInfo.GetQuestProcess();
+    }
 
 
 
@@ -71,6 +74,7 @@ public class QuestSlot : ReuseCellData<QuestSlotCellData>
             recivingBtn.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.BTN_ICON, shortcutsImg);
             recivingTxt.text = shortcutsTxt;
         }
+        UpdateQuestSlot();
     }
 
     public void OnClickReciveBtn()
@@ -86,14 +90,8 @@ public class QuestSlot : ReuseCellData<QuestSlotCellData>
 
     void CompleatedQuest()
     {
-        foreach (var quest in AccountManager.Instance.QuestInfoDictionary[QUEST_CARTEGORY.QUEST_CLEAR])
-        {
-            if (Quest.Get(quest.key) is Tables.Quest questTb && questTb.QuestType == m_QuestTb.QuestType)
-            {
-                UIQuest.instance.IncreaseQuestCount(questTb.key, 1);
-            }
-        }
         m_data.m_QuestInfo.GetReward();
+        SetReceivingButtonState();
     }
     void ShortCutsPopup()
     {
