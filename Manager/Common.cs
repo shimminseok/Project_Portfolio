@@ -627,7 +627,7 @@ public class MaterialItem : ItemSlotCell
 }
 public class SkillItem : ItemSlotCell
 {
-    public int skillLevel;
+    public int skillAwake;
     public bool isGet = false;
 
     public bool IsEmpty { get => key == 0; }
@@ -650,18 +650,44 @@ public class SkillItem : ItemSlotCell
     public SkillItem()
     {
         key = 0;
+        enhanceCount = 1;
         itemCategory = ITEM_CATEGORY.SKILL;
     }
     public void EquipSkill(int _key, int _level)
     {
         key = _key;
-        skillLevel = _level;
+        enhanceCount = _level;
     }
     public void UnEquipSkill()
     {
         key = 0;
-        skillLevel = 0;
+        enhanceCount = 0;
     }
+
+    public void SkillEnhance()
+    {
+        //TO DO 레벨업에 사용되는 재화 추가
+        enhanceCount++;
+        UISkill.Instance.SetSkillDetailInfo(m_Table);
+    }
+    public void SkillAwake()
+    {
+        if(count >= skillAwake * 10)
+        {
+            count -= skillAwake * 10;
+            skillAwake++;
+            UISkill.Instance.SetSkillDetailInfo(m_Table);
+        }
+
+    }
+    public string GetSkillDesc(SkillItem _skillItem, bool _isNextLv = false)
+    {
+        var skillTable = _skillItem.m_Table;
+        int enhanceLevel = (_skillItem.enhanceCount - 1) + (_isNextLv ? 1 : 0);
+        float skillDamage = (skillTable.DamageCoefficient + (skillTable.AddDamageCoefficient * enhanceLevel)) * 100;
+        return string.Format(UIManager.Instance.GetText(skillTable.SkillDescription), skillDamage);
+    }
+
 }
 public class MonsterItem : ItemSlotCell
 {

@@ -90,11 +90,7 @@ public class UIQuest : UIPopUp
         UpdateNotiImage(_type);
     }
 
-    public void OnClickQuestTab(int _type)
-    {
-        selectedQuestType = _type;
-        questScrollRect.CreateQuestSlot((QUEST_TYPE)_type);
-    }
+
     public void IncreaseQuestCount(QUEST_CARTEGORY _cartegory, double _value)
     {
         if (UIManager.Instance.openedPopupList.Contains(this))
@@ -127,7 +123,12 @@ public class UIQuest : UIPopUp
             AccountManager.Instance.QuestInfoDictionary[(QUEST_CARTEGORY)questTb.QuestGroupType].Find(x => x.key == _key)?.IncrementQuestCount(_value);
         }
     }
-
+    #region[ButtonEvent]
+    public void OnClickQuestTab(int _type)
+    {
+        selectedQuestType = _type;
+        questScrollRect.CreateQuestSlot((QUEST_TYPE)_type);
+    }
     public void OnClickAllReceiveRewardBtn()
     {
         var receivableQuestList = questInfoDictionary.Where(x => x.Value.isCompleted && !x.Value.isDone);
@@ -136,4 +137,5 @@ public class UIQuest : UIPopUp
             quest.Value.GetReward();
         }
     }
+    #endregion
 }

@@ -457,7 +457,34 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     }
     public void Rotate(Vector3 dir)
     {
-        transform.localRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 100 * Time.deltaTime);
+        //transform.localRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 100 * Time.deltaTime);
+
+        //방법 1
+        //float distanceToTarget = dir.magnitude;
+
+        //if (distanceToTarget < attackRange)
+        //{
+        //    // 타겟과 너무 가까우면 바로 바라보도록 설정
+        //    transform.localRotation = Quaternion.LookRotation(dir);
+        //}
+        //else
+        //{
+        //    // 타겟과 거리가 충분하면 부드럽게 회전
+        //    transform.localRotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), 100 * Time.deltaTime);
+        //}
+
+
+        //방법 2
+        float distanceToTarget = dir.magnitude;
+        Debug.Log(distanceToTarget);
+        float rotationSpeed = Mathf.Clamp((100 * distanceToTarget) * Time.deltaTime, 0, 1); // 거리에 따라 회전 속도 조정
+
+        transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.LookRotation(dir), rotationSpeed);
+
+        //방법 3
+        //float rotationSpeed = 100 * Time.deltaTime;
+        //Quaternion targetRotation = Quaternion.LookRotation(dir);
+        //transform.localRotation = Quaternion.RotateTowards(transform.localRotation, targetRotation, rotationSpeed);
     }
     public void SetMoveEvent()
     {
@@ -470,7 +497,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         if (aniCtrl.CurrentState != OBJ_ANIMATION_STATE.ATTACK)
         {
-            transform.LookAt(Target.transform);
             ChangeState(OBJ_ANIMATION_STATE.ATTACK);
         }
 
@@ -620,7 +646,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
     {
         double finaldamage = 0;
         Tables.Skill skillTb = Tables.Skill.Get(_skillInfo.key);
-        double skillOffset = skillTb.DamageCoefficient + (_skillInfo.skillLevel * skillTb.AddDamageCoefficient);
+        double skillOffset = skillTb.DamageCoefficient + (_skillInfo.enhanceCount * skillTb.AddDamageCoefficient);
         if (skillTb != null)
         {
             finaldamage = System.Math.Truncate(Damage * skillOffset);

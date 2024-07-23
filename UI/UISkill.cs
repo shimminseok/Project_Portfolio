@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,12 +23,25 @@ public class UISkill : UIPopUp
     [SerializeField] Text skillDescSkillDesc;
     [SerializeField] Text skillSettingSelectedSlotNumTxt;
 
+    [Header("SkillDetailInfo")]
+    [SerializeField] GameObject skillDetailPopupObj;
+    [SerializeField] ItemSlot skillDetail_Skill_Slot;
+    [SerializeField] Image skillDetail_SkillRemainCnt_Fill;
+    [SerializeField] TextMeshProUGUI skillDetail_Skill_Name;
+    [SerializeField] TextMeshProUGUI skillDetail_Skill_Level;
+    [SerializeField] TextMeshProUGUI skillDetail_DemainPiece_Cnt;
+    [SerializeField] TextMeshProUGUI skillDetail_CurrentLv_SkillDesc;
+    [SerializeField] TextMeshProUGUI skillDetail_NextLv_SkillDesc;
+
+
 
     int selectSkillNumber = 0;
     int selectEquipSlotNumber;
     bool isOnClickEquipSkill;
     bool isOnClickUnEquipSkill;
 
+
+    bool isOpenSkillDetailPopUp;
 
     void Awake()
     {
@@ -42,15 +56,20 @@ public class UISkill : UIPopUp
     public override void ClosePopUp()
     {
         base.ClosePopUp();
+        if (isOpenSkillDetailPopUp)
+        {
+            CloseSkillDetailUI();
+            UIManager.Instance.OnClickOpenPopUp(this);
+            return;
+        }
+
     }
 
     public override void OpenPopUp()
     {
         base.OpenPopUp();
-
-        SelectedSkill(0);
         UnLockSkillIcon();
-
+        CloseSkillDetailUI();
         isOnClickEquipSkill = false;
         skillListReuseScrollRect.CreateSkillListSlot();
     }
@@ -62,6 +81,8 @@ public class UISkill : UIPopUp
         selectSkillNumber = _num;
         skillListReuseScrollRect.TableData.ForEach(x => x.isSelected = x.Index == _num);
 
+
+        SetSkillDetailInfo(skillListReuseScrollRect.TableData[_num].m_skill);
         skillListReuseScrollRect.UpdateAllCells();
 
     }
@@ -76,8 +97,19 @@ public class UISkill : UIPopUp
 
         //TO DO
         //스킬 설명
-        float skillDam = _skillTb.DamageCoefficient * 100;
-        skillDescSkillDesc.text = string.Format(UIManager.Instance.GetText(_skillTb.SkillDescription), skillDam);
+        skillDescSkillDesc.text = GetSkillDesc(_skillTb.key);
+    }
+    string GetSkillDesc(int _key, bool _isNextLv = false)
+    {
+        if (!AccountManager.Instance.HasSkillDictionary.TryGetValue(_key, out var skillDictionary))
+        {
+            skillDictionary = new SkillItem()
+            {
+                key = _key,
+                m_Table = Tables.Skill.Get(_key)
+            };
+        }
+        return skillDictionary.GetSkillDesc(skillDictionary, _isNextLv);
     }
     void UnLockSkillIcon()
     {
@@ -109,6 +141,48 @@ public class UISkill : UIPopUp
             skillSettingSkillIconFrameImgs[_num].sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON, "skilluse_a_bg001");
         }
     }
+    #region[SkillDetailUI]
+
+    public void SetSkillDetailInfo(Tables.Skill _skillTb)
+    {
+        if(!AccountManager.Instance.HasSkillDictionary.TryGetValue(_skillTb.key, out SkillItem skillInfo))
+        {
+            skillInfo = new SkillItem
+            {
+                key = _skillTb.key,
+                m_Table = _skillTb
+            };
+        }
+        skillDetail_Skill_Slot.UpdateSlot(skillInfo);
+
+        //각성에 요구되는 갯수는 각성 * 10;
+        skillDetail_Skill_Name.text = UIManager.Instance.GetText(skillInfo.m_Table.SkillName);
+        skillDetail_Skill_Level.text = $"Lv.{skillInfo.enhanceCount}";
+        skillDetail_DemainPiece_Cnt.text = $"{skillInfo.count} / {(skillInfo.skillAwake + 1) * 10}";
+        skillDetail_SkillRemainCnt_Fill.fillAmount = (float)skillInfo.count / ((skillInfo.skillAwake + 1) * 10);
+
+
+
+        skillDetail_CurrentLv_SkillDesc.text = skillInfo.GetSkillDesc(skillInfo);
+        skillDetail_NextLv_SkillDesc.text = skillInfo.GetSkillDesc(skillInfo, true);
+
+
+        OpenSkillDetailUI();
+    }
+    void OpenSkillDetailUI()
+    {
+        isOpenSkillDetailPopUp = true;
+        skillDetailPopupObj.SetActive(true);
+    }
+
+    void CloseSkillDetailUI()
+    {
+        isOpenSkillDetailPopUp = false;
+        skillDetailPopupObj.SetActive(false);
+    }
+    #endregion
+
+
     #region[Button Action]
     public void OnClickEquipSkill()
     {
@@ -149,6 +223,20 @@ public class UISkill : UIPopUp
         {
             skillSettingSelectedImgList[i].gameObject.SetActive(i == _num);
         }
+    }
+
+    public void OnClickOpenDetailSkillInfoUI()
+    {
+        isOpenSkillDetailPopUp = true;
+    }
+
+    public void OnClickSkillLevelUpBtn()
+    {
+
+    }
+    public void OnClickSkillAwakeBtn()
+    {
+
     }
     #endregion
 }
