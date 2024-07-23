@@ -42,7 +42,7 @@ public class QuestSlot : ReuseCellData<QuestSlotCellData>
     }
     public void SetRewardItemSlot(Reward _rewardTb )
     {
-        UIQuest.instance.SetRewardDetails(rewardItem,_rewardTb);
+        RewardManager.Instance.SetRewardDetails(rewardItem,_rewardTb);
     }
     void UpdateQuestSlot()
     {

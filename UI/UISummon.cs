@@ -345,8 +345,7 @@ public class UISummon : UIPopUp
         }
 
         Tables.Reward rewardTb = Reward.Get($"{rewardTbKey}{AccountManager.Instance.SummonRewardLevel[(int)selectSummonType]}");
-        ItemSlotCell info = new ItemSlotCell { key = rewardTb.GoodsKey[0], count = (uint)rewardTb.GoodsQty[0] };
-        summonLevelRewardItemSlot.UpdateSlot(info);
+        RewardManager.Instance.SetRewardDetails(summonLevelRewardItemSlot, rewardTb);
 
         bool isEligibleForReward = AccountManager.Instance.SummonRewardLevel[(int)selectSummonType] <= AccountManager.Instance.GetSummonLevel(selectSummonType);
         summonLevelRewardItemSlot.ActiveNotiImg(isEligibleForReward);

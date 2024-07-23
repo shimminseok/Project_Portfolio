@@ -100,7 +100,7 @@ public class QuestObjerverSlot : MonoBehaviour
 
         if (rewardTb != null)
         {
-            UIQuest.instance.SetRewardDetails(rewardItemSlot, rewardTb);
+            RewardManager.Instance.SetRewardDetails(rewardItemSlot, rewardTb);
         }
     }
 

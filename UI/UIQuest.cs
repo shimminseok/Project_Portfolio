@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tables;
@@ -8,6 +9,10 @@ public class UIQuest : UIPopUp
 {
     public static UIQuest instance;
 
+    [Header("Main")]
+    [SerializeField] GameObject mainQuestMenuNoti;
+
+
     [SerializeField] QuestReuseScrollRect questScrollRect;
     [SerializeField] List<GameObject> questCompletedNotiObj;
     [SerializeField] List<Toggle> questTypeTabList;
@@ -15,8 +20,11 @@ public class UIQuest : UIPopUp
 
     int selectedQuestType = (int)QUEST_TYPE.LOOP;
 
+    public event  Action<QUEST_TYPE> OnQuestCompleted;
 
-    public Dictionary<QUEST_TYPE, List<QuestInfo>> questInfoDictionaryByType;
+    public Dictionary<QUEST_TYPE, List<QuestInfo>> questInfoDictionaryByType = new Dictionary<QUEST_TYPE, List<QuestInfo>>();
+
+    public Dictionary<int, QuestInfo> questInfoDictionary = new Dictionary<int, QuestInfo>();
     void Awake()
     {
         if (instance == null)
@@ -25,6 +33,31 @@ public class UIQuest : UIPopUp
     protected override void Start()
     {
         base.Start();
+
+        questInfoDictionary = AccountManager.Instance.QuestInfoDictionary
+            .SelectMany(kv => kv.Value)
+            .ToDictionary(qi => qi.key, qi => qi);
+
+        foreach (var item in questInfoDictionary)
+        {
+            if (questInfoDictionaryByType.ContainsKey((QUEST_TYPE)item.Value.m_QuestTb.QuestType))
+            {
+                questInfoDictionaryByType[(QUEST_TYPE)item.Value.m_QuestTb.QuestType].Add(item.Value);
+            }
+            else
+            {
+                List<QuestInfo> list = new List<QuestInfo>() { item.Value};
+                questInfoDictionaryByType.Add((QUEST_TYPE)item.Value.m_QuestTb.QuestType, list);
+            }
+
+        }
+        for (int i = 0; i < (int)QUEST_TYPE.MAX; i++)
+        {
+            UpdateNotiImage((QUEST_TYPE)i);
+        }
+        UpdateMainNotiImage();
+        OnQuestCompleted += HandleQuestCompleted;
+
     }
 
     public override void OpenPopUp()
@@ -35,8 +68,27 @@ public class UIQuest : UIPopUp
     public override void ClosePopUp()
     {
         base.ClosePopUp();
-    }
 
+    }
+    public void OnQuestTypeNoti(QuestInfo _quest)
+    {
+        OnQuestCompleted?.Invoke((QUEST_TYPE)_quest.m_QuestTb.QuestType);
+    }
+    public void UpdateNotiImage(QUEST_TYPE _type)
+    {
+        bool hasReward = questInfoDictionaryByType[_type].Any(x => x.isCompleted && !x.isDone);
+        questCompletedNotiObj[(int)_type].SetActive(hasReward);
+        UpdateMainNotiImage();
+    }
+    void UpdateMainNotiImage()
+    {
+        bool hasReward = questCompletedNotiObj.Find(x => x.activeSelf);
+        mainQuestMenuNoti.SetActive(hasReward);
+    }
+    void HandleQuestCompleted(QUEST_TYPE _type)
+    {
+        UpdateNotiImage(_type);
+    }
 
     public void OnClickQuestTab(int _type)
     {
@@ -75,60 +127,13 @@ public class UIQuest : UIPopUp
             AccountManager.Instance.QuestInfoDictionary[(QUEST_CARTEGORY)questTb.QuestGroupType].Find(x => x.key == _key)?.IncrementQuestCount(_value);
         }
     }
-    /// <summary>
-    /// 메인화면에서의 Noti이미지 활성/비활성을 위한 함수
-    /// </summary>
-    /// <returns></returns>
-    public bool ActiveNotiState()
+
+    public void OnClickAllReceiveRewardBtn()
     {
-        return questCompletedNotiObj.Any(x => x.activeSelf);
-    }
-    public void ActiveQuestTabNoti(int _questType)
-    {
-        questCompletedNotiObj[_questType].SetActive(questInfoDictionaryByType[(QUEST_TYPE)_questType].Any(x => x.isCompleted && !x.isDone));
-    }
-    ItemSlotCell SetRewardDetails(Reward rewardTb, ITEM_CATEGORY itemCategory)
-    {
-        ItemSlotCell cell = new ItemSlotCell();
-        switch (itemCategory)
+        var receivableQuestList = questInfoDictionary.Where(x => x.Value.isCompleted && !x.Value.isDone);
+        foreach(var quest in receivableQuestList)
         {
-            case ITEM_CATEGORY.GOODS:
-                cell.key = rewardTb.GoodsKey[0];
-                cell.count = rewardTb.GoodsQty[0];
-                cell.itemGrade = Tables.Goods.Get(rewardTb.GoodsKey[0]).Grade;
-                break;
-            case ITEM_CATEGORY.MATERIAL:
-                cell.key = rewardTb.MaterialKey[0];
-                cell.count = rewardTb.MaterialQty[0];
-                cell.itemGrade = Tables.Material.Get(rewardTb.MaterialKey[0]).Grade;
-
-                break;
-            case ITEM_CATEGORY.ITEM:
-                cell.key = rewardTb.ItemKey[0];
-                cell.count = rewardTb.ItemQty[0];
-                cell.itemGrade = Tables.Item.Get(rewardTb.ItemKey[0]).ItemGrade;
-                break;
+            quest.Value.GetReward();
         }
-
-        return cell;
-    }
-    ITEM_CATEGORY DetermineItemCategory(Reward rewardTb)
-    {
-        if (rewardTb.GoodsKey.Length > 0)
-            return ITEM_CATEGORY.GOODS;
-        if (rewardTb.MaterialKey.Length > 0)
-            return ITEM_CATEGORY.MATERIAL;
-        if (rewardTb.ItemKey.Length > 0)
-            return ITEM_CATEGORY.ITEM;
-
-        return ITEM_CATEGORY.NONE;
-    }
-
-    public void SetRewardDetails(ItemSlot _targetSlot, Tables.Reward _reward)
-    {
-
-        ITEM_CATEGORY category = DetermineItemCategory(_reward);
-        ItemSlotCell cell = SetRewardDetails(_reward, category);
-        _targetSlot.UpdateSlot(cell);
     }
 }

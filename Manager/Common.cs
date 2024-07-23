@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Tables;
-using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 
 #region [Enum]
@@ -201,6 +200,7 @@ public enum QUEST_TYPE
     WEEKLY,
     ACHIEVEMENT,
     LOOP,
+    MAX
 }
 public enum QUEST_CARTEGORY
 {
@@ -755,7 +755,7 @@ public class QuestInfo
         if (!isDone && questCount >= m_QuestTb.Value)
         {
             isCompleted = true;
-            UIQuest.instance.ActiveQuestTabNoti(m_QuestTb.QuestType);
+            UIQuest.instance.OnQuestTypeNoti(this);
         }
     }
 
@@ -790,6 +790,7 @@ public class QuestInfo
         }
         GetQuestProcess();
         UIManager.Instance.ObjerverSlot.SortingQuest();
+        UIQuest.instance.UpdateNotiImage((QUEST_TYPE)m_QuestTb.QuestType);
     }
 }
 

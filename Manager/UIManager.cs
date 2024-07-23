@@ -79,7 +79,6 @@ public class UIManager : Singleton<UIManager>
         SetStageName(AccountManager.Instance.CurrentStageInfo.key);
         OnClickAuto();
     }
-
     public void UpdateGoodText(GOOD_TYPE _type, double _amount)
     {
         if (popupType != FULL_POPUP_TYPE.NONE)
