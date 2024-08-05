@@ -600,6 +600,7 @@ public class InvenItem : ItemSlotCell
         UIQuest.instance.IncreaseQuestCount(QUEST_CARTEGORY.GET_EQUIPMENT, synthesisCount);
     }
 }
+[System.Serializable]
 public class MaterialItem : ItemSlotCell
 {
 
@@ -625,9 +626,10 @@ public class MaterialItem : ItemSlotCell
         itemCategory = ITEM_CATEGORY.MATERIAL;
     }
 }
+[System.Serializable]
 public class SkillItem : ItemSlotCell
 {
-    public int skillAwake;
+    public int skillAwakeCount;
     public bool isGet = false;
 
     public bool IsEmpty { get => key == 0; }
@@ -647,6 +649,7 @@ public class SkillItem : ItemSlotCell
             table = value;
         }
     }
+
     public SkillItem()
     {
         key = 0;
@@ -667,15 +670,19 @@ public class SkillItem : ItemSlotCell
     public void SkillEnhance()
     {
         //TO DO 레벨업에 사용되는 재화 추가
-        enhanceCount++;
-        UISkill.Instance.SetSkillDetailInfo(m_Table);
+        if (enhanceCount < (skillAwakeCount + 1) * 10)
+        {
+            enhanceCount++;
+            UISkill.Instance.SetSkillDetailInfo(m_Table);
+        }
+
     }
     public void SkillAwake()
     {
-        if(count >= skillAwake * 10)
+        if (count >= (skillAwakeCount + 1) * 10)
         {
-            count -= skillAwake * 10;
-            skillAwake++;
+            count -= skillAwakeCount * 10;
+            skillAwakeCount++;
             UISkill.Instance.SetSkillDetailInfo(m_Table);
         }
 
@@ -748,7 +755,20 @@ public class QuestInfo
     public double questCount = 0;
     public int clearCount = 0;
 
-    public Quest m_QuestTb;
+    Tables.Quest table;
+
+    public Quest m_QuestTb
+    {
+        get
+        {
+            if(table == null)
+            {
+                table = Tables.Quest.Get(key);
+            }
+
+            return table;
+        }
+    }
 
     public bool isCompleted = false;
     public bool isDone = false;
@@ -758,7 +778,7 @@ public class QuestInfo
     public QuestInfo(int _key)
     {
         key = _key;
-        m_QuestTb = Tables.Quest.Get(key);
+        table = Tables.Quest.Get(key);
     }
 
     public void IncrementQuestCount(double _count)
@@ -934,6 +954,7 @@ public class PlayerSaveData
         AccountManager.Instance.SummonRewardLevel = summonRewardLevel;
         AccountManager.Instance.HasSkillDictionary = DictionaryJsonUtility.FromJson<int, SkillItem>(skill);
         AccountManager.Instance.QuestInfoDictionary = DictionaryJsonUtility.FromJson<QUEST_CARTEGORY, List<QuestInfo>>(quest);
+        
     }
 
 }

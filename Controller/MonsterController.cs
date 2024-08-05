@@ -245,7 +245,7 @@ public class MonsterController : ObjectController, IAttackable, IMoveable, IHitt
             {
                 StopCoroutine("FollowPath");
             }
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
     }
     void Attack()

@@ -1,3 +1,4 @@
+using NPOI.SS.Formula.Functions;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,7 +55,6 @@ public class UISummon : UIPopUp
         base.ClosePopUp();
         CloseSummonResultPopup();
     }
-
     public void OnClickSummonBtn(int _count)
     {
         AccountManager.Instance.UseGoods(GOOD_TYPE.DIA, (ulong)(_count * 100), out bool isEnough);
@@ -64,6 +64,7 @@ public class UISummon : UIPopUp
     public void OnClickSummonTab(GameObject _go)
     {
         int onToggleIndex = summonTypeToggles.FindIndex(x => x.name == _go.name);
+        summonTypeToggles[onToggleIndex].isOn = true;
         selectSummonType = (SUMMON_TYPE)onToggleIndex;
         UpdateSummonLevel();
     }
@@ -77,11 +78,6 @@ public class UISummon : UIPopUp
         else
         {
             List<ItemSlotCell> summonedItems = new List<ItemSlotCell>();
-
-            for (int i = 0; i < resultSlotRoot.childCount; i++)
-            {
-                Destroy(resultSlotRoot.GetChild(i).gameObject);
-            }
             summonResultItemQueue.Clear();
 
             for (int i = 0; i < _count; i++)
@@ -235,11 +231,12 @@ public class UISummon : UIPopUp
         StartCoroutine(TweenManager.Instance.TweenAlpha(screenTouchText, 1, 0.2f, 0.5f, TweenType.PINGPONG));
         isPlayingSummonResultCo = true;
         yield return new WaitForSeconds(0.2f);
+        int count = 0;
         while (resultItemList.Count > 0)
         {
             ItemSlotCell slotcell = resultItemList.Dequeue();
             object itemInfo = CreateItemInfo(slotcell);
-            InstantiateAndSetupItemSlot(itemInfo);
+            InstantiateAndSetupItemSlot(itemInfo, count++);
             yield return new WaitForSeconds(delayTime);
         }
         isPlayingSummonResultCo = false;
@@ -259,20 +256,23 @@ public class UISummon : UIPopUp
         }
     }
 
-    void InstantiateAndSetupItemSlot(object itemInfo)
+    void InstantiateAndSetupItemSlot(object _itemInfo,int _openCount)
     {
-        var itemSlot = Instantiate(resultSlotBase.gameObject, resultSlotRoot).GetComponent<ItemSlot>();
-        if (itemSlot != null)
-        {
-            itemSlot.UpdateSlotByType(itemInfo);
-        }
+        ItemSlot itemSlot = (_openCount >= resultSlotRoot.childCount)
+            ? Instantiate(resultSlotBase.gameObject, resultSlotRoot).GetComponent<ItemSlot>()
+            : resultSlotRoot.GetChild(_openCount).GetComponent<ItemSlot>();
+
+        itemSlot?.gameObject.SetActive(true);
+        itemSlot?.UpdateSlotByType(_itemInfo);
     }
     void SkipSummonResult()
     {
         StopCoroutine(summonResultCo);
+        int count = 0;
         while (summonResultItemQueue.Count > 0)
         {
-            Instantiate(resultSlotBase.gameObject, resultSlotRoot).GetComponent<ItemSlot>()?.UpdateSlot(summonResultItemQueue.Dequeue());
+            object itemInfo = CreateItemInfo(summonResultItemQueue.Dequeue());
+            InstantiateAndSetupItemSlot(itemInfo, count++);
         }
         isPlayingSummonResultCo = false;
     }
@@ -287,7 +287,7 @@ public class UISummon : UIPopUp
             resultItemPopup.SetActive(false);
             for (int i = 0; i < resultSlotRoot.childCount; i++)
             {
-                Destroy(resultSlotRoot.GetChild(i).gameObject);
+                resultSlotRoot.GetChild(i).gameObject.SetActive(false);
             }
         }
         UpdateSummonLevel();

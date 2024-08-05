@@ -113,7 +113,7 @@ public class Navigation : MonoBehaviour
     public void RequestPath(Vector3 _startPos, Vector3 _targetPos, System.Action<List<Node>, bool> _callback)
     {
         string pathKey = GetPathKey(NodeFromWorldPoint(_startPos), NodeFromWorldPoint(_targetPos));
-        if(nodePathCache.TryGetValue(pathKey,out List<Node> cachedPath))
+        if (nodePathCache.TryGetValue(pathKey, out List<Node> cachedPath))
         {
             _callback(cachedPath, true);
         }

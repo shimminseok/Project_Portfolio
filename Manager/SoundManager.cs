@@ -1,3 +1,4 @@
+using NPOI.OpenXmlFormats.Dml.Chart;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -34,5 +35,14 @@ public class SoundManager : Singleton<SoundManager>
     public void MuteEffectSount(bool _isMute)
     {
         effect_Audio.mute = _isMute;
+    }
+
+    public void ChangeBGMSoundVolume(float _volume )
+    {
+        bgm_Audio.volume = _volume;
+    }
+    public void ChangeEffectSoundVolume(float _volume)
+    {
+        effect_Audio.volume = _volume;
     }
 }

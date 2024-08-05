@@ -303,7 +303,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         if (isDead || GameManager.Instance.GameState == GAME_STATE.WIN)
             return;
 
-
         if (GameManager.Instance.GameState == GAME_STATE.LOADING || GameManager.Instance.GameState == GAME_STATE.BOSS)
         {
             transform.localPosition = Navigation.Instance.start.worldPos;
@@ -386,10 +385,14 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         for (int i = 0; i < SkillInfoList.Length; i++)
         {
+            SkillItem skill = new SkillItem();
+
             if (SkillInfoList[i] != null)
-                UIManager.Instance.EquipSkill(i, SkillInfoList[i]);
-            else
-                UIManager.Instance.EquipSkill(i, new SkillItem());
+            {
+                skill = SkillInfoList[i];
+            }
+                UIManager.Instance.EquipSkill(i,skill);
+            //skill.EquipSkill()
         }
 
         TagController.SetTag(this);
@@ -407,7 +410,9 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
         else
         {
             if (targetObj != null && !targetObj.IsDead)
+            {
                 Navigation.Instance.RequestPath(transform.localPosition, targetObj.transform.localPosition, OnPathFound);
+            }
         }
         if (aniCtrl.CurrentState != OBJ_ANIMATION_STATE.MOVE)
             ChangeState(OBJ_ANIMATION_STATE.MOVE);
@@ -452,7 +457,7 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
             {
                 StopCoroutine("FollowPath");
             }
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
     }
     public void Rotate(Vector3 dir)
@@ -476,7 +481,6 @@ public class PlayerController : ObjectController, IMoveable, IAttackable, IHitta
 
         //방법 2
         float distanceToTarget = dir.magnitude;
-        Debug.Log(distanceToTarget);
         float rotationSpeed = Mathf.Clamp((100 * distanceToTarget) * Time.deltaTime, 0, 1); // 거리에 따라 회전 속도 조정
 
         transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.LookRotation(dir), rotationSpeed);

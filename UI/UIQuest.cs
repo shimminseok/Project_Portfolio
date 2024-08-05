@@ -38,18 +38,19 @@ public class UIQuest : UIPopUp
             .SelectMany(kv => kv.Value)
             .ToDictionary(qi => qi.key, qi => qi);
 
-        foreach (var item in questInfoDictionary)
+        foreach (var item in questInfoDictionary.Values)
         {
-            if (questInfoDictionaryByType.ContainsKey((QUEST_TYPE)item.Value.m_QuestTb.QuestType))
+            var questType = (QUEST_TYPE)item.m_QuestTb.QuestType;
+
+            if (questInfoDictionaryByType.TryGetValue(questType, out var questList))
             {
-                questInfoDictionaryByType[(QUEST_TYPE)item.Value.m_QuestTb.QuestType].Add(item.Value);
+                questList.Add(item);
             }
             else
             {
-                List<QuestInfo> list = new List<QuestInfo>() { item.Value};
-                questInfoDictionaryByType.Add((QUEST_TYPE)item.Value.m_QuestTb.QuestType, list);
+                questList = new List<QuestInfo> { item };
+                questInfoDictionaryByType.Add(questType, questList);
             }
-
         }
         for (int i = 0; i < (int)QUEST_TYPE.MAX; i++)
         {

@@ -42,7 +42,7 @@ public class UISkill : UIPopUp
 
 
     bool isOpenSkillDetailPopUp;
-
+    SkillItem selectedSkill;
     void Awake()
     {
         if (Instance == null)
@@ -95,8 +95,6 @@ public class UISkill : UIPopUp
         skillDescSkillIcon.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.SKILL_ICON, _skillTb.SkillListIcon);
         skillDescSkillName.text = UIManager.Instance.GetText(_skillTb.SkillName);
 
-        //TO DO
-        //스킬 설명
         skillDescSkillDesc.text = GetSkillDesc(_skillTb.key);
     }
     string GetSkillDesc(int _key, bool _isNextLv = false)
@@ -113,10 +111,10 @@ public class UISkill : UIPopUp
     }
     void UnLockSkillIcon()
     {
-        for (int i = 0; i < skillSettingLockImgList.Count; i++)
-        {
-            skillSettingLockImgList[i].gameObject.SetActive(AccountManager.Instance.PlayerLevel < Tables.Define.Get(string.Format("SkillSlotOpen_{0:D2}", i + 1)).value);
-        }
+        //for (int i = 0; i < skillSettingLockImgList.Count; i++)
+        //{
+        //    skillSettingLockImgList[i].gameObject.SetActive(AccountManager.Instance.PlayerLevel < Tables.Define.Get(string.Format("SkillSlotOpen_{0:D2}", i + 1)).value);
+        //}
 
         for (int i = 0; i < PlayerController.Instance.SkillInfoList.Length; i++)
         {
@@ -145,7 +143,7 @@ public class UISkill : UIPopUp
 
     public void SetSkillDetailInfo(Tables.Skill _skillTb)
     {
-        if(!AccountManager.Instance.HasSkillDictionary.TryGetValue(_skillTb.key, out SkillItem skillInfo))
+        if (!AccountManager.Instance.HasSkillDictionary.TryGetValue(_skillTb.key, out SkillItem skillInfo))
         {
             skillInfo = new SkillItem
             {
@@ -153,13 +151,14 @@ public class UISkill : UIPopUp
                 m_Table = _skillTb
             };
         }
+        selectedSkill = skillInfo;
         skillDetail_Skill_Slot.UpdateSlot(skillInfo);
 
         //각성에 요구되는 갯수는 각성 * 10;
         skillDetail_Skill_Name.text = UIManager.Instance.GetText(skillInfo.m_Table.SkillName);
-        skillDetail_Skill_Level.text = $"Lv.{skillInfo.enhanceCount}";
-        skillDetail_DemainPiece_Cnt.text = $"{skillInfo.count} / {(skillInfo.skillAwake + 1) * 10}";
-        skillDetail_SkillRemainCnt_Fill.fillAmount = (float)skillInfo.count / ((skillInfo.skillAwake + 1) * 10);
+        skillDetail_Skill_Level.text = $"Lv.{skillInfo.enhanceCount} / {(skillInfo.skillAwakeCount + 1) * 10}";
+        skillDetail_DemainPiece_Cnt.text = $"{skillInfo.count} / {(skillInfo.skillAwakeCount + 1) * 10}";
+        skillDetail_SkillRemainCnt_Fill.fillAmount = (float)skillInfo.count / ((skillInfo.skillAwakeCount + 1) * 10);
 
 
 
@@ -205,15 +204,20 @@ public class UISkill : UIPopUp
         skillSettingSelectedSlotNumTxt.text = string.Format("선택 슬롯 : {0}번", _num + 1);
         if (isOnClickEquipSkill)
         {
-            SkillItem skillInfo = new SkillItem();
-            int key = skillListReuseScrollRect.TableData[selectSkillNumber].m_skill.key;
-            int level = 1;
-            skillInfo.EquipSkill(key, level);
-            PlayerController.Instance.SkillInfoList[_num] = skillInfo;
-            PlayerController.Instance.SetSkillCoolDown(key);
-            UIManager.Instance.EquipSkill(_num, skillInfo);
-            isOnClickEquipSkill = false;
-            SetSkillSettingIconList(_num);
+            if (AccountManager.Instance.HasSkillDictionary.TryGetValue(skillListReuseScrollRect.TableData[selectSkillNumber].m_skill.key, out var skill))
+            {
+                //skill.EquipSkill();
+                PlayerController.Instance.SkillInfoList[_num] = skill;
+                PlayerController.Instance.SetSkillCoolDown(skill.key);
+                UIManager.Instance.EquipSkill(_num, skill);
+                isOnClickEquipSkill = false;
+                SetSkillSettingIconList(_num);
+            }
+            else
+            {
+
+            }
+
         }
         else
         {
@@ -232,11 +236,11 @@ public class UISkill : UIPopUp
 
     public void OnClickSkillLevelUpBtn()
     {
-
+        selectedSkill.SkillEnhance();
     }
     public void OnClickSkillAwakeBtn()
     {
-
+        selectedSkill.SkillAwake();
     }
     #endregion
 }

@@ -21,6 +21,14 @@ public class GameManager : Singleton<GameManager>
     {
         ChangeGameState(GAME_STATE.LOADING);
         SoundManager.Instance.PlayBGMSound((int)SOUND_BGM.NO_0);
+
+
+#if UNITY_ANDROID
+        Application.targetFrameRate = 120;
+        QualitySettings.masterTextureLimit = 1;
+#elif UNITY_EDITOR
+        Application.targetFrameRate = 120;
+#endif
     }
 
     public void ChangeGameState(GAME_STATE _state)

@@ -1,4 +1,4 @@
-using Tables;
+using Spine.Unity;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,10 +14,12 @@ public class ItemSlot : MonoBehaviour
     [SerializeField] GameObject notGetImg;
     [SerializeField] GameObject notiImg;
 
+    [SerializeField] SkeletonGraphic itemGradeEffect;
+
 
     public void UpdateSlotByType(object _itemObj, bool _isActiveUI = true)
     {
-        switch(_itemObj)
+        switch (_itemObj)
         {
             case InvenItem equipmentItem:
                 UpdateSlot(equipmentItem, _isActiveUI);
@@ -63,6 +65,9 @@ public class ItemSlot : MonoBehaviour
 
         hasCountTxt.text = _isActiveUI ? $"x{Utility.ToCurrencyString(_item.count)}" : string.Empty;
         enhanceCountTxt.text = _item.enhanceCount > 0 ? $"Lv.{_item.enhanceCount}" : string.Empty;
+
+        itemGradeEffect.gameObject.SetActive(_item.m_Table.ItemGrade > 2);
+
         ActiveNotGetImg(!_item.isGet && _isActiveUI);
         IsEquipping(_item.isEquipped && _isActiveUI);
         ActiveNotiImg(_item.count >= 5 && _isActiveUI);
@@ -98,10 +103,11 @@ public class ItemSlot : MonoBehaviour
         itemIconImg.gameObject.SetActive(false);
         qualityImg.gameObject.SetActive(false);
         equippingTxt.gameObject.SetActive(false);
-        enhanceCountTxt.text= string.Empty;
+        enhanceCountTxt.text = string.Empty;
         hasCountTxt.text = string.Empty;
         ActiveNotiImg(false);
         ActiveNotGetImg(false);
+        itemGradeEffect.gameObject.SetActive(false);
     }
     public void IsEquipping(bool _isEquipping)
     {

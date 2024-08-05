@@ -28,6 +28,9 @@ public class UIPopUp : MonoBehaviour
     }
     public virtual void OpenPopUp()
     {
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
         ChildSetActive(true);
         SoundManager.Instance.PlayEffectSound(SOUND_EFFECT.NO_11);
         if (UIManager.Instance.popupType != FULL_POPUP_TYPE.NONE)

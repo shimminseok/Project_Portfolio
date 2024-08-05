@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Tables;
-using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -133,7 +132,7 @@ public class AccountManager : Singleton<AccountManager>
     }
     public int[] SummonRewardLevel
     {
-        get=> summonRewardLevel;
+        get => summonRewardLevel;
         set => summonRewardLevel = value;
     }
     public double Gold
@@ -142,7 +141,6 @@ public class AccountManager : Singleton<AccountManager>
         set
         {
             gold = value;
-            UIManager.Instance?.UpdateGoodText(GOOD_TYPE.GOLD, gold);
         }
     }
     public double Dia
@@ -151,7 +149,7 @@ public class AccountManager : Singleton<AccountManager>
         set
         {
             dia = value;
-            UIManager.Instance?.UpdateGoodText(GOOD_TYPE.DIA, dia);
+
         }
     }
     void Start()
@@ -193,11 +191,15 @@ public class AccountManager : Singleton<AccountManager>
         {
             case GOOD_TYPE.DIA:
                 Dia += _amount;
+                UIManager.Instance?.UpdateGoodText(_type, Dia);
                 break;
             case GOOD_TYPE.GOLD:
                 Gold += _amount;
+                UIManager.Instance?.UpdateGoodText(_type, Gold);
                 break;
         }
+
+
     }
     QUEST_CARTEGORY GetQuestCategory(GOOD_TYPE _type)
     {
@@ -303,11 +305,11 @@ public class AccountManager : Singleton<AccountManager>
     {
         if (!hasSkillDictionary.TryGetValue(_skill.key, out var skill))
         {
-            skill = new SkillItem() { isGet = true};
+            skill = new SkillItem() { key = _skill.key, isGet = true };
             hasSkillDictionary[_skill.key] = skill;
         }
         else
-        { 
+        {
             skill.count += _skill.count;
         }
     }

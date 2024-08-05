@@ -20,6 +20,10 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] Image loadingBox;
     [SerializeField] Image systemMessageObj;
 
+    [Header("LeftAnchor")]
+    [SerializeField] TextMeshProUGUI frameTxt;
+    float deltaTime = 0f;
+
     [Header("TopAnchor")]
     [SerializeField] TextMeshProUGUI waveProcessText;
     [SerializeField] TextMeshProUGUI currentStageName;
@@ -70,6 +74,11 @@ public class UIManager : Singleton<UIManager>
         {
             UpdateSkillCoolTime(i);
         }
+        deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
+
+        float fps = 1f / deltaTime;
+        frameTxt.text = string.Format("{0:0.}FPS", fps);
+
     }
 
     void InitUI()
