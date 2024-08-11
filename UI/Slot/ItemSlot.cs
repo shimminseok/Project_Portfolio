@@ -1,4 +1,5 @@
 using Spine.Unity;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,7 +17,13 @@ public class ItemSlot : MonoBehaviour
 
     [SerializeField] SkeletonGraphic itemGradeEffect;
 
+    int targetGrade = 1;
+    string[] itemGradeTeduriEffectName = new string[5] { "gold","pink","purple","red","white"};
 
+    private void Start()
+    {
+        itemGradeEffect.Initialize(true);
+    }
     public void UpdateSlotByType(object _itemObj, bool _isActiveUI = true)
     {
         switch (_itemObj)
@@ -60,14 +67,12 @@ public class ItemSlot : MonoBehaviour
 
 
         itemIconImg.sprite = _item.GetSprite();
-        itemGradeBG.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, $"item_bg_00{Tables.Item.Get(_item.key)?.ItemGrade}");
-        qualityImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, $"icon_class_a00{Tables.Item.Get(_item.key)?.Quality_Grade}");
+        targetGrade = _item.m_Table.ItemGrade;
+        itemGradeBG.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, $"item_bg_00{targetGrade}");
+        qualityImg.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, $"icon_class_a00{_item.m_Table?.Quality_Grade}");
 
         hasCountTxt.text = _isActiveUI ? $"x{Utility.ToCurrencyString(_item.count)}" : string.Empty;
         enhanceCountTxt.text = _item.enhanceCount > 0 ? $"Lv.{_item.enhanceCount}" : string.Empty;
-
-        itemGradeEffect.gameObject.SetActive(_item.m_Table.ItemGrade > 2);
-
         ActiveNotGetImg(!_item.isGet && _isActiveUI);
         IsEquipping(_item.isEquipped && _isActiveUI);
         ActiveNotiImg(_item.count >= 5 && _isActiveUI);
@@ -85,7 +90,8 @@ public class ItemSlot : MonoBehaviour
         qualityImg.gameObject.SetActive(false);
         hasCountTxt.text = string.Empty;
         enhanceCountTxt.text = _item.enhanceCount > 0 ? $"Lv.{_item.enhanceCount}" : string.Empty;
-        itemGradeBG.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, $"item_bg_00{Tables.Skill.Get(_item.key)?.SkillGrade}");
+        targetGrade = _item.m_Table.SkillGrade;
+        itemGradeBG.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, $"item_bg_00{targetGrade}");
         IsEquipping(false);
         ActiveNotiImg(false);
         ActiveNotGetImg(false);
@@ -99,12 +105,13 @@ public class ItemSlot : MonoBehaviour
     }
     void EmptySlot()
     {
+        targetGrade = 1;
         itemGradeBG.sprite = UIManager.Instance.GetSprite(SPRITE_TYPE.ITEM_GRADE, "item_bg_001");
         itemIconImg.gameObject.SetActive(false);
         qualityImg.gameObject.SetActive(false);
-        equippingTxt.gameObject.SetActive(false);
         enhanceCountTxt.text = string.Empty;
         hasCountTxt.text = string.Empty;
+        IsEquipping(false);
         ActiveNotiImg(false);
         ActiveNotGetImg(false);
         itemGradeEffect.gameObject.SetActive(false);
@@ -120,5 +127,25 @@ public class ItemSlot : MonoBehaviour
     public void ActiveNotGetImg(bool _isActive)
     {
         notGetImg.SetActive(_isActive);
+    }
+    public void SetGradeEffectOn(float _delay = 0f, bool _isOpenEffect = true)
+    {
+        if (gameObject.activeInHierarchy)
+            StartCoroutine(EffectAniActive(_delay, _isOpenEffect));
+
+    }
+    IEnumerator EffectAniActive(float _delay, bool _isOpenEffect)
+    {
+        yield return new WaitForSeconds(_delay);
+
+        if (targetGrade >= 3)
+        {
+            if (_isOpenEffect)
+            {
+                UIManager.Instance.SetSkeletonAnimation(itemGradeEffect, itemGradeTeduriEffectName[targetGrade - 3], true);
+            }
+        }
+        else
+            itemGradeEffect.gameObject.SetActive(false);
     }
 }

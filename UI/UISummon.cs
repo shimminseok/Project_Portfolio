@@ -71,6 +71,11 @@ public class UISummon : UIPopUp
 
     void Summon(int _count)
     {
+        
+        for (int i = 0; i < resultSlotRoot.childCount; i++)
+        {
+            resultSlotRoot.GetChild(i).gameObject.SetActive(false); ; 
+        }
         if (isPlayingSummonResultCo)
         {
             SkipSummonResult();
@@ -263,6 +268,7 @@ public class UISummon : UIPopUp
             : resultSlotRoot.GetChild(_openCount).GetComponent<ItemSlot>();
 
         itemSlot?.gameObject.SetActive(true);
+        itemSlot?.SetGradeEffectOn(0);
         itemSlot?.UpdateSlotByType(_itemInfo);
     }
     void SkipSummonResult()

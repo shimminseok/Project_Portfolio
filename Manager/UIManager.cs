@@ -1,3 +1,4 @@
+using Spine.Unity;
 using System.Collections.Generic;
 using Tables;
 using TMPro;
@@ -162,6 +163,13 @@ public class UIManager : Singleton<UIManager>
         }
 
         processFillImg.fillAmount = fillAmount;
+    }
+    public void SetSkeletonAnimation(SkeletonGraphic _effect, string _aniName, bool _loop = false)
+    {
+        _effect.gameObject.SetActive(true);
+        _effect.startingAnimation = _aniName;
+        _effect.AnimationState.ClearTracks();
+        _effect.AnimationState.SetAnimation(0,_aniName, _loop);
     }
     #region[Button Event]
     public void OnClickOpenPopUp(UIPopUp _popup)
